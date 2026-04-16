@@ -30,37 +30,49 @@ export function StockChart({ data, height = 420 }: StockChartProps) {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#94a3b8',
-        fontFamily: 'Inter, system-ui, sans-serif',
+        textColor: '#6e6e73',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif',
       },
       grid: {
-        vertLines: { color: 'rgba(148, 163, 184, 0.08)' },
-        horzLines: { color: 'rgba(148, 163, 184, 0.08)' },
+        vertLines: { color: 'rgba(0, 0, 0, 0.04)' },
+        horzLines: { color: 'rgba(0, 0, 0, 0.04)' },
       },
       rightPriceScale: {
-        borderColor: 'rgba(148, 163, 184, 0.2)',
+        borderColor: 'rgba(0, 0, 0, 0.08)',
       },
       timeScale: {
-        borderColor: 'rgba(148, 163, 184, 0.2)',
+        borderColor: 'rgba(0, 0, 0, 0.08)',
         timeVisible: true,
         secondsVisible: false,
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: 'rgba(148, 163, 184, 0.35)', labelBackgroundColor: '#2563eb' },
-        horzLine: { color: 'rgba(148, 163, 184, 0.35)', labelBackgroundColor: '#2563eb' },
+        vertLine: {
+          color: 'rgba(0, 0, 0, 0.18)',
+          labelBackgroundColor: '#0a84ff',
+        },
+        horzLine: {
+          color: 'rgba(0, 0, 0, 0.18)',
+          labelBackgroundColor: '#0a84ff',
+        },
       },
-      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
       handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
     });
 
     const candle = chart.addCandlestickSeries({
-      upColor: '#16a34a',
-      downColor: '#dc2626',
-      borderUpColor: '#16a34a',
-      borderDownColor: '#dc2626',
-      wickUpColor: '#16a34a',
-      wickDownColor: '#dc2626',
+      upColor: '#30d158',
+      downColor: '#ff453a',
+      borderUpColor: '#30d158',
+      borderDownColor: '#ff453a',
+      wickUpColor: '#30d158',
+      wickDownColor: '#ff453a',
     });
 
     const volume = chart.addHistogramSeries({
@@ -105,7 +117,7 @@ export function StockChart({ data, height = 420 }: StockChartProps) {
     const volumes = data.map((c) => ({
       time: c.time as unknown as UTCTimestamp,
       value: c.volume,
-      color: c.close >= c.open ? 'rgba(22, 163, 74, 0.55)' : 'rgba(220, 38, 38, 0.55)',
+      color: c.close >= c.open ? 'rgba(48, 209, 88, 0.45)' : 'rgba(255, 69, 58, 0.45)',
     }));
 
     const ma20 = computeMA(data, 20);

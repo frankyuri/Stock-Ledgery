@@ -34,12 +34,16 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <section>
-        <div className="mb-4 flex items-end justify-between">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-100">大盤總覽</h1>
-            <p className="text-sm text-slate-500">即時報價、個股 K 線、自選清單</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">
+              大盤總覽
+            </h1>
+            <p className="mt-1 text-sm text-ink-mute">
+              即時報價、個股 K 線、自選清單
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {watchlist.slice(0, 6).map((s) => (
               <button
                 key={s}
@@ -74,7 +78,7 @@ export function Dashboard() {
             label="市值 (估)"
             value={
               quote.data?.marketCap
-                ? `${formatNumber(quote.data.marketCap / 1e9, 2)} B`
+                ? `${formatNumber(quote.data.marketCap / 1e9, 2)} B ${quote.data.currency}`
                 : '—'
             }
           />
@@ -84,10 +88,10 @@ export function Dashboard() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2 className="text-base font-semibold text-slate-100">
+            <h2 className="text-base font-semibold tracking-tight text-ink">
               {selected} · 日 K 線
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-ink-mute">
               滾輪縮放、按住拖曳平移；MA20 顯示於黃色線
             </p>
           </div>
@@ -98,7 +102,7 @@ export function Dashboard() {
           ) : chart.data ? (
             <StockChart data={chart.data} />
           ) : (
-            <p className="py-16 text-center text-slate-500">無法載入圖表資料</p>
+            <p className="py-16 text-center text-ink-mute">無法載入圖表資料</p>
           )}
         </div>
       </section>
@@ -106,8 +110,12 @@ export function Dashboard() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2 className="text-base font-semibold text-slate-100">自選清單</h2>
-            <p className="text-xs text-slate-500">每 60 秒自動更新（經 Yahoo Finance）</p>
+            <h2 className="text-base font-semibold tracking-tight text-ink">
+              自選清單
+            </h2>
+            <p className="mt-0.5 text-xs text-ink-mute">
+              每 60 秒自動更新（經 Yahoo Finance）
+            </p>
           </div>
         </div>
         {watch.isLoading ? (

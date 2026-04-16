@@ -28,9 +28,15 @@ export function HoldingForm() {
     <form onSubmit={onSubmit} className="card">
       <div className="card-header">
         <div>
-          <h3 className="text-base font-semibold text-slate-100">新增 / 更新持股</h3>
-          <p className="text-xs text-slate-500">
-            代號同時存在時會覆寫。台股請使用 <code className="text-slate-300">2330.TW</code> 格式
+          <h3 className="text-base font-semibold tracking-tight text-ink">
+            新增 / 更新持股
+          </h3>
+          <p className="mt-0.5 text-xs text-ink-mute">
+            代號同時存在時會覆寫。台股請使用{' '}
+            <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[11px] text-ink-soft">
+              2330.TW
+            </code>{' '}
+            格式
           </p>
         </div>
       </div>
@@ -40,23 +46,23 @@ export function HoldingForm() {
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
             placeholder="代號（AAPL / 2330.TW）"
-            className="rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand focus:outline-none"
+            className="input"
           />
           <input
             value={shares}
             onChange={(e) => setShares(e.target.value)}
             placeholder="股數"
             inputMode="decimal"
-            className="rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand focus:outline-none"
+            className="input num font-mono"
           />
           <input
             value={avgCost}
             onChange={(e) => setAvgCost(e.target.value)}
             placeholder="平均成本"
             inputMode="decimal"
-            className="rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand focus:outline-none"
+            className="input num font-mono"
           />
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary px-5">
             加入
           </button>
         </div>

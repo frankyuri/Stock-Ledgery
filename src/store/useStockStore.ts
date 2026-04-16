@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Holding, Resolution } from '@/types/stock';
-import { defaultWatchlist } from '@/services/mockData';
+
+const DEFAULT_WATCHLIST = ['AAPL', 'MSFT', 'NVDA', 'TSLA', '2330.TW'];
 
 interface StockState {
   selectedSymbol: string;
@@ -21,7 +22,7 @@ export const useStockStore = create<StockState>()(
     (set) => ({
       selectedSymbol: 'AAPL',
       resolution: '1D',
-      watchlist: defaultWatchlist(),
+      watchlist: DEFAULT_WATCHLIST,
       holdings: [],
       setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
       setResolution: (resolution) => set({ resolution }),

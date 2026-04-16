@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -12,11 +12,39 @@ body,
   height: 100%;
 }
 
+html {
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+}
+
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: linear-gradient(180deg, #0b1120 0%, #0f172a 100%);
-  color: #e2e8f0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter',
+    'Noto Sans TC', 'PingFang TC', 'Helvetica Neue', system-ui, sans-serif;
+  background:
+    radial-gradient(900px 600px at -10% -10%, rgba(10, 132, 255, 0.18), transparent 60%),
+    radial-gradient(800px 600px at 110% 0%, rgba(175, 82, 222, 0.16), transparent 55%),
+    radial-gradient(700px 500px at 50% 110%, rgba(48, 209, 88, 0.12), transparent 60%),
+    linear-gradient(180deg, #f7f7fb 0%, #eef0f5 100%);
+  background-attachment: fixed;
+  color: #1d1d1f;
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.022em;
+}
+
+.font-mono,
+code,
+kbd,
+pre,
+samp {
+  font-feature-settings: 'tnum' on, 'zero' on, 'ss01' on;
 }
 
 ::-webkit-scrollbar {
@@ -27,30 +55,39 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.18);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.32);
 }
 
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-800 bg-surface-card/80 shadow-lg shadow-black/20 backdrop-blur;
+    @apply rounded-2xl border border-black/5 bg-surface-card shadow-glass backdrop-blur-2xl backdrop-saturate-150;
   }
   .card-header {
-    @apply flex items-center justify-between border-b border-slate-800 px-5 py-4;
+    @apply flex items-center justify-between border-b border-black/5 px-5 py-4;
   }
   .card-body {
     @apply p-5;
   }
   .btn {
-    @apply inline-flex items-center justify-center rounded-md border border-slate-700 bg-slate-800/70 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-black/10 bg-white/70 px-3 py-1.5 text-sm font-medium text-ink-soft shadow-sm transition hover:bg-white active:scale-[0.98];
   }
   .btn-primary {
-    @apply border-brand bg-brand text-white hover:bg-brand-dark;
+    @apply border-brand/50 bg-brand text-white shadow-[0_4px_14px_rgba(10,132,255,0.32)] hover:bg-brand-dark;
   }
   .chip {
-    @apply inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-0.5 text-xs text-slate-300;
+    @apply inline-flex items-center rounded-full border border-black/10 bg-white/70 px-2.5 py-0.5 text-[11px] font-medium text-ink-mute backdrop-blur;
+  }
+  .input {
+    @apply w-full rounded-lg border border-black/10 bg-white/80 px-3.5 py-2 text-sm text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
   }
 }

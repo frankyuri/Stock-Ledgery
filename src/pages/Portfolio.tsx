@@ -19,22 +19,40 @@ export function Portfolio() {
     refetchInterval: 60_000,
   });
 
-  const totals = useMemo(() => {
-    if (!data || data.length === 0) {
-      return { marketValue: 0, gainLoss: 0, dayChange: 0, cost: 0 };
+  const groups = useMemo(() => {
+    const map = new Map<
+      string,
+      { marketValue: number; cost: number; gainLoss: number; dayChange: number }
+    >();
+    for (const x of data ?? []) {
+      const g = map.get(x.currency) ?? {
+        marketValue: 0,
+        cost: 0,
+        gainLoss: 0,
+        dayChange: 0,
+      };
+      g.marketValue += x.marketValue;
+      g.cost += x.shares * x.avgCost;
+      g.gainLoss += x.gainLoss;
+      g.dayChange += x.change * x.shares;
+      map.set(x.currency, g);
     }
-    const marketValue = data.reduce((a, x) => a + x.marketValue, 0);
-    const cost = data.reduce((a, x) => a + x.shares * x.avgCost, 0);
-    const gainLoss = data.reduce((a, x) => a + x.gainLoss, 0);
-    const dayChange = data.reduce((a, x) => a + x.change * x.shares, 0);
-    return { marketValue, gainLoss, dayChange, cost };
+    return Array.from(map.entries()).sort((a, b) => b[1].marketValue - a[1].marketValue);
   }, [data]);
+
+  const summary = useMemo(() => {
+    if (groups.length === 0) {
+      return { currency: 'USD', marketValue: 0, gainLoss: 0, dayChange: 0, cost: 0 };
+    }
+    const [currency, g] = groups[0];
+    return { currency, ...g };
+  }, [groups]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-100">個人持股</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">個人持股</h1>
+        <p className="mt-1 text-sm text-ink-mute">
           資料只儲存在你的瀏覽器 (localStorage)，報價經 Yahoo Finance 取得
         </p>
       </div>
@@ -42,24 +60,53 @@ export function Portfolio() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
           label="總市值"
-          value={formatCurrency(totals.marketValue, 'USD')}
-          hint="依最新 Yahoo 報價估算"
+          value={formatCurrency(summary.marketValue, summary.currency)}
+          hint={
+            groups.length > 1
+              ? `主要幣別 ${summary.currency}（共 ${groups.length} 種幣別）`
+              : '依最新 Yahoo 報價估算'
+          }
         />
         <StatCard
           label="未實現損益"
-          value={formatCurrency(totals.gainLoss, 'USD')}
-          change={totals.gainLoss}
-          changePercent={totals.cost ? (totals.gainLoss / totals.cost) * 100 : 0}
+          value={formatCurrency(summary.gainLoss, summary.currency)}
+          change={summary.gainLoss}
+          changePercent={summary.cost ? (summary.gainLoss / summary.cost) * 100 : 0}
         />
         <StatCard
           label="今日變動"
-          value={formatCurrency(totals.dayChange, 'USD')}
-          change={totals.dayChange}
+          value={formatCurrency(summary.dayChange, summary.currency)}
+          change={summary.dayChange}
           changePercent={
-            totals.marketValue ? (totals.dayChange / totals.marketValue) * 100 : 0
+            summary.marketValue ? (summary.dayChange / summary.marketValue) * 100 : 0
           }
         />
       </div>
+
+      {groups.length > 1 && (
+        <div className="card card-body">
+          <p className="text-xs uppercase tracking-wider text-ink-mute">分幣別小計</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {groups.map(([cur, g]) => (
+              <div
+                key={cur}
+                className="rounded-lg border border-black/5 bg-white/60 p-3 backdrop-blur"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-ink">{cur}</span>
+                  <span className="text-xs text-ink-mute">市值</span>
+                </div>
+                <p className="mt-1 font-mono text-lg text-ink">
+                  {formatCurrency(g.marketValue, cur)}
+                </p>
+                <p className="mt-1 text-xs text-ink-mute">
+                  損益 {formatCurrency(g.gainLoss, cur)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <HoldingForm />
 
@@ -70,7 +117,7 @@ export function Portfolio() {
       )}
 
       {holdings.length === 0 ? (
-        <div className="card card-body py-12 text-center text-slate-500">
+        <div className="card card-body py-12 text-center text-ink-mute">
           目前沒有持股。用上方表單新增一筆試試看。
         </div>
       ) : isLoading ? (

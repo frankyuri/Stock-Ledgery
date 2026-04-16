@@ -43,4 +43,5 @@ export interface PortfolioHolding {
   marketValue: number;
   gainLoss: number;
   gainLossPercent: number;
+  currency: string;
 }

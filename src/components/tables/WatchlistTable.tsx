@@ -25,8 +25,8 @@ export function WatchlistTable({ data, onRemove }: Props) {
         header: '代號',
         cell: (ctx) => (
           <div className="flex flex-col">
-            <span className="font-semibold text-slate-100">{ctx.row.original.symbol}</span>
-            <span className="text-xs text-slate-500">{ctx.row.original.name}</span>
+            <span className="font-semibold text-ink">{ctx.row.original.symbol}</span>
+            <span className="text-xs text-ink-mute">{ctx.row.original.name}</span>
           </div>
         ),
       },
@@ -34,7 +34,7 @@ export function WatchlistTable({ data, onRemove }: Props) {
         accessorKey: 'price',
         header: '現價',
         cell: (ctx) => (
-          <span className="font-mono">{formatNumber(ctx.getValue<number>())}</span>
+          <span className="font-mono num">{formatNumber(ctx.getValue<number>())}</span>
         ),
       },
       {
@@ -42,7 +42,12 @@ export function WatchlistTable({ data, onRemove }: Props) {
         header: '漲跌',
         cell: (ctx) => {
           const v = ctx.getValue<number>();
-          return <span className={cn('font-medium', changeColor(v))}>{formatNumber(v)}</span>;
+          return (
+            <span className={cn('font-mono font-medium num', changeColor(v))}>
+              {v > 0 ? '+' : ''}
+              {formatNumber(v)}
+            </span>
+          );
         },
       },
       {
@@ -50,7 +55,11 @@ export function WatchlistTable({ data, onRemove }: Props) {
         header: '漲跌幅',
         cell: (ctx) => {
           const v = ctx.getValue<number>();
-          return <span className={cn('font-medium', changeColor(v))}>{formatPercent(v)}</span>;
+          return (
+            <span className={cn('font-mono font-medium num', changeColor(v))}>
+              {formatPercent(v)}
+            </span>
+          );
         },
       },
       {
@@ -63,7 +72,7 @@ export function WatchlistTable({ data, onRemove }: Props) {
               e.stopPropagation();
               onRemove?.(ctx.row.original.symbol);
             }}
-            className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-slate-800 hover:text-down"
+            className="rounded-md px-2 py-1 text-xs text-ink-mute transition hover:bg-black/5 hover:text-down"
           >
             移除
           </button>
@@ -82,14 +91,14 @@ export function WatchlistTable({ data, onRemove }: Props) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-slate-800 text-sm">
+      <table className="min-w-full divide-y divide-black/5 text-sm">
         <thead>
           {table.getHeaderGroups().map((group) => (
-            <tr key={group.id}>
+            <tr key={group.id} className="bg-black/[0.02]">
               {group.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-400"
+                  className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-mute"
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
@@ -97,15 +106,20 @@ export function WatchlistTable({ data, onRemove }: Props) {
             </tr>
           ))}
         </thead>
-        <tbody className="divide-y divide-slate-800">
+        <tbody className="divide-y divide-black/5">
           {table.getRowModel().rows.map((row) => (
             <tr
               key={row.id}
-              onClick={() => navigate(`/stock/${encodeURIComponent(row.original.symbol)}`)}
-              className="cursor-pointer transition hover:bg-slate-800/40"
+              onClick={() =>
+                navigate(`/stock/${encodeURIComponent(row.original.symbol)}`)
+              }
+              className="cursor-pointer transition hover:bg-black/[0.03]"
             >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="whitespace-nowrap px-5 py-3 text-slate-200">
+                <td
+                  key={cell.id}
+                  className="whitespace-nowrap px-5 py-3.5 text-ink-soft"
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
@@ -113,7 +127,10 @@ export function WatchlistTable({ data, onRemove }: Props) {
           ))}
           {data.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-5 py-10 text-center text-slate-500">
+              <td
+                colSpan={columns.length}
+                className="px-5 py-12 text-center text-sm text-ink-mute"
+              >
                 尚未加入任何股票
               </td>
             </tr>

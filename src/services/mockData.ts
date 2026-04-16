@@ -124,6 +124,7 @@ export function buildMockPortfolio(): PortfolioHolding[] {
       marketValue,
       gainLoss,
       gainLossPercent: round((gainLoss / cost) * 100),
+      currency: q.currency,
     };
   });
 }

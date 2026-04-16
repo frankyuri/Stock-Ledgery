@@ -9,6 +9,7 @@ interface YahooChartResult {
     symbol: string;
     currency?: string;
     regularMarketPrice?: number;
+    regularMarketPreviousClose?: number;
     chartPreviousClose?: number;
     previousClose?: number;
     longName?: string;
@@ -88,8 +89,14 @@ export async function yahooChart(
   }
 
   const lastClose = candles[candles.length - 1]?.close ?? 0;
+  const prevCandleClose = candles[candles.length - 2]?.close;
   const price = meta.regularMarketPrice ?? lastClose;
-  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? lastClose;
+  const prevClose =
+    meta.regularMarketPreviousClose ??
+    meta.previousClose ??
+    prevCandleClose ??
+    meta.chartPreviousClose ??
+    lastClose;
   const change = r2(price - prevClose);
   const changePercent = prevClose ? r2((change / prevClose) * 100) : 0;
 

@@ -39,18 +39,18 @@ export function StockDetail() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
             {symbol}
             {quote.data && (
-              <span className="ml-3 text-sm font-normal text-slate-400">
+              <span className="ml-3 text-sm font-normal text-ink-mute">
                 {quote.data.name}
               </span>
             )}
           </h1>
-          <p className="text-sm text-slate-500">個股即時報價與歷史走勢</p>
+          <p className="mt-1 text-sm text-ink-mute">個股即時報價與歷史走勢</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex overflow-hidden rounded-md border border-slate-700">
+          <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 backdrop-blur">
             {RESOLUTIONS.map((r) => (
               <button
                 key={r}
@@ -59,7 +59,7 @@ export function StockDetail() {
                 className={`px-3 py-1.5 text-xs font-medium transition ${
                   resolution === r
                     ? 'bg-brand text-white'
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                    : 'text-ink-soft hover:bg-black/[0.04]'
                 }`}
               >
                 {r}
@@ -98,8 +98,10 @@ export function StockDetail() {
 
       <section className="card">
         <div className="card-header">
-          <h2 className="text-base font-semibold text-slate-100">走勢圖</h2>
-          <span className="text-xs text-slate-500">滾輪縮放 · 拖曳平移 · MA20</span>
+          <h2 className="text-base font-semibold tracking-tight text-ink">
+            走勢圖
+          </h2>
+          <span className="text-xs text-ink-mute">滾輪縮放 · 拖曳平移 · MA20</span>
         </div>
         <div className="card-body">
           {chart.isLoading ? (
@@ -107,7 +109,7 @@ export function StockDetail() {
           ) : chart.data ? (
             <StockChart data={chart.data} />
           ) : (
-            <p className="py-16 text-center text-slate-500">暫無資料</p>
+            <p className="py-16 text-center text-ink-mute">暫無資料</p>
           )}
         </div>
       </section>

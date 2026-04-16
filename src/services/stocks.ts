@@ -64,8 +64,16 @@ export async function fetchPortfolio(
       marketValue,
       gainLoss,
       gainLossPercent: cost ? round((gainLoss / cost) * 100) : 0,
+      currency: q?.currency ?? guessCurrency(h.symbol),
     };
   });
+}
+
+function guessCurrency(symbol: string): string {
+  if (/\.TW$/i.test(symbol)) return 'TWD';
+  if (/\.HK$/i.test(symbol)) return 'HKD';
+  if (/\.T$/i.test(symbol)) return 'JPY';
+  return 'USD';
 }
 
 export async function searchTickers(query: string): Promise<SearchResult[]> {

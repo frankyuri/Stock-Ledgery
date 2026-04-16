@@ -13,15 +13,20 @@ export function StatCard({ label, value, change, changePercent, hint }: StatCard
   const showChange = typeof change === 'number' && typeof changePercent === 'number';
   return (
     <div className="card p-5">
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 font-mono text-2xl font-semibold text-slate-100">{value}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
+        {label}
+      </p>
+      <p className="mt-2 font-mono text-[26px] font-semibold leading-none tracking-tight text-ink num">
+        {value}
+      </p>
       {showChange && (
-        <p className={cn('mt-1 text-sm font-medium', changeColor(change!))}>
+        <p className={cn('mt-2 text-sm font-medium num', changeColor(change!))}>
           {change! > 0 ? '+' : ''}
-          {change!.toFixed(2)} ({formatPercent(changePercent!)})
+          {change!.toFixed(2)}{' '}
+          <span className="text-xs opacity-80">({formatPercent(changePercent!)})</span>
         </p>
       )}
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-ink-mute">{hint}</p>}
     </div>
   );
 }

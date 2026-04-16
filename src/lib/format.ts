@@ -24,5 +24,5 @@ export function formatPercent(value: number): string {
 export function changeColor(value: number): string {
   if (value > 0) return 'text-up';
   if (value < 0) return 'text-down';
-  return 'text-slate-300';
+  return 'text-ink-mute';
 }
