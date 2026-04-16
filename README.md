@@ -57,8 +57,33 @@ npm run dev
 Yahoo 沒有官方 CORS 支援，本專案用 [vite.config.ts](vite.config.ts) 的 `server.proxy`
 將 `/yahoo/*` 轉發到 `query1.finance.yahoo.com`。這在 `npm run dev` 下可直接運作。
 
-若要部署成 **靜態站**（GitHub Pages、Netlify 等），瀏覽器會再度遇到 CORS，
-屆時才需要加一層極簡後端 proxy（FastAPI、Cloudflare Worker 皆可）。
+部署到靜態站時改走 Cloudflare Worker proxy——程式碼在 [workers/yahoo-proxy.js](workers/yahoo-proxy.js)。
+
+## 部署到 GitHub Pages
+
+CI/CD 已設定在 [.github/workflows/deploy.yml](.github/workflows/deploy.yml)，每次 push 到 `main` 會自動 build + deploy。
+
+**一次性設定步驟：**
+
+1. **部署 Cloudflare Worker**（免費，無需綁卡）
+   ```bash
+   cd workers
+   npx wrangler deploy
+   ```
+   登入 Cloudflare 後會印出 Worker URL，例如 `https://stocktify-yahoo-proxy.<account>.workers.dev`。
+
+2. **在 GitHub repo 設兩個東西：**
+   - Settings → Pages → Source 選 **GitHub Actions**
+   - Settings → Secrets and variables → Actions → New repository secret
+     - Name: `YAHOO_PROXY_URL`
+     - Value: 上一步的 Worker URL
+
+3. push 到 `main`，Actions 會自動跑。完成後網址是 `https://<user>.github.io/Stocktify/`。
+
+**原理說明：**
+- `VITE_BASE_PATH=/Stocktify/` 由 workflow 注入，讓 Vite 產出的資源路徑帶 repo 名
+- `BrowserRouter basename` 讀同一個值，路由才能正確解析子路徑
+- `cp index.html 404.html` 是 GitHub Pages 的 SPA fallback 標準技巧——刷新子路徑時 Pages 會回 404.html，內容仍是 React App，路由即接管
 
 ## 之後接自家後端
 

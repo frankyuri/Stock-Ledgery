@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Candle, Quote, Resolution, SearchResult } from '@/types/stock';
 
-const yahoo = axios.create({ baseURL: '/yahoo', timeout: 12_000 });
+const YAHOO_BASE_URL = import.meta.env.VITE_YAHOO_PROXY_URL ?? '/yahoo';
+const yahoo = axios.create({ baseURL: YAHOO_BASE_URL, timeout: 12_000 });
 
 interface YahooChartResult {
   meta: {
