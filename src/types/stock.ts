@@ -16,7 +16,15 @@ export interface Quote {
   change: number;
   changePercent: number;
   previousClose: number;
+  open?: number;
+  dayHigh?: number;
+  dayLow?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  volume?: number;
+  avgVolume?: number;
   currency: string;
+  exchangeName?: string;
   marketCap?: number;
 }
 
@@ -44,4 +52,27 @@ export interface PortfolioHolding {
   gainLoss: number;
   gainLossPercent: number;
   currency: string;
+}
+
+export type TransactionType = 'BUY' | 'SELL';
+
+export interface Transaction {
+  id: string;
+  symbol: string;
+  type: TransactionType;
+  shares: number;
+  price: number;
+  fee: number;
+  tradedAt: string;
+  note?: string;
+}
+
+export interface AssetSnapshot {
+  id: string;
+  date: string;
+  cash: number;
+  securities: number;
+  other: number;
+  currency: string;
+  note?: string;
 }

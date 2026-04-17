@@ -12,9 +12,15 @@ interface YahooChartResult {
     regularMarketPreviousClose?: number;
     chartPreviousClose?: number;
     previousClose?: number;
+    regularMarketDayHigh?: number;
+    regularMarketDayLow?: number;
+    regularMarketVolume?: number;
+    fiftyTwoWeekHigh?: number;
+    fiftyTwoWeekLow?: number;
     longName?: string;
     shortName?: string;
     exchangeName?: string;
+    fullExchangeName?: string;
     marketCap?: number;
   };
   timestamp?: number[];
@@ -88,17 +94,22 @@ export async function yahooChart(
     });
   }
 
-  const lastClose = candles[candles.length - 1]?.close ?? 0;
-  const prevCandleClose = candles[candles.length - 2]?.close;
-  const price = meta.regularMarketPrice ?? lastClose;
+  const last = candles[candles.length - 1];
+  const prev = candles[candles.length - 2];
+  const price = meta.regularMarketPrice ?? last?.close ?? 0;
   const prevClose =
     meta.regularMarketPreviousClose ??
     meta.previousClose ??
-    prevCandleClose ??
+    prev?.close ??
     meta.chartPreviousClose ??
-    lastClose;
+    last?.close ??
+    0;
   const change = r2(price - prevClose);
   const changePercent = prevClose ? r2((change / prevClose) * 100) : 0;
+
+  const avgVolume = estimateAvgVolume(candles, 20);
+  const fiftyTwoWeekHigh = meta.fiftyTwoWeekHigh ?? estimateRecent(candles, 'high', 252);
+  const fiftyTwoWeekLow = meta.fiftyTwoWeekLow ?? estimateRecent(candles, 'low', 252);
 
   const quote: Quote = {
     symbol: meta.symbol,
@@ -107,7 +118,15 @@ export async function yahooChart(
     change,
     changePercent,
     previousClose: r2(prevClose),
+    open: meta.regularMarketPrice != null && last ? r2(last.open) : last?.open,
+    dayHigh: meta.regularMarketDayHigh ?? last?.high,
+    dayLow: meta.regularMarketDayLow ?? last?.low,
+    fiftyTwoWeekHigh: fiftyTwoWeekHigh != null ? r2(fiftyTwoWeekHigh) : undefined,
+    fiftyTwoWeekLow: fiftyTwoWeekLow != null ? r2(fiftyTwoWeekLow) : undefined,
+    volume: meta.regularMarketVolume ?? last?.volume,
+    avgVolume,
     currency: meta.currency ?? 'USD',
+    exchangeName: meta.fullExchangeName ?? meta.exchangeName,
     marketCap: meta.marketCap,
   };
 
@@ -132,7 +151,7 @@ export async function yahooSearch(query: string): Promise<SearchResult[]> {
     params: { q: query, quotesCount: 8, newsCount: 0 },
   });
   return (data.quotes ?? [])
-    .filter((q) => q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
+    .filter((q) => q.quoteType === 'EQUITY' || q.quoteType === 'ETF' || q.quoteType === 'INDEX')
     .map((q) => ({
       symbol: q.symbol,
       name: q.longname ?? q.shortname ?? q.symbol,
@@ -146,4 +165,22 @@ function unixToISODate(unix: number): string {
 
 function r2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+function estimateAvgVolume(candles: Candle[], window: number): number | undefined {
+  if (candles.length === 0) return undefined;
+  const slice = candles.slice(-window);
+  const sum = slice.reduce((s, c) => s + (c.volume || 0), 0);
+  return slice.length ? Math.round(sum / slice.length) : undefined;
+}
+
+function estimateRecent(
+  candles: Candle[],
+  key: 'high' | 'low',
+  window: number,
+): number | undefined {
+  if (candles.length === 0) return undefined;
+  const slice = candles.slice(-window);
+  if (key === 'high') return Math.max(...slice.map((c) => c.high));
+  return Math.min(...slice.map((c) => c.low));
 }
