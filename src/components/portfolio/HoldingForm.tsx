@@ -28,12 +28,10 @@ export function HoldingForm() {
     <form onSubmit={onSubmit} className="card">
       <div className="card-header">
         <div>
-          <h3 className="text-base font-semibold tracking-tight text-ink">
-            新增 / 更新持股
-          </h3>
-          <p className="mt-0.5 text-xs text-ink-mute">
+          <h3 className="section-title">新增 / 更新持股</h3>
+          <p className="section-hint">
             代號同時存在時會覆寫。台股請使用{' '}
-            <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[11px] text-ink-soft">
+            <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-xs text-ink-soft">
               2330.TW
             </code>{' '}
             格式
@@ -66,7 +64,7 @@ export function HoldingForm() {
             加入
           </button>
         </div>
-        {error && <p className="mt-3 text-sm text-down">{error}</p>}
+        {error && <p className="mt-3 text-[15px] text-down">{error}</p>}
       </div>
     </form>
   );

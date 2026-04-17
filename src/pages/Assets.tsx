@@ -72,8 +72,8 @@ export function Assets() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">資產紀錄</h1>
-        <p className="mt-1 text-sm text-ink-mute">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">資產紀錄</h1>
+        <p className="mt-1.5 text-[15px] text-ink-mute">
           週 / 月定期記錄現金、證券、其他資產快照，追蹤總淨值變化。
         </p>
       </div>
@@ -81,8 +81,8 @@ export function Assets() {
       <form onSubmit={onSubmit} className="card">
         <div className="card-header">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-ink">新增快照</h3>
-            <p className="mt-0.5 text-xs text-ink-mute">
+            <h3 className="section-title">新增快照</h3>
+            <p className="section-hint">
               每次輸入都是一筆獨立的時間點紀錄，不會覆蓋既有資料
             </p>
           </div>
@@ -144,40 +144,34 @@ export function Assets() {
       {primary ? (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="card p-5">
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-                最新淨值
-              </p>
-              <p className="mt-2 font-mono text-[24px] font-semibold text-ink num">
+            <div className="card p-6">
+              <p className="label-caps">最新淨值</p>
+              <p className="mt-3 font-mono text-[28px] font-semibold text-ink num">
                 {latest
                   ? formatCurrency(latest.cash + latest.securities + latest.other, latest.currency)
                   : '—'}
               </p>
-              <p className="mt-1 text-xs text-ink-mute">{latest?.date ?? '—'}</p>
+              <p className="mt-1.5 text-sm text-ink-mute">{latest?.date ?? '—'}</p>
             </div>
-            <div className="card p-5">
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-                期間變動
-              </p>
+            <div className="card p-6">
+              <p className="label-caps">期間變動</p>
               <p
                 className={cn(
-                  'mt-2 font-mono text-[24px] font-semibold num',
+                  'mt-3 font-mono text-[28px] font-semibold num',
                   change >= 0 ? 'text-up' : 'text-down',
                 )}
               >
                 {change >= 0 ? '+' : ''}
                 {formatNumber(change)}
               </p>
-              <p className="mt-1 text-xs text-ink-mute">
+              <p className="mt-1.5 text-sm text-ink-mute">
                 {first?.date} → {latest?.date}
               </p>
             </div>
-            <div className="card p-5">
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-                資產結構
-              </p>
+            <div className="card p-6">
+              <p className="label-caps">資產結構</p>
               {latest && (
-                <div className="mt-2 space-y-1 text-sm">
+                <div className="mt-3 space-y-1.5 text-[15px]">
                   <div className="flex justify-between">
                     <span className="text-ink-mute">現金</span>
                     <span className="font-mono num">
@@ -204,12 +198,8 @@ export function Assets() {
           <section className="card">
             <div className="card-header">
               <div>
-                <h2 className="text-base font-semibold tracking-tight text-ink">
-                  淨值走勢 · {primary[0]}
-                </h2>
-                <p className="mt-0.5 text-xs text-ink-mute">
-                  依時間點繪製總淨值（現金 + 證券 + 其他）
-                </p>
+                <h2 className="section-title">淨值走勢 · {primary[0]}</h2>
+                <p className="section-hint">依時間點繪製總淨值（現金 + 證券 + 其他）</p>
               </div>
             </div>
             <div className="card-body">
@@ -220,14 +210,14 @@ export function Assets() {
           <div className="card overflow-hidden">
             <div className="card-header">
               <div>
-                <h3 className="text-base font-semibold tracking-tight text-ink">歷史快照</h3>
-                <p className="mt-0.5 text-xs text-ink-mute">依日期排序</p>
+                <h3 className="section-title">歷史快照</h3>
+                <p className="section-hint">依日期排序</p>
               </div>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-black/5 text-sm">
                 <thead>
-                  <tr className="bg-black/[0.02] text-[11px] uppercase tracking-[0.12em] text-ink-mute">
+                  <tr className="bg-black/[0.02] text-xs uppercase tracking-[0.12em] text-ink-mute">
                     <th className="px-5 py-3 text-left font-semibold">日期</th>
                     <th className="px-5 py-3 text-left font-semibold">幣別</th>
                     <th className="px-5 py-3 text-right font-semibold">現金</th>

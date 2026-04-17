@@ -63,8 +63,8 @@ export function Transactions() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">交易紀錄</h1>
-        <p className="mt-1 text-sm text-ink-mute">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">交易紀錄</h1>
+        <p className="mt-1.5 text-[15px] text-ink-mute">
           記錄每筆買進 / 賣出，自動更新持股平均成本。
           <span className="ml-1.5 text-ink-faint">
             資料暫存於本機；登入後會同步至後端
@@ -75,8 +75,8 @@ export function Transactions() {
       <form onSubmit={onSubmit} className="card">
         <div className="card-header">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-ink">新增交易</h3>
-            <p className="mt-0.5 text-xs text-ink-mute">
+            <h3 className="section-title">新增交易</h3>
+            <p className="section-hint">
               買進將加權計算新的平均成本；賣出會扣減股數（成本不變）
             </p>
           </div>
@@ -156,46 +156,40 @@ export function Transactions() {
       </form>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="card p-5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-            累計買進
-          </p>
-          <p className="mt-2 font-mono text-[22px] font-semibold text-ink num">
+        <div className="card p-6">
+          <p className="label-caps">累計買進</p>
+          <p className="mt-3 font-mono text-[26px] font-semibold text-ink num">
             {formatNumber(totals.buyAmount)}
           </p>
-          <p className="mt-1 text-xs text-ink-mute">含手續費</p>
+          <p className="mt-1.5 text-sm text-ink-mute">含手續費</p>
         </div>
-        <div className="card p-5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-            累計賣出
-          </p>
-          <p className="mt-2 font-mono text-[22px] font-semibold text-ink num">
+        <div className="card p-6">
+          <p className="label-caps">累計賣出</p>
+          <p className="mt-3 font-mono text-[26px] font-semibold text-ink num">
             {formatNumber(totals.sellAmount)}
           </p>
-          <p className="mt-1 text-xs text-ink-mute">扣除手續費</p>
+          <p className="mt-1.5 text-sm text-ink-mute">扣除手續費</p>
         </div>
-        <div className="card p-5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-            現金淨流入
-          </p>
+        <div className="card p-6">
+          <p className="label-caps">現金淨流入</p>
           <p
             className={cn(
-              'mt-2 font-mono text-[22px] font-semibold num',
+              'mt-3 font-mono text-[26px] font-semibold num',
               totals.net >= 0 ? 'text-up' : 'text-down',
             )}
           >
             {totals.net >= 0 ? '+' : ''}
             {formatNumber(totals.net)}
           </p>
-          <p className="mt-1 text-xs text-ink-mute">賣出 − 買進</p>
+          <p className="mt-1.5 text-sm text-ink-mute">賣出 − 買進</p>
         </div>
       </div>
 
       <div className="card overflow-hidden">
         <div className="card-header">
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-ink">歷史紀錄</h3>
-            <p className="mt-0.5 text-xs text-ink-mute">依成交日期排序；可篩選買 / 賣</p>
+            <h3 className="section-title">歷史紀錄</h3>
+            <p className="section-hint">依成交日期排序；可篩選買 / 賣</p>
           </div>
           <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs">
             {(['ALL', 'BUY', 'SELL'] as const).map((f) => (
@@ -218,7 +212,7 @@ export function Transactions() {
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-black/5 text-sm">
             <thead>
-              <tr className="bg-black/[0.02] text-[11px] uppercase tracking-[0.12em] text-ink-mute">
+              <tr className="bg-black/[0.02] text-xs uppercase tracking-[0.12em] text-ink-mute">
                 <th className="px-5 py-3 text-left font-semibold">日期</th>
                 <th className="px-5 py-3 text-left font-semibold">類別</th>
                 <th className="px-5 py-3 text-left font-semibold">代號</th>

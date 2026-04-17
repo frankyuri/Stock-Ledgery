@@ -4,6 +4,8 @@
 
 :root {
   color-scheme: light;
+  --font-size-base: 15px;
+  --line-height-base: 1.55;
 }
 
 html,
@@ -14,6 +16,7 @@ body,
 
 html {
   font-feature-settings: 'cv11', 'ss01', 'ss03';
+  font-size: var(--font-size-base);
 }
 
 body {
@@ -28,6 +31,7 @@ body {
   background-attachment: fixed;
   color: #1d1d1f;
   letter-spacing: -0.011em;
+  line-height: var(--line-height-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -37,6 +41,7 @@ h1,
 h2,
 h3 {
   letter-spacing: -0.022em;
+  line-height: 1.25;
 }
 
 .font-mono,
@@ -67,22 +72,31 @@ samp {
     @apply rounded-2xl border border-black/5 bg-surface-card shadow-glass backdrop-blur-2xl backdrop-saturate-150;
   }
   .card-header {
-    @apply flex items-center justify-between border-b border-black/5 px-5 py-4;
+    @apply flex items-center justify-between gap-4 border-b border-black/5 px-6 py-5;
   }
   .card-body {
-    @apply p-5;
+    @apply p-6;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-black/10 bg-white/70 px-3 py-1.5 text-sm font-medium text-ink-soft shadow-sm transition hover:bg-white active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-black/10 bg-white/70 px-3.5 py-2 text-sm font-medium text-ink-soft shadow-sm transition hover:bg-white active:scale-[0.98];
   }
   .btn-primary {
-    @apply border-brand/50 bg-brand text-white shadow-[0_4px_14px_rgba(10,132,255,0.32)] hover:bg-brand-dark;
+    @apply border-brand/50 bg-brand text-white shadow-[0_4px_14px_rgba(10,132,255,0.32)] hover:bg-brand-dark hover:text-white;
   }
   .chip {
-    @apply inline-flex items-center rounded-full border border-black/10 bg-white/70 px-2.5 py-0.5 text-[11px] font-medium text-ink-mute backdrop-blur;
+    @apply inline-flex items-center rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-xs font-medium text-ink-mute backdrop-blur;
   }
   .input {
-    @apply w-full rounded-lg border border-black/10 bg-white/80 px-3.5 py-2 text-sm text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25;
+    @apply w-full rounded-lg border border-black/10 bg-white/80 px-3.5 py-2.5 text-[15px] text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25;
+  }
+  .section-title {
+    @apply text-lg font-semibold tracking-tight text-ink;
+  }
+  .section-hint {
+    @apply mt-1 text-sm text-ink-mute;
+  }
+  .label-caps {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-ink-mute;
   }
 }
 

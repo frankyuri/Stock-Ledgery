@@ -131,20 +131,18 @@ export function PortfolioTable({ data, onRemove }: Props) {
     <div className="card overflow-hidden">
       <div className="card-header">
         <div>
-          <h3 className="text-base font-semibold tracking-tight text-ink">
-            個人持股
-          </h3>
-          <p className="mt-0.5 text-xs text-ink-mute">點擊列可進入個股研究頁</p>
+          <h3 className="section-title">個人持股</h3>
+          <p className="section-hint">點擊列可進入個股研究頁</p>
         </div>
         <input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="搜尋..."
-          className="input w-44 py-1.5"
+          className="input w-48 py-2"
         />
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-black/5 text-sm">
+        <table className="min-w-full divide-y divide-black/5 text-[15px]">
           <thead>
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id} className="bg-black/[0.02]">
@@ -154,7 +152,7 @@ export function PortfolioTable({ data, onRemove }: Props) {
                     <th
                       key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
-                      className="cursor-pointer select-none px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-mute transition hover:text-ink"
+                      className="cursor-pointer select-none px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-mute transition hover:text-ink"
                     >
                       <span className="inline-flex items-center gap-1">
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -179,7 +177,7 @@ export function PortfolioTable({ data, onRemove }: Props) {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="whitespace-nowrap px-5 py-3.5 text-ink-soft"
+                    className="whitespace-nowrap px-5 py-4 text-ink-soft"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

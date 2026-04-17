@@ -262,8 +262,8 @@ export function StockChart({
 
   return (
     <div className="relative">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {MA_OPTIONS.map((m) => (
             <button
               key={m.key}
@@ -272,7 +272,7 @@ export function StockChart({
                 setEnabledMA((s) => ({ ...s, [m.key]: !s[m.key] }))
               }
               className={cn(
-                'chip cursor-pointer transition',
+                'chip cursor-pointer text-xs transition',
                 enabledMA[m.key]
                   ? 'border-transparent text-white'
                   : 'hover:bg-black/[0.04]',
@@ -287,7 +287,7 @@ export function StockChart({
             </button>
           ))}
         </div>
-        <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-[11px]">
+        <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs">
           {(
             [
               { label: '1M', d: 22 },
@@ -301,7 +301,7 @@ export function StockChart({
               key={x.label}
               type="button"
               onClick={() => setRange(x.d)}
-              className="px-2.5 py-1 font-medium text-ink-soft transition hover:bg-black/[0.04]"
+              className="px-3 py-1.5 font-medium text-ink-soft transition hover:bg-black/[0.04]"
             >
               {x.label}
             </button>
@@ -312,21 +312,22 @@ export function StockChart({
       <div ref={containerRef} className="h-[420px] w-full" style={{ height }} />
 
       {hover && (
-        <div className="pointer-events-none absolute left-3 top-12 rounded-lg border border-black/5 bg-white/80 px-3 py-2 text-[11px] text-ink-soft shadow-pop backdrop-blur-xl">
-          <div className="mb-1 font-mono text-ink">{hover.candle.time}</div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono">
+        <div className="pointer-events-none absolute left-3 top-14 rounded-xl border border-black/5 bg-white/85 px-4 py-3 text-[13px] text-ink-soft shadow-pop backdrop-blur-xl">
+          <div className="mb-1.5 font-mono text-sm font-medium text-ink">
+            {hover.candle.time}
+          </div>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-1 font-mono">
             <span>
-              開{' '}
-              <span className="text-ink">{hover.candle.open.toFixed(2)}</span>
+              開 <span className="ml-0.5 text-ink">{hover.candle.open.toFixed(2)}</span>
             </span>
             <span>
-              高{' '}
-              <span className="text-up">{hover.candle.high.toFixed(2)}</span>
+              高 <span className="ml-0.5 text-up">{hover.candle.high.toFixed(2)}</span>
             </span>
             <span>
               收{' '}
               <span
                 className={cn(
+                  'ml-0.5',
                   hover.candle.close >= hover.candle.open ? 'text-up' : 'text-down',
                 )}
               >
@@ -334,11 +335,13 @@ export function StockChart({
               </span>
             </span>
             <span>
-              低{' '}
-              <span className="text-down">{hover.candle.low.toFixed(2)}</span>
+              低 <span className="ml-0.5 text-down">{hover.candle.low.toFixed(2)}</span>
             </span>
             <span className="col-span-2">
-              量 <span className="text-ink">{formatVolume(hover.candle.volume)}</span>
+              量{' '}
+              <span className="ml-0.5 text-ink">
+                {formatVolume(hover.candle.volume)}
+              </span>
             </span>
             {MA_OPTIONS.map((m) =>
               enabledMA[m.key] && hover.ma[m.key] != null ? (

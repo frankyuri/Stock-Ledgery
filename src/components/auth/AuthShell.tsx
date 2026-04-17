@@ -22,12 +22,12 @@ export function AuthShell({ title, subtitle, children }: Props) {
             Stocktify
           </span>
         </Link>
-        <div className="card p-7">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
-          {subtitle && <p className="mt-1.5 text-sm text-ink-mute">{subtitle}</p>}
-          <div className="mt-6">{children}</div>
+        <div className="card p-8">
+          <h1 className="text-[26px] font-semibold tracking-tight text-ink">{title}</h1>
+          {subtitle && <p className="mt-2 text-[15px] text-ink-mute">{subtitle}</p>}
+          <div className="mt-7">{children}</div>
         </div>
-        <p className="mt-5 text-center text-xs text-ink-faint">
+        <p className="mt-6 text-center text-xs text-ink-faint">
           © {new Date().getFullYear()} Stocktify · 僅供個人使用
         </p>
       </div>

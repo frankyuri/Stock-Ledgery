@@ -39,7 +39,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-black/5 bg-white/55 px-4 backdrop-blur-2xl backdrop-saturate-150 md:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-black/5 bg-white/55 px-4 backdrop-blur-2xl backdrop-saturate-150 md:px-6">
       <div ref={wrapRef} className="relative max-w-lg flex-1">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">
           ⌕
@@ -55,7 +55,7 @@ export function Header() {
             if (e.key === 'Enter' && results[0]) goto(results[0].symbol);
           }}
           placeholder="搜尋股票代號或公司名稱（例：AAPL、2330）"
-          className="w-full rounded-lg border border-black/10 bg-white/80 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25"
+          className="w-full rounded-lg border border-black/10 bg-white/80 py-2.5 pl-9 pr-3 text-[15px] text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25"
         />
         {open && query && results.length > 0 && (
           <ul className="absolute left-0 right-0 top-full mt-2 max-h-72 overflow-y-auto rounded-xl border border-black/5 bg-white/85 shadow-pop backdrop-blur-2xl backdrop-saturate-150">
@@ -79,7 +79,7 @@ export function Header() {
           </ul>
         )}
       </div>
-      <div className="hidden items-center gap-2 text-xs md:flex">
+      <div className="hidden items-center gap-2 md:flex">
         <span className="chip">Yahoo Finance</span>
       </div>
 
@@ -88,19 +88,19 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-sm shadow-sm transition hover:bg-white"
+            className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-xs font-semibold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-sm font-semibold text-white">
               {user.name.slice(0, 1).toUpperCase()}
             </span>
             <span className="hidden text-ink-soft md:inline">{user.name}</span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl border border-black/5 bg-white/90 shadow-pop backdrop-blur-2xl">
-              <div className="border-b border-black/5 px-4 py-3">
-                <p className="text-sm font-medium text-ink">{user.name}</p>
-                <p className="text-xs text-ink-mute">{user.email}</p>
-                <p className="mt-1 text-[11px] text-ink-faint">
+            <div className="absolute right-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-black/5 bg-white/90 shadow-pop backdrop-blur-2xl">
+              <div className="border-b border-black/5 px-4 py-3.5">
+                <p className="text-[15px] font-medium text-ink">{user.name}</p>
+                <p className="mt-0.5 text-sm text-ink-mute">{user.email}</p>
+                <p className="mt-1.5 text-xs text-ink-faint">
                   LINE：
                   {user.lineDisplayName ? (
                     <span className="text-[#06C755]">● {user.lineDisplayName}</span>
@@ -112,7 +112,7 @@ export function Header() {
               <Link
                 to="/settings/line"
                 onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2 text-sm text-ink-soft hover:bg-black/[0.04]"
+                className="block px-4 py-2.5 text-sm text-ink-soft hover:bg-black/[0.04]"
               >
                 LINE 綁定設定
               </Link>
@@ -123,7 +123,7 @@ export function Header() {
                   setMenuOpen(false);
                   navigate('/login');
                 }}
-                className="block w-full px-4 py-2 text-left text-sm text-down hover:bg-black/[0.04]"
+                className="block w-full px-4 py-2.5 text-left text-sm text-down hover:bg-black/[0.04]"
               >
                 登出
               </button>
@@ -132,10 +132,10 @@ export function Header() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Link to="/login" className="btn text-xs">
+          <Link to="/login" className="btn text-sm">
             登入
           </Link>
-          <Link to="/register" className="btn btn-primary text-xs">
+          <Link to="/register" className="btn btn-primary text-sm">
             註冊
           </Link>
         </div>

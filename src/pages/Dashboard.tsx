@@ -50,9 +50,9 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <section>
-        <div className="mb-5">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">大盤總覽</h1>
-          <p className="mt-1 text-sm text-ink-mute">
+        <div className="mb-6">
+          <h1 className="text-[28px] font-semibold tracking-tight text-ink">大盤總覽</h1>
+          <p className="mt-1.5 text-[15px] text-ink-mute">
             主要指數即時行情、個股 K 線、自選清單（每 60 秒更新）
           </p>
         </div>
@@ -68,14 +68,10 @@ export function Dashboard() {
       </section>
 
       <section>
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-ink">
-              {selected} · 日 K 線
-            </h2>
-            <p className="mt-0.5 text-xs text-ink-mute">
-              滾輪縮放 · 拖曳平移 · MA20；點自選切換
-            </p>
+            <h2 className="section-title">{selected} · 日 K 線</h2>
+            <p className="section-hint">滾輪縮放 · 拖曳平移 · MA20；點自選切換</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {watchlist.slice(0, 6).map((s) => (
@@ -83,7 +79,7 @@ export function Dashboard() {
                 key={s}
                 type="button"
                 onClick={() => setSelected(s)}
-                className={`btn text-xs ${selected === s ? 'btn-primary' : ''}`}
+                className={`btn text-sm ${selected === s ? 'btn-primary' : ''}`}
               >
                 {s}
               </button>
@@ -92,13 +88,13 @@ export function Dashboard() {
         </div>
 
         {quote.data && (
-          <div className="mb-3 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-            <span className="font-mono text-[28px] font-semibold tracking-tight text-ink num">
+          <div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <span className="font-mono text-[32px] font-semibold tracking-tight text-ink num">
               {formatNumber(quote.data.price)}
             </span>
             <span
               className={cn(
-                'font-mono text-sm font-medium num',
+                'font-mono text-[15px] font-medium num',
                 changeColor(quote.data.change),
               )}
             >
@@ -106,7 +102,7 @@ export function Dashboard() {
               {formatNumber(quote.data.change)} (
               {formatPercent(quote.data.changePercent)})
             </span>
-            <span className="text-xs text-ink-mute">
+            <span className="text-sm text-ink-mute">
               前收 {formatNumber(quote.data.previousClose)} · 開盤{' '}
               {formatNumber(quote.data.open ?? 0)} · 高{' '}
               {formatNumber(quote.data.dayHigh ?? 0)} · 低{' '}
@@ -131,10 +127,8 @@ export function Dashboard() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-ink">自選清單</h2>
-            <p className="mt-0.5 text-xs text-ink-mute">
-              每 60 秒自動更新（經 Yahoo Finance）
-            </p>
+            <h2 className="section-title">自選清單</h2>
+            <p className="section-hint">每 60 秒自動更新（經 Yahoo Finance）</p>
           </div>
         </div>
         {watch.isLoading ? (
@@ -159,32 +153,25 @@ function IndexCard({
   quote?: Quote;
 }) {
   return (
-    <div className="card p-5">
+    <div className="card p-6">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-          {label}
-        </p>
-        <span className="text-[10px] font-mono text-ink-faint">{symbol}</span>
+        <p className="label-caps">{label}</p>
+        <span className="font-mono text-xs text-ink-faint">{symbol}</span>
       </div>
-      <p className="mt-2 font-mono text-[24px] font-semibold leading-none tracking-tight text-ink num">
+      <p className="mt-3 font-mono text-[28px] font-semibold leading-none tracking-tight text-ink num">
         {quote ? formatNumber(quote.price) : '—'}
       </p>
       {quote && (
-        <p
-          className={cn(
-            'mt-2 text-sm font-medium num',
-            changeColor(quote.change),
-          )}
-        >
+        <p className={cn('mt-3 text-[15px] font-medium num', changeColor(quote.change))}>
           {quote.change > 0 ? '+' : ''}
           {quote.change.toFixed(2)}{' '}
-          <span className="text-xs opacity-80">
+          <span className="text-sm opacity-80">
             ({formatPercent(quote.changePercent)})
           </span>
         </p>
       )}
       {quote?.dayHigh != null && quote?.dayLow != null && (
-        <p className="mt-1.5 text-[11px] text-ink-mute">
+        <p className="mt-2 text-xs text-ink-mute">
           區間 {formatNumber(quote.dayLow)} – {formatNumber(quote.dayHigh)}
         </p>
       )}

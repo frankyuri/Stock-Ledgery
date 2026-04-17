@@ -36,8 +36,8 @@ export function LineSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">LINE 通知綁定</h1>
-        <p className="mt-1 text-sm text-ink-mute">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">LINE 通知綁定</h1>
+        <p className="mt-1.5 text-[15px] text-ink-mute">
           綁定 LINE 後可以接收價格警示、每日資產摘要、以及交易確認訊息。
         </p>
       </div>
@@ -54,10 +54,8 @@ export function LineSettings() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-ink">綁定狀態</h2>
-            <p className="mt-0.5 text-xs text-ink-mute">
-              授權將 LINE 帳號與 Stocktify 使用者對應
-            </p>
+            <h2 className="section-title">綁定狀態</h2>
+            <p className="section-hint">授權將 LINE 帳號與 Stocktify 使用者對應</p>
           </div>
           <span
             className={cn(
@@ -145,10 +143,8 @@ export function LineSettings() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-ink">通知偏好</h2>
-            <p className="mt-0.5 text-xs text-ink-mute">
-              後端會依照這裡的設定推送不同訊息
-            </p>
+            <h2 className="section-title">通知偏好</h2>
+            <p className="section-hint">後端會依照這裡的設定推送不同訊息</p>
           </div>
         </div>
         <div className="card-body divide-y divide-black/5">
@@ -179,12 +175,8 @@ export function LineSettings() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-ink">
-              後端 Webhook 預留
-            </h2>
-            <p className="mt-0.5 text-xs text-ink-mute">
-              之後後端串 LINE Messaging API 用的設定值
-            </p>
+            <h2 className="section-title">後端 Webhook 預留</h2>
+            <p className="section-hint">之後後端串 LINE Messaging API 用的設定值</p>
           </div>
         </div>
         <div className="card-body space-y-3 text-sm">
@@ -202,11 +194,9 @@ export function LineSettings() {
 
 function Info({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="rounded-lg border border-black/5 bg-white/60 p-3">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-mute">
-        {label}
-      </p>
-      <p className={cn('mt-1.5 text-sm text-ink', mono && 'font-mono')}>{value}</p>
+    <div className="rounded-xl border border-black/5 bg-white/60 p-4">
+      <p className="label-caps">{label}</p>
+      <p className={cn('mt-2 text-[15px] text-ink', mono && 'font-mono')}>{value}</p>
     </div>
   );
 }
@@ -232,8 +222,8 @@ function Toggle({
       )}
     >
       <div>
-        <p className="text-sm font-medium text-ink">{label}</p>
-        {hint && <p className="text-xs text-ink-mute">{hint}</p>}
+        <p className="text-[15px] font-medium text-ink">{label}</p>
+        {hint && <p className="mt-0.5 text-sm text-ink-mute">{hint}</p>}
       </div>
       <button
         type="button"
@@ -269,18 +259,16 @@ function EnvRow({
   copied: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-3">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-mute">
-        {label}
-      </span>
+    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
+      <span className="label-caps">{label}</span>
       <div className="flex min-w-0 flex-1 items-center gap-2 md:justify-end">
-        <code className="truncate rounded bg-black/[0.05] px-2 py-1 font-mono text-xs text-ink-soft">
+        <code className="truncate rounded bg-black/[0.05] px-2.5 py-1.5 font-mono text-sm text-ink-soft">
           {value}
         </code>
         <button
           type="button"
           onClick={() => onCopy(value)}
-          className="btn px-2.5 py-1 text-xs"
+          className="btn text-xs"
         >
           {copied ? '已複製' : '複製'}
         </button>

@@ -51,8 +51,8 @@ export function Portfolio() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">個人持股</h1>
-        <p className="mt-1 text-sm text-ink-mute">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">個人持股</h1>
+        <p className="mt-1.5 text-[15px] text-ink-mute">
           資料只儲存在你的瀏覽器 (localStorage)，報價經 Yahoo Finance 取得
         </p>
       </div>
@@ -85,21 +85,21 @@ export function Portfolio() {
 
       {groups.length > 1 && (
         <div className="card card-body">
-          <p className="text-xs uppercase tracking-wider text-ink-mute">分幣別小計</p>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <p className="label-caps">分幣別小計</p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map(([cur, g]) => (
               <div
                 key={cur}
-                className="rounded-lg border border-black/5 bg-white/60 p-3 backdrop-blur"
+                className="rounded-xl border border-black/5 bg-white/60 p-4 backdrop-blur"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-ink">{cur}</span>
+                  <span className="text-base font-semibold text-ink">{cur}</span>
                   <span className="text-xs text-ink-mute">市值</span>
                 </div>
-                <p className="mt-1 font-mono text-lg text-ink">
+                <p className="mt-1.5 font-mono text-xl text-ink num">
                   {formatCurrency(g.marketValue, cur)}
                 </p>
-                <p className="mt-1 text-xs text-ink-mute">
+                <p className="mt-1 text-sm text-ink-mute">
                   損益 {formatCurrency(g.gainLoss, cur)}
                 </p>
               </div>
