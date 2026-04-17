@@ -2,9 +2,25 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 
 const NAV = [
-  { to: '/', label: '大盤總覽', icon: '◐' },
-  { to: '/portfolio', label: '個人持股', icon: '◇' },
-  { to: '/stock/AAPL', label: '個股研究', icon: '◎' },
+  {
+    section: '市場',
+    items: [
+      { to: '/', label: '大盤總覽', icon: '◐' },
+      { to: '/stock/AAPL', label: '個股研究', icon: '◎' },
+    ],
+  },
+  {
+    section: '我的資產',
+    items: [
+      { to: '/portfolio', label: '個人持股', icon: '◇' },
+      { to: '/transactions', label: '交易紀錄', icon: '⇄' },
+      { to: '/assets', label: '資產紀錄', icon: '◈' },
+    ],
+  },
+  {
+    section: '整合',
+    items: [{ to: '/settings/line', label: 'LINE 綁定', icon: '◉' }],
+  },
 ];
 
 export function Sidebar() {
@@ -19,28 +35,37 @@ export function Sidebar() {
           <p className="text-[11px] text-ink-mute">個人股票追蹤</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
-        {NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-                isActive
-                  ? 'bg-brand-soft text-brand shadow-[inset_0_0_0_1px_rgba(10,132,255,0.18)]'
-                  : 'text-ink-mute hover:bg-black/[0.04] hover:text-ink',
-              )
-            }
-          >
-            <span className="text-base leading-none">{item.icon}</span>
-            <span>{item.label}</span>
-          </NavLink>
+      <nav className="flex-1 space-y-5 p-3">
+        {NAV.map((group) => (
+          <div key={group.section}>
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+              {group.section}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
+                      isActive
+                        ? 'bg-brand-soft text-brand shadow-[inset_0_0_0_1px_rgba(10,132,255,0.18)]'
+                        : 'text-ink-mute hover:bg-black/[0.04] hover:text-ink',
+                    )
+                  }
+                >
+                  <span className="text-base leading-none">{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
       <div className="border-t border-black/5 px-4 py-3 text-[11px] text-ink-mute">
-        v0.2.0 · Yahoo Finance
+        v0.3.0 · Yahoo Finance
       </div>
     </aside>
   );

@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchTickers } from '@/services/stocks';
+import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/cn';
 
 export function Header() {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
   const { data: results = [] } = useQuery({
     queryKey: ['search', query],
@@ -20,6 +26,7 @@ export function Header() {
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -74,8 +81,65 @@ export function Header() {
       </div>
       <div className="hidden items-center gap-2 text-xs md:flex">
         <span className="chip">Yahoo Finance</span>
-        <span className="chip">React Query</span>
       </div>
+
+      {user ? (
+        <div ref={menuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-sm shadow-sm transition hover:bg-white"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-xs font-semibold text-white">
+              {user.name.slice(0, 1).toUpperCase()}
+            </span>
+            <span className="hidden text-ink-soft md:inline">{user.name}</span>
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl border border-black/5 bg-white/90 shadow-pop backdrop-blur-2xl">
+              <div className="border-b border-black/5 px-4 py-3">
+                <p className="text-sm font-medium text-ink">{user.name}</p>
+                <p className="text-xs text-ink-mute">{user.email}</p>
+                <p className="mt-1 text-[11px] text-ink-faint">
+                  LINE：
+                  {user.lineDisplayName ? (
+                    <span className="text-[#06C755]">● {user.lineDisplayName}</span>
+                  ) : (
+                    <span className="text-ink-faint">尚未綁定</span>
+                  )}
+                </p>
+              </div>
+              <Link
+                to="/settings/line"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 text-sm text-ink-soft hover:bg-black/[0.04]"
+              >
+                LINE 綁定設定
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  setMenuOpen(false);
+                  navigate('/login');
+                }}
+                className="block w-full px-4 py-2 text-left text-sm text-down hover:bg-black/[0.04]"
+              >
+                登出
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Link to="/login" className="btn text-xs">
+            登入
+          </Link>
+          <Link to="/register" className="btn btn-primary text-xs">
+            註冊
+          </Link>
+        </div>
+      )}
     </header>
   );
 }
