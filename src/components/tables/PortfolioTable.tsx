@@ -10,7 +10,13 @@ import {
 } from '@tanstack/react-table';
 import { useNavigate } from 'react-router-dom';
 import type { PortfolioHolding } from '@/types/stock';
-import { changeColor, formatCurrency, formatNumber, formatPercent } from '@/lib/format';
+import {
+  changeColor,
+  formatCurrency,
+  formatNumber,
+  formatPercent,
+  formatShares,
+} from '@/lib/format';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -25,8 +31,8 @@ export function PortfolioTable({ data, onRemove }: Props) {
   const [filter, setFilter] = useState('');
   const navigate = useNavigate();
 
-  const columns = useMemo<ColumnDef<PortfolioHolding>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<PortfolioHolding>[]>(() => {
+    const base: ColumnDef<PortfolioHolding>[] = [
       {
         accessorKey: 'symbol',
         header: '代號',
@@ -41,7 +47,7 @@ export function PortfolioTable({ data, onRemove }: Props) {
         accessorKey: 'shares',
         header: '持有股數',
         cell: (ctx) => (
-          <span className="font-mono num">{formatNumber(ctx.getValue<number>(), 0)}</span>
+          <span className="font-mono num">{formatShares(ctx.getValue<number>())}</span>
         ),
       },
       {
@@ -96,7 +102,9 @@ export function PortfolioTable({ data, onRemove }: Props) {
           );
         },
       },
-      {
+    ];
+    if (onRemove) {
+      base.push({
         id: 'actions',
         header: '',
         cell: (ctx) => (
@@ -104,17 +112,17 @@ export function PortfolioTable({ data, onRemove }: Props) {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              onRemove?.(ctx.row.original.symbol);
+              onRemove(ctx.row.original.symbol);
             }}
             className="rounded-md px-2 py-1 text-xs text-ink-mute transition hover:bg-black/5 hover:text-down"
           >
             移除
           </button>
         ),
-      },
-    ],
-    [onRemove],
-  );
+      });
+    }
+    return base;
+  }, [onRemove]);
 
   const table = useReactTable({
     data,

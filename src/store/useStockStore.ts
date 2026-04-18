@@ -30,6 +30,7 @@ interface StockState {
   upsertHolding: (holding: Holding) => void;
   removeHolding: (symbol: string) => void;
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
+  addRawTransaction: (t: Omit<Transaction, 'id'>) => void;
   removeTransaction: (id: string) => void;
   addAssetSnapshot: (a: Omit<AssetSnapshot, 'id'>) => void;
   removeAssetSnapshot: (id: string) => void;
@@ -104,6 +105,11 @@ export const useStockStore = create<StockState>()(
             transactions: [full, ...s.transactions],
             holdings: applyTransaction(s.holdings, full),
           };
+        }),
+      addRawTransaction: (t) =>
+        set((s) => {
+          const full: Transaction = { id: genId(), ...t };
+          return { transactions: [full, ...s.transactions] };
         }),
       removeTransaction: (id) =>
         set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),

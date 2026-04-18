@@ -1,10 +1,20 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStockStore } from '@/store/useStockStore';
+import { fetchPortfolio } from '@/services/stocks';
 import { formatCurrency, formatNumber } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { LineAreaChart } from '@/components/charts/LineAreaChart';
 
 const CURRENCIES = ['TWD', 'USD', 'HKD', 'JPY', 'EUR'];
+
+interface Row {
+  id: string;
+  currency: string;
+  cash: string;
+  securities: string;
+  other: string;
+}
 
 function todayISO(): string {
   const d = new Date();
@@ -12,31 +22,85 @@ function todayISO(): string {
   return d.toISOString().slice(0, 10);
 }
 
+function rowId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+}
+
+function newRow(currency = 'TWD'): Row {
+  return { id: rowId(), currency, cash: '', securities: '', other: '0' };
+}
+
 export function Assets() {
   const assets = useStockStore((s) => s.assets);
+  const holdings = useStockStore((s) => s.holdings);
   const addAssetSnapshot = useStockStore((s) => s.addAssetSnapshot);
   const removeAssetSnapshot = useStockStore((s) => s.removeAssetSnapshot);
 
   const [date, setDate] = useState(todayISO());
-  const [cash, setCash] = useState('');
-  const [securities, setSecurities] = useState('');
-  const [other, setOther] = useState('0');
-  const [currency, setCurrency] = useState('TWD');
+  const [rows, setRows] = useState<Row[]>([newRow('TWD')]);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const { data: portfolio } = useQuery({
+    queryKey: ['portfolio', holdings],
+    queryFn: () => fetchPortfolio(holdings),
+    enabled: holdings.length > 0,
+    staleTime: 60_000,
+  });
+
+  const securitiesByCurrency = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of portfolio ?? []) {
+      m.set(p.currency, (m.get(p.currency) ?? 0) + p.marketValue);
+    }
+    return m;
+  }, [portfolio]);
+
+  function updateRow(id: string, patch: Partial<Row>) {
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+
+  function addRow() {
+    const used = new Set(rows.map((r) => r.currency));
+    const next = CURRENCIES.find((c) => !used.has(c)) ?? 'USD';
+    setRows((rs) => [...rs, newRow(next)]);
+  }
+
+  function removeRow(id: string) {
+    setRows((rs) => (rs.length === 1 ? rs : rs.filter((r) => r.id !== id)));
+  }
+
+  function fillSecurities(row: Row) {
+    const v = securitiesByCurrency.get(row.currency);
+    if (v != null) updateRow(row.id, { securities: String(Math.round(v * 100) / 100) });
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const c = Number(cash);
-    const s = Number(securities);
-    const o = Number(other) || 0;
-    if (!Number.isFinite(c) || c < 0) return setError('現金需為非負數');
-    if (!Number.isFinite(s) || s < 0) return setError('證券市值需為非負數');
-    addAssetSnapshot({ date, cash: c, securities: s, other: o, currency, note });
-    setCash('');
-    setSecurities('');
-    setOther('0');
+
+    const parsed: Array<{
+      currency: string;
+      cash: number;
+      securities: number;
+      other: number;
+    }> = [];
+    for (const r of rows) {
+      const c = Number(r.cash);
+      const s = Number(r.securities);
+      const o = Number(r.other) || 0;
+      if (!Number.isFinite(c) || c < 0) return setError(`${r.currency} 現金需為非負數`);
+      if (!Number.isFinite(s) || s < 0) return setError(`${r.currency} 證券市值需為非負數`);
+      if (c + s + o === 0) continue;
+      parsed.push({ currency: r.currency, cash: c, securities: s, other: o });
+    }
+    if (parsed.length === 0) return setError('至少需填入一個幣別的金額');
+
+    for (const p of parsed) {
+      addAssetSnapshot({ date, note, ...p });
+    }
+
+    setRows([newRow('TWD')]);
     setNote('');
   }
 
@@ -68,13 +132,23 @@ export function Assets() {
     latest && first
       ? latest.cash + latest.securities + latest.other - (first.cash + first.securities + first.other)
       : 0;
+  const spanDays =
+    latest && first
+      ? Math.max(
+          1,
+          Math.round(
+            (new Date(latest.date).getTime() - new Date(first.date).getTime()) /
+              86_400_000,
+          ) + 1,
+        )
+      : 0;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[28px] font-semibold tracking-tight text-ink">資產紀錄</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">淨值快照</h1>
         <p className="mt-1.5 text-[15px] text-ink-mute">
-          週 / 月定期記錄現金、證券、其他資產快照，追蹤總淨值變化。
+          週 / 月定期手動記錄現金、證券、其他資產，追蹤整體淨值時間軸（資產配置請看資產總覽）。
         </p>
       </div>
 
@@ -83,54 +157,99 @@ export function Assets() {
           <div>
             <h3 className="section-title">新增快照</h3>
             <p className="section-hint">
-              每次輸入都是一筆獨立的時間點紀錄，不會覆蓋既有資料
+              一次可記多個幣別；證券市值可從目前持股一鍵帶入
             </p>
           </div>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="input num font-mono max-w-[180px]"
+          />
         </div>
         <div className="card-body space-y-3">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="input num font-mono"
-            />
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="input"
+          <div className="space-y-2.5">
+            {rows.map((r) => {
+              const suggestion = securitiesByCurrency.get(r.currency);
+              const suggestionFilled =
+                suggestion != null && Number(r.securities) === Math.round(suggestion * 100) / 100;
+              return (
+                <div
+                  key={r.id}
+                  className="grid grid-cols-2 gap-2.5 md:grid-cols-[120px_1fr_1fr_1fr_auto]"
+                >
+                  <select
+                    value={r.currency}
+                    onChange={(e) => updateRow(r.id, { currency: e.target.value })}
+                    className="input"
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={r.cash}
+                    onChange={(e) => updateRow(r.id, { cash: e.target.value })}
+                    inputMode="decimal"
+                    placeholder="現金"
+                    className="input num font-mono"
+                  />
+                  <div className="relative">
+                    <input
+                      value={r.securities}
+                      onChange={(e) => updateRow(r.id, { securities: e.target.value })}
+                      inputMode="decimal"
+                      placeholder="證券市值"
+                      className={cn('input num font-mono', suggestion != null && 'pr-24')}
+                    />
+                    {suggestion != null && !suggestionFilled && (
+                      <button
+                        type="button"
+                        onClick={() => fillSecurities(r)}
+                        title={`帶入目前持股 ${formatNumber(suggestion)} ${r.currency}`}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-brand-soft px-2 py-1 text-[11px] font-semibold text-brand transition hover:bg-brand/15"
+                      >
+                        帶入持股
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    value={r.other}
+                    onChange={(e) => updateRow(r.id, { other: e.target.value })}
+                    inputMode="decimal"
+                    placeholder="其他"
+                    className="input num font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeRow(r.id)}
+                    disabled={rows.length === 1}
+                    className="btn px-3 disabled:opacity-30"
+                    title="移除此幣別"
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={addRow}
+              disabled={rows.length >= CURRENCIES.length}
+              className="btn disabled:opacity-40"
             >
-              {CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <input
-              value={cash}
-              onChange={(e) => setCash(e.target.value)}
-              inputMode="decimal"
-              placeholder="現金"
-              className="input num font-mono"
-            />
-            <input
-              value={securities}
-              onChange={(e) => setSecurities(e.target.value)}
-              inputMode="decimal"
-              placeholder="證券市值"
-              className="input num font-mono"
-            />
-            <input
-              value={other}
-              onChange={(e) => setOther(e.target.value)}
-              inputMode="decimal"
-              placeholder="其他"
-              className="input num font-mono"
-            />
+              ＋ 新增幣別
+            </button>
             <button type="submit" className="btn btn-primary px-5">
               加入快照
             </button>
           </div>
+
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -143,7 +262,7 @@ export function Assets() {
 
       {primary ? (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="card p-6">
               <p className="label-caps">最新淨值</p>
               <p className="mt-3 font-mono text-[28px] font-semibold text-ink num">
@@ -166,32 +285,10 @@ export function Assets() {
               </p>
               <p className="mt-1.5 text-sm text-ink-mute">
                 {first?.date} → {latest?.date}
+                {spanDays > 0 && (
+                  <span className="ml-1.5 text-ink-faint">· 跨 {spanDays} 天</span>
+                )}
               </p>
-            </div>
-            <div className="card p-6">
-              <p className="label-caps">資產結構</p>
-              {latest && (
-                <div className="mt-3 space-y-1.5 text-[15px]">
-                  <div className="flex justify-between">
-                    <span className="text-ink-mute">現金</span>
-                    <span className="font-mono num">
-                      {formatCurrency(latest.cash, latest.currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-ink-mute">證券</span>
-                    <span className="font-mono num">
-                      {formatCurrency(latest.securities, latest.currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-ink-mute">其他</span>
-                    <span className="font-mono num">
-                      {formatCurrency(latest.other, latest.currency)}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 

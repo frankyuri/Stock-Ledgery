@@ -1,16 +1,47 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PortfolioTable } from '@/components/tables/PortfolioTable';
-import { HoldingForm } from '@/components/portfolio/HoldingForm';
-import { StatCard } from '@/components/ui/StatCard';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { fetchPortfolio } from '@/services/stocks';
 import { useStockStore } from '@/store/useStockStore';
-import { formatCurrency } from '@/lib/format';
+
+function todayISO(): string {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+interface OrphanHolding {
+  symbol: string;
+  shares: number;
+  avgCost: number;
+}
+
+function findOrphans(
+  holdings: ReturnType<typeof useStockStore.getState>['holdings'],
+  transactions: ReturnType<typeof useStockStore.getState>['transactions'],
+): OrphanHolding[] {
+  const net = new Map<string, number>();
+  for (const t of transactions) {
+    const prev = net.get(t.symbol) ?? 0;
+    net.set(t.symbol, t.type === 'BUY' ? prev + t.shares : prev - t.shares);
+  }
+  const out: OrphanHolding[] = [];
+  for (const h of holdings) {
+    const covered = net.get(h.symbol) ?? 0;
+    const missing = h.shares - covered;
+    if (missing > 1e-6) {
+      out.push({ symbol: h.symbol, shares: missing, avgCost: h.avgCost });
+    }
+  }
+  return out;
+}
 
 export function Portfolio() {
   const holdings = useStockStore((s) => s.holdings);
-  const removeHolding = useStockStore((s) => s.removeHolding);
+  const transactions = useStockStore((s) => s.transactions);
+  const addRawTransaction = useStockStore((s) => s.addRawTransaction);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['portfolio', holdings],
@@ -19,96 +50,59 @@ export function Portfolio() {
     refetchInterval: 60_000,
   });
 
-  const groups = useMemo(() => {
-    const map = new Map<
-      string,
-      { marketValue: number; cost: number; gainLoss: number; dayChange: number }
-    >();
-    for (const x of data ?? []) {
-      const g = map.get(x.currency) ?? {
-        marketValue: 0,
-        cost: 0,
-        gainLoss: 0,
-        dayChange: 0,
-      };
-      g.marketValue += x.marketValue;
-      g.cost += x.shares * x.avgCost;
-      g.gainLoss += x.gainLoss;
-      g.dayChange += x.change * x.shares;
-      map.set(x.currency, g);
-    }
-    return Array.from(map.entries()).sort((a, b) => b[1].marketValue - a[1].marketValue);
-  }, [data]);
+  const orphans = useMemo(
+    () => findOrphans(holdings, transactions),
+    [holdings, transactions],
+  );
 
-  const summary = useMemo(() => {
-    if (groups.length === 0) {
-      return { currency: 'USD', marketValue: 0, gainLoss: 0, dayChange: 0, cost: 0 };
+  function migrateOrphans() {
+    const today = todayISO();
+    for (const o of orphans) {
+      addRawTransaction({
+        type: 'BUY',
+        symbol: o.symbol,
+        shares: o.shares,
+        price: o.avgCost,
+        fee: 0,
+        tradedAt: today,
+        note: '初始部位匯入',
+      });
     }
-    const [currency, g] = groups[0];
-    return { currency, ...g };
-  }, [groups]);
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[28px] font-semibold tracking-tight text-ink">個人持股</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">持股明細</h1>
         <p className="mt-1.5 text-[15px] text-ink-mute">
-          資料只儲存在你的瀏覽器 (localStorage)，報價經 Yahoo Finance 取得
+          目前持有的所有部位。新增 / 修改 / 減倉都請到{' '}
+          <Link to="/transactions" className="font-medium text-brand hover:underline">
+            交易紀錄
+          </Link>{' '}
+          新增買進 / 賣出，持股會自動同步。
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard
-          label="總市值"
-          value={formatCurrency(summary.marketValue, summary.currency)}
-          hint={
-            groups.length > 1
-              ? `主要幣別 ${summary.currency}（共 ${groups.length} 種幣別）`
-              : '依最新 Yahoo 報價估算'
-          }
-        />
-        <StatCard
-          label="未實現損益"
-          value={formatCurrency(summary.gainLoss, summary.currency)}
-          change={summary.gainLoss}
-          changePercent={summary.cost ? (summary.gainLoss / summary.cost) * 100 : 0}
-        />
-        <StatCard
-          label="今日變動"
-          value={formatCurrency(summary.dayChange, summary.currency)}
-          change={summary.dayChange}
-          changePercent={
-            summary.marketValue ? (summary.dayChange / summary.marketValue) * 100 : 0
-          }
-        />
-      </div>
-
-      {groups.length > 1 && (
-        <div className="card card-body">
-          <p className="label-caps">分幣別小計</p>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {groups.map(([cur, g]) => (
-              <div
-                key={cur}
-                className="rounded-xl border border-black/5 bg-white/60 p-4 backdrop-blur"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-ink">{cur}</span>
-                  <span className="text-xs text-ink-mute">市值</span>
-                </div>
-                <p className="mt-1.5 font-mono text-xl text-ink num">
-                  {formatCurrency(g.marketValue, cur)}
-                </p>
-                <p className="mt-1 text-sm text-ink-mute">
-                  損益 {formatCurrency(g.gainLoss, cur)}
-                </p>
-              </div>
-            ))}
+      {orphans.length > 0 && (
+        <div className="card border-brand/25 bg-brand-soft/60 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[15px] font-semibold text-ink">
+                發現 {orphans.length} 筆持股沒有對應的交易紀錄
+              </p>
+              <p className="mt-1 text-sm text-ink-mute">
+                一鍵補建為初始買入，交易紀錄與持股即可對齊
+                <span className="text-ink-faint">
+                  （{orphans.map((o) => o.symbol).join('、')}）
+                </span>
+              </p>
+            </div>
+            <button type="button" onClick={migrateOrphans} className="btn btn-primary">
+              補建初始部位
+            </button>
           </div>
         </div>
       )}
-
-      <HoldingForm />
 
       {isError && (
         <div className="card card-body text-sm text-down">
@@ -117,13 +111,20 @@ export function Portfolio() {
       )}
 
       {holdings.length === 0 ? (
-        <div className="card card-body py-12 text-center text-ink-mute">
-          目前沒有持股。用上方表單新增一筆試試看。
+        <div className="card card-body py-14 text-center">
+          <p className="text-[15px] text-ink-mute">
+            目前沒有持股。前往交易紀錄新增一筆買入試試看。
+          </p>
+          <div className="mt-5">
+            <Link to="/transactions" className="btn btn-primary">
+              前往交易紀錄
+            </Link>
+          </div>
         </div>
       ) : isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : (
-        <PortfolioTable data={data ?? []} onRemove={removeHolding} />
+        <PortfolioTable data={data ?? []} />
       )}
     </div>
   );

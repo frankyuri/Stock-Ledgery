@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Dashboard } from '@/pages/Dashboard';
+import { Overview } from '@/pages/Overview';
 import { Portfolio } from '@/pages/Portfolio';
 import { StockDetail } from '@/pages/StockDetail';
 import { Transactions } from '@/pages/Transactions';
@@ -17,6 +18,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route element={<AppLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="overview" element={<Overview />} />
         <Route path="portfolio" element={<Portfolio />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="assets" element={<Assets />} />

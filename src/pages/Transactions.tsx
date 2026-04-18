@@ -1,8 +1,11 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useState, useMemo, type FormEvent } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStockStore } from '@/store/useStockStore';
+import { SymbolSearchInput } from '@/components/ui/SymbolSearchInput';
+import { fetchQuote } from '@/services/stocks';
 import { cn } from '@/lib/cn';
-import { formatNumber } from '@/lib/format';
-import type { TransactionType } from '@/types/stock';
+import { formatNumber, formatShares } from '@/lib/format';
+import type { Quote, SearchResult, TransactionType } from '@/types/stock';
 
 function todayISO(): string {
   const d = new Date();
@@ -14,6 +17,7 @@ export function Transactions() {
   const transactions = useStockStore((s) => s.transactions);
   const addTransaction = useStockStore((s) => s.addTransaction);
   const removeTransaction = useStockStore((s) => s.removeTransaction);
+  const qc = useQueryClient();
 
   const [type, setType] = useState<TransactionType>('BUY');
   const [symbol, setSymbol] = useState('');
@@ -22,8 +26,38 @@ export function Transactions() {
   const [fee, setFee] = useState('0');
   const [tradedAt, setTradedAt] = useState(todayISO());
   const [note, setNote] = useState('');
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [loadingQuote, setLoadingQuote] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'ALL' | TransactionType>('ALL');
+
+  async function handleSelect(r: SearchResult) {
+    setError(null);
+    setQuote(null);
+    setLoadingQuote(true);
+    try {
+      const q = await qc.fetchQuery({
+        queryKey: ['quote', r.symbol],
+        queryFn: () => fetchQuote(r.symbol),
+        staleTime: 30_000,
+      });
+      setQuote(q);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '取得報價失敗');
+    } finally {
+      setLoadingQuote(false);
+    }
+  }
+
+  function onSymbolChange(raw: string) {
+    setSymbol(raw);
+    if (quote && raw !== quote.symbol) setQuote(null);
+  }
+
+  function useLivePrice() {
+    if (!quote) return;
+    setPrice(String(quote.price));
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -42,6 +76,7 @@ export function Transactions() {
     setPrice('');
     setFee('0');
     setNote('');
+    setQuote(null);
   }
 
   const filtered = useMemo(
@@ -49,16 +84,7 @@ export function Transactions() {
     [filter, transactions],
   );
 
-  const totals = useMemo(() => {
-    let buyAmount = 0;
-    let sellAmount = 0;
-    for (const t of transactions) {
-      const amt = t.shares * t.price + t.fee;
-      if (t.type === 'BUY') buyAmount += amt;
-      else sellAmount += t.shares * t.price - t.fee;
-    }
-    return { buyAmount, sellAmount, net: sellAmount - buyAmount };
-  }, [transactions]);
+  const currency = quote?.currency;
 
   return (
     <div className="space-y-6">
@@ -101,12 +127,12 @@ export function Transactions() {
           </div>
         </div>
         <div className="card-body space-y-3">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
-            <input
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+            <SymbolSearchInput
               value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              placeholder="代號"
-              className="input col-span-2 md:col-span-1"
+              onChange={onSymbolChange}
+              onSelect={handleSelect}
+              className="sm:col-span-2 md:col-span-1"
             />
             <input
               value={shares}
@@ -115,20 +141,39 @@ export function Transactions() {
               placeholder="股數"
               className="input num font-mono"
             />
-            <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              inputMode="decimal"
-              placeholder="成交價"
-              className="input num font-mono"
-            />
-            <input
-              value={fee}
-              onChange={(e) => setFee(e.target.value)}
-              inputMode="decimal"
-              placeholder="手續費"
-              className="input num font-mono"
-            />
+            <div className="relative">
+              <input
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                inputMode="decimal"
+                placeholder="成交價"
+                className={cn('input num font-mono', quote && 'pr-20')}
+              />
+              {quote && (
+                <button
+                  type="button"
+                  onClick={useLivePrice}
+                  title={`使用現價 ${formatNumber(quote.price)} ${quote.currency}`}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-brand-soft px-2 py-1 text-[11px] font-semibold text-brand transition hover:bg-brand/15"
+                >
+                  用現價
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                value={fee}
+                onChange={(e) => setFee(e.target.value)}
+                inputMode="decimal"
+                placeholder="手續費"
+                className={cn('input num font-mono', currency && 'pr-14')}
+              />
+              {currency && (
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-black/[0.05] px-1.5 py-0.5 text-[11px] font-semibold text-ink-mute">
+                  {currency}
+                </span>
+              )}
+            </div>
             <input
               type="date"
               value={tradedAt}
@@ -145,6 +190,25 @@ export function Transactions() {
               {type === 'BUY' ? '加入買進' : '加入賣出'}
             </button>
           </div>
+
+          {(loadingQuote || quote) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-mute">
+              {loadingQuote && <span>查詢現價中…</span>}
+              {quote && (
+                <>
+                  <span className="chip">{quote.symbol}</span>
+                  <span className="truncate text-ink-soft">{quote.name}</span>
+                  <span className="font-mono num text-ink">
+                    現價 {formatNumber(quote.price)} {quote.currency}
+                  </span>
+                  {quote.exchangeName && (
+                    <span className="text-ink-faint">· {quote.exchangeName}</span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -154,36 +218,6 @@ export function Transactions() {
           {error && <p className="text-sm text-down">{error}</p>}
         </div>
       </form>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="card p-6">
-          <p className="label-caps">累計買進</p>
-          <p className="mt-3 font-mono text-[26px] font-semibold text-ink num">
-            {formatNumber(totals.buyAmount)}
-          </p>
-          <p className="mt-1.5 text-sm text-ink-mute">含手續費</p>
-        </div>
-        <div className="card p-6">
-          <p className="label-caps">累計賣出</p>
-          <p className="mt-3 font-mono text-[26px] font-semibold text-ink num">
-            {formatNumber(totals.sellAmount)}
-          </p>
-          <p className="mt-1.5 text-sm text-ink-mute">扣除手續費</p>
-        </div>
-        <div className="card p-6">
-          <p className="label-caps">現金淨流入</p>
-          <p
-            className={cn(
-              'mt-3 font-mono text-[26px] font-semibold num',
-              totals.net >= 0 ? 'text-up' : 'text-down',
-            )}
-          >
-            {totals.net >= 0 ? '+' : ''}
-            {formatNumber(totals.net)}
-          </p>
-          <p className="mt-1.5 text-sm text-ink-mute">賣出 − 買進</p>
-        </div>
-      </div>
 
       <div className="card overflow-hidden">
         <div className="card-header">
@@ -218,60 +252,68 @@ export function Transactions() {
                 <th className="px-5 py-3 text-left font-semibold">代號</th>
                 <th className="px-5 py-3 text-right font-semibold">股數</th>
                 <th className="px-5 py-3 text-right font-semibold">單價</th>
-                <th className="px-5 py-3 text-right font-semibold">金額</th>
+                <th className="px-5 py-3 text-right font-semibold">小計</th>
                 <th className="px-5 py-3 text-right font-semibold">手續費</th>
+                <th className="px-5 py-3 text-right font-semibold">合計</th>
                 <th className="px-5 py-3 text-left font-semibold">備註</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {filtered.map((t) => (
-                <tr key={t.id} className="text-ink-soft">
-                  <td className="whitespace-nowrap px-5 py-3 font-mono num">
-                    {t.tradedAt}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={cn(
-                        'chip',
-                        t.type === 'BUY'
-                          ? 'border-up/30 bg-up/[0.1] text-up'
-                          : 'border-down/30 bg-down/[0.1] text-down',
-                      )}
-                    >
-                      {t.type === 'BUY' ? '買進' : '賣出'}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-3 font-semibold text-ink">
-                    {t.symbol}
-                  </td>
-                  <td className="px-5 py-3 text-right font-mono num">
-                    {formatNumber(t.shares, 0)}
-                  </td>
-                  <td className="px-5 py-3 text-right font-mono num">
-                    {formatNumber(t.price)}
-                  </td>
-                  <td className="px-5 py-3 text-right font-mono num">
-                    {formatNumber(t.shares * t.price)}
-                  </td>
-                  <td className="px-5 py-3 text-right font-mono num">
-                    {formatNumber(t.fee)}
-                  </td>
-                  <td className="px-5 py-3 text-ink-mute">{t.note ?? '—'}</td>
-                  <td className="px-5 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => removeTransaction(t.id)}
-                      className="rounded-md px-2 py-1 text-xs text-ink-mute transition hover:bg-black/5 hover:text-down"
-                    >
-                      刪除
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((t) => {
+                const subtotal = t.shares * t.price;
+                const total = t.type === 'BUY' ? subtotal + t.fee : subtotal - t.fee;
+                return (
+                  <tr key={t.id} className="text-ink-soft">
+                    <td className="whitespace-nowrap px-5 py-3 font-mono num">
+                      {t.tradedAt}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className={cn(
+                          'chip',
+                          t.type === 'BUY'
+                            ? 'border-up/30 bg-up/[0.1] text-up'
+                            : 'border-down/30 bg-down/[0.1] text-down',
+                        )}
+                      >
+                        {t.type === 'BUY' ? '買進' : '賣出'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3 font-semibold text-ink">
+                      {t.symbol}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono num">
+                      {formatShares(t.shares)}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono num">
+                      {formatNumber(t.price)}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono num">
+                      {formatNumber(subtotal)}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono text-ink-mute num">
+                      {formatNumber(t.fee)}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono font-semibold text-ink num">
+                      {formatNumber(total)}
+                    </td>
+                    <td className="px-5 py-3 text-ink-mute">{t.note ?? '—'}</td>
+                    <td className="px-5 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => removeTransaction(t.id)}
+                        className="rounded-md px-2 py-1 text-xs text-ink-mute transition hover:bg-black/5 hover:text-down"
+                      >
+                        刪除
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-ink-mute">
+                  <td colSpan={10} className="px-5 py-12 text-center text-sm text-ink-mute">
                     {transactions.length === 0
                       ? '尚未有任何交易紀錄，先從上方新增一筆試試看'
                       : '沒有符合條件的交易'}

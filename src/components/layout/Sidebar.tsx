@@ -12,9 +12,10 @@ const NAV = [
   {
     section: '我的資產',
     items: [
-      { to: '/portfolio', label: '個人持股', icon: '◇' },
+      { to: '/overview', label: '資產總覽', icon: '◐' },
+      { to: '/portfolio', label: '持股明細', icon: '◇' },
       { to: '/transactions', label: '交易紀錄', icon: '⇄' },
-      { to: '/assets', label: '資產紀錄', icon: '◈' },
+      { to: '/assets', label: '淨值快照', icon: '◈' },
     ],
   },
   {

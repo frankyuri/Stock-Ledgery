@@ -16,6 +16,11 @@ export function formatNumber(value: number, digits = 2): string {
   }).format(value);
 }
 
+export function formatShares(value: number): string {
+  if (Number.isInteger(value)) return formatNumber(value, 0);
+  return formatNumber(value, 4);
+}
+
 export function formatPercent(value: number): string {
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
