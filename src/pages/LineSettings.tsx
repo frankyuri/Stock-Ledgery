@@ -5,9 +5,9 @@ import { cn } from '@/lib/cn';
 
 // 之後把這個置換成後端回來的 OAuth URL
 const LINE_OAUTH_URL =
-  import.meta.env.VITE_LINE_OAUTH_URL ?? 'https://stocktify.example.com/oauth/line/authorize';
+  import.meta.env.VITE_LINE_OAUTH_URL ?? 'https://stock-ledgery.example.com/oauth/line/authorize';
 const LINE_FRIEND_URL =
-  import.meta.env.VITE_LINE_FRIEND_URL ?? 'https://line.me/R/ti/p/@stocktify';
+  import.meta.env.VITE_LINE_FRIEND_URL ?? 'https://line.me/R/ti/p/@stockledgery';
 
 export function LineSettings() {
   const user = useAuthStore((s) => s.user);
@@ -55,7 +55,7 @@ export function LineSettings() {
         <div className="card-header">
           <div>
             <h2 className="section-title">綁定狀態</h2>
-            <p className="section-hint">授權將 LINE 帳號與 Stocktify 使用者對應</p>
+            <p className="section-hint">授權將 LINE 帳號與 Stock-Ledgery 使用者對應</p>
           </div>
           <span
             className={cn(
@@ -86,7 +86,7 @@ export function LineSettings() {
           ) : (
             <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-soft">
               <li>
-                先到 LINE 把 Stocktify 官方帳號加為好友：
+                先到 LINE 把 Stock-Ledgery 官方帳號加為好友：
                 <a
                   href={LINE_FRIEND_URL}
                   target="_blank"
@@ -180,7 +180,7 @@ export function LineSettings() {
           </div>
         </div>
         <div className="card-body space-y-3 text-sm">
-          <EnvRow label="Webhook URL" value="https://api.stocktify.example.com/line/webhook" onCopy={copy} copied={copied} />
+          <EnvRow label="Webhook URL" value="https://api.stock-ledgery.example.com/line/webhook" onCopy={copy} copied={copied} />
           <EnvRow label="OAuth 重導 URL" value={LINE_OAUTH_URL} onCopy={copy} copied={copied} />
           <EnvRow label="好友加入連結" value={LINE_FRIEND_URL} onCopy={copy} copied={copied} />
           <p className="text-xs text-ink-mute">

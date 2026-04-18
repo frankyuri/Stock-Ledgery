@@ -19,7 +19,7 @@ export function AuthShell({ title, subtitle, children }: Props) {
             <span className="text-sm font-semibold tracking-tight">S</span>
           </span>
           <span className="text-base font-semibold tracking-tight text-ink">
-            Stocktify
+            Stock-Ledgery
           </span>
         </Link>
         <div className="card p-8">
@@ -28,7 +28,7 @@ export function AuthShell({ title, subtitle, children }: Props) {
           <div className="mt-7">{children}</div>
         </div>
         <p className="mt-6 text-center text-xs text-ink-faint">
-          © {new Date().getFullYear()} Stocktify · 僅供個人使用
+          © {new Date().getFullYear()} Stock-Ledgery · 僅供個人使用
         </p>
       </div>
     </div>

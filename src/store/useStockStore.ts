@@ -124,6 +124,6 @@ export const useStockStore = create<StockState>()(
       setLinePrefs: (patch) =>
         set((s) => ({ linePrefs: { ...s.linePrefs, ...patch } })),
     }),
-    { name: 'stocktify-store', version: 3 },
+    { name: 'stock-ledgery-store', version: 3 },
   ),
 );
