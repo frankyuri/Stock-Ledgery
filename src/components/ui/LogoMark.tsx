@@ -1,0 +1,36 @@
+interface Props {
+  className?: string;
+}
+
+export function LogoMark({ className }: Props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="30 25 200 200"
+      className={className}
+      aria-label="Stock-Ledgery"
+      role="img"
+    >
+      <g
+        fill="#ffffff"
+        stroke="#364554"
+        strokeWidth={10}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      >
+        <polygon points="130,125 164.64,105 130,85 95.36,105" />
+        <polygon points="130,85 164.64,65 130,45 95.36,65" />
+        <polygon points="95.36,105 130,85 95.36,65 60.72,85" />
+        <polygon points="164.64,105 199.28,85 164.64,65 130,85" />
+        <polygon points="130,125 95.36,105 95.36,145 130,165" />
+        <polygon points="95.36,105 60.72,85 60.72,125 95.36,145" />
+        <polygon points="130,165 95.36,145 95.36,185 130,205" />
+        <polygon points="95.36,145 60.72,125 60.72,165 95.36,185" />
+        <polygon points="130,125 130,165 164.64,145 164.64,105" />
+        <polygon points="164.64,105 164.64,145 199.28,125 199.28,85" />
+        <polygon points="130,165 130,205 164.64,185 164.64,145" />
+        <polygon points="164.64,145 164.64,185 199.28,165 199.28,125" />
+      </g>
+    </svg>
+  );
+}

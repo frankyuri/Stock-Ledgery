@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/cn';
+import { LogoMark } from '@/components/ui/LogoMark';
 
 const NAV = [
   {
@@ -28,9 +29,7 @@ export function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-black/5 bg-white/55 backdrop-blur-2xl backdrop-saturate-150 md:flex md:flex-col">
       <div className="flex h-16 items-center gap-3 border-b border-black/5 px-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-dark text-white shadow-[0_4px_14px_rgba(10,132,255,0.45)]">
-          <span className="text-base font-semibold tracking-tight">S</span>
-        </span>
+        <LogoMark className="h-9 w-9 shrink-0" />
         <div className="leading-tight">
           <p className="text-base font-semibold tracking-tight text-ink">Stock-Ledgery</p>
           <p className="text-xs text-ink-mute">個人股票追蹤</p>

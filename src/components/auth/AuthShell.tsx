@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { LogoMark } from '@/components/ui/LogoMark';
 
 interface Props {
   title: string;
@@ -15,9 +16,7 @@ export function AuthShell({ title, subtitle, children }: Props) {
           to="/"
           className="mb-6 flex items-center gap-2.5"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-dark text-white shadow-[0_4px_14px_rgba(10,132,255,0.45)]">
-            <span className="text-sm font-semibold tracking-tight">S</span>
-          </span>
+          <LogoMark className="h-9 w-9 shrink-0" />
           <span className="text-base font-semibold tracking-tight text-ink">
             Stock-Ledgery
           </span>
