@@ -1,6 +1,6 @@
-// Cloudflare Worker: Yahoo Finance CORS proxy for Stocktify
+// Cloudflare Worker: Yahoo Finance CORS proxy for Stock-Ledgery
 // Deploy to Cloudflare Workers (free tier). Frontend sets VITE_YAHOO_PROXY_URL
-// to this Worker's URL, e.g. https://stocktify-yahoo-proxy.<account>.workers.dev
+// to this Worker's URL, e.g. https://stock-ledgery-yahoo-proxy.<account>.workers.dev
 
 const YAHOO_ORIGIN = 'https://query1.finance.yahoo.com';
 const UA =

@@ -32,7 +32,7 @@ export function Sidebar() {
           <span className="text-base font-semibold tracking-tight">S</span>
         </span>
         <div className="leading-tight">
-          <p className="text-base font-semibold tracking-tight text-ink">Stocktify</p>
+          <p className="text-base font-semibold tracking-tight text-ink">Stock-Ledgery</p>
           <p className="text-xs text-ink-mute">個人股票追蹤</p>
         </div>
       </div>

@@ -75,6 +75,6 @@ export const useAuthStore = create<AuthState>()(
       updateProfile: (patch) =>
         set((s) => (s.user ? { user: { ...s.user, ...patch } } : s)),
     }),
-    { name: 'stocktify-auth', version: 1 },
+    { name: 'stock-ledgery-auth', version: 1 },
   ),
 );
