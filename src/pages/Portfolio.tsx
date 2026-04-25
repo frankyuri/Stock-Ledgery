@@ -5,13 +5,19 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { fetchPortfolio } from '@/services/stocks';
 import { useStockStore } from '@/store/useStockStore';
 import { holdingsKey } from '@/lib/queryKeys';
+import type { PortfolioHolding } from '@/types/stock';
 
 export function Portfolio() {
   const holdings = useStockStore((s) => s.holdings);
 
-  const { data, isLoading, isError, error, isStale } = useQuery({
+  const { data, isLoading, isError, error, isStale } = useQuery<
+    Awaited<ReturnType<typeof fetchPortfolio>>,
+    Error,
+    PortfolioHolding[]
+  >({
     queryKey: ['portfolio', holdingsKey(holdings)],
     queryFn: () => fetchPortfolio(holdings),
+    select: (result) => result.holdings,
     enabled: holdings.length > 0,
     refetchInterval: 60_000,
   });

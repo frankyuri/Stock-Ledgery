@@ -152,8 +152,8 @@ const safeStorage: PersistStorage<StockState> = {
 };
 
 export const useStockStore = create<StockState>()(
-  persist(
-    (set) => ({
+  persist<StockState>(
+    (set): StockState => ({
       selectedSymbol: 'AAPL',
       resolution: '1D',
       watchlist: DEFAULT_WATCHLIST,
@@ -209,7 +209,7 @@ export const useStockStore = create<StockState>()(
         });
         return { ok: true, realizedGainLoss: realized };
       },
-      removeTransaction: (id) =>
+      removeTransaction: (id: string) =>
         set((s) => {
           const nextTxns = s.transactions.filter((t) => t.id !== id);
           return {
@@ -217,17 +217,17 @@ export const useStockStore = create<StockState>()(
             holdings: reconcileHoldings(nextTxns),
           };
         }),
-      addAssetSnapshot: (a) =>
+      addAssetSnapshot: (a: Omit<AssetSnapshot, 'id'>) =>
         set((s) => ({
           assets: [...s.assets, { id: genId(), ...a }].sort((x, y) =>
             x.date.localeCompare(y.date),
           ),
         })),
-      removeAssetSnapshot: (id) =>
+      removeAssetSnapshot: (id: string) =>
         set((s) => ({ assets: s.assets.filter((a) => a.id !== id) })),
-      setLinePrefs: (patch) =>
+      setLinePrefs: (patch: Partial<LinePrefs>) =>
         set((s) => ({ linePrefs: { ...s.linePrefs, ...patch } })),
-      importBackup: (snapshot) =>
+      importBackup: (snapshot: BackupSnapshot) =>
         set((s) => ({
           watchlist: snapshot.watchlist?.length
             ? snapshot.watchlist
