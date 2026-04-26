@@ -14,6 +14,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const [query, setQuery] = useState('');
+  const [debounced, setDebounced] = useState('');
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -27,10 +28,15 @@ export function Header({ onMenuClick }: HeaderProps) {
   const watchlist = useStockStore((s) => s.watchlist);
   const addToWatchlist = useStockStore((s) => s.addToWatchlist);
 
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(query.trim()), 220);
+    return () => clearTimeout(id);
+  }, [query]);
+
   const { data: results = [] } = useQuery({
-    queryKey: ['search', query],
-    queryFn: () => searchTickers(query),
-    enabled: query.trim().length > 0,
+    queryKey: ['search', debounced],
+    queryFn: () => searchTickers(debounced),
+    enabled: debounced.length > 0,
     staleTime: 30_000,
   });
 

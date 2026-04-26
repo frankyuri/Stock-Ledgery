@@ -1,6 +1,6 @@
-# Stock-Ledgery｜個人股票追蹤系統 (v0.1)
+# Stock-Ledgery｜個人股票追蹤系統
 
-依循技術規格書打造的 React 股票追蹤系統前端。
+依循技術規格書打造的 React 股票追蹤系統前端。版本以 [package.json](package.json) 的 `version` 為準（畫面左下角會顯示）。
 
 ## 技術棧
 

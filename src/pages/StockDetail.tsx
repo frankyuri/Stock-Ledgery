@@ -41,6 +41,8 @@ export function StockDetail() {
   const bundle = useQuery({
     queryKey: ['chart-bundle', symbol, resolution],
     queryFn: () => fetchChartBundle(symbol, resolution),
+    // 與 quote 對齊：盤中最新一根 K 線會跟著動
+    refetchInterval: 5 * 60_000,
   });
 
   const inWatchlist = watchlist.includes(symbol);

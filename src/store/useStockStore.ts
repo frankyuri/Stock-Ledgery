@@ -15,12 +15,15 @@ interface LinePrefs {
   tradeConfirm: boolean;
 }
 
+/**
+ * holdings 不進 persist：它是 transactions 的純函數，存兩份只會讓兩邊
+ * 對不起來。rehydrate 完用 onRehydrateStorage 重算一次即可。
+ */
 type PersistedStockState = Pick<
   StockState,
   | 'selectedSymbol'
   | 'resolution'
   | 'watchlist'
-  | 'holdings'
   | 'transactions'
   | 'assets'
   | 'linePrefs'
@@ -72,10 +75,10 @@ function round(n: number): number {
 }
 
 /**
- * 從 transactions 重新計算 holdings。
+ * 從 transactions 重新計算 holdings（weighted-average 方法）。
  * 規則：
- *  - BUY：weighted avg cost，手續費攤入成本
- *  - SELL：扣減股數，平均成本不變（FIFO 變體）
+ *  - BUY：加權平均新成本 = (舊股數 × 舊均價 + 新股數 × 新單價 + 手續費) / 總股數
+ *  - SELL：扣減股數，平均成本不變（已實現損益另外於 transaction 上記錄）
  *  - 賣超的部分視為無效（reconcile 時不會讓股數變負）
  */
 export function reconcileHoldings(transactions: Transaction[]): Holding[] {
@@ -124,7 +127,7 @@ export function reconcileHoldings(transactions: Transaction[]): Holding[] {
 }
 
 /** 計算這筆 SELL 的已實現損益（用 reconcile 到此筆「之前」的 avg cost） */
-function computeRealizedForSell(
+export function computeRealizedForSell(
   transactions: Transaction[],
   pending: Omit<Transaction, 'id' | 'realizedGainLoss'>,
 ): number {
@@ -146,11 +149,12 @@ const DEFAULT_PERSISTED_STATE: PersistedStockState = {
   selectedSymbol: 'AAPL',
   resolution: '1D',
   watchlist: DEFAULT_WATCHLIST,
-  holdings: [],
   transactions: [],
   assets: [],
   linePrefs: DEFAULT_LINE_PREFS,
 };
+
+const STORAGE_VERSION = 5;
 
 const safeStorage: PersistStorage<PersistedStockState> = {
   getItem: (name) => {
@@ -267,13 +271,12 @@ export const useStockStore = create<StockState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 4,
+      version: STORAGE_VERSION,
       storage: safeStorage,
       partialize: (state) => ({
         selectedSymbol: state.selectedSymbol,
         resolution: state.resolution,
         watchlist: state.watchlist,
-        holdings: state.holdings,
         transactions: state.transactions,
         assets: state.assets,
         linePrefs: state.linePrefs,
@@ -283,6 +286,7 @@ export const useStockStore = create<StockState>()(
           holdings?: Holding[];
         };
         if (version < 4) {
+          // v3 以前：可能只有 holdings 沒有 transactions，要把 holdings 反推成 BUY 交易
           const txns = state.transactions ?? [];
           const oldHoldings = state.holdings ?? [];
           let nextTxns = txns;
@@ -303,15 +307,20 @@ export const useStockStore = create<StockState>()(
             ...DEFAULT_PERSISTED_STATE,
             ...state,
             transactions: nextTxns,
-            holdings: reconcileHoldings(nextTxns),
             linePrefs: state.linePrefs ?? DEFAULT_LINE_PREFS,
           };
         }
+        // v4 → v5：把已存的 holdings 欄位丟掉（onRehydrateStorage 會重算）
         return {
           ...DEFAULT_PERSISTED_STATE,
           ...state,
           linePrefs: state.linePrefs ?? DEFAULT_LINE_PREFS,
         };
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.holdings = reconcileHoldings(state.transactions);
+        }
       },
     },
   ),
@@ -321,7 +330,7 @@ export const useStockStore = create<StockState>()(
 export function buildBackupSnapshot(): BackupSnapshot {
   const s = useStockStore.getState();
   return {
-    version: 4,
+    version: STORAGE_VERSION,
     exportedAt: new Date().toISOString(),
     watchlist: s.watchlist,
     transactions: s.transactions,

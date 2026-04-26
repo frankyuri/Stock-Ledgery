@@ -26,20 +26,33 @@ const RATE_TABLE: Record<string, number> = {
   GBP_TWD: 1.27 * 32.5,
 };
 
-export function convert(amount: number, from: string, to: string): number {
-  if (!Number.isFinite(amount)) return 0;
-  if (from === to) return amount;
+/** 直查或反查；找不到回 null（不要靜默回 1） */
+function lookup(from: string, to: string): number | null {
+  if (from === to) return 1;
   const direct = RATE_TABLE[`${from}_${to}`];
+  if (direct != null) return direct;
+  const inverse = RATE_TABLE[`${to}_${from}`];
+  if (inverse != null && inverse !== 0) return 1 / inverse;
+  return null;
+}
+
+/**
+ * 換算 amount 從 from 到 to。換不到時回傳 null（呼叫端自行決定要 skip
+ * 還是顯示警告，避免「USD 數值套上 EUR 標籤」這種靜默錯誤）。
+ */
+export function convert(amount: number, from: string, to: string): number | null {
+  if (!Number.isFinite(amount)) return null;
+  const direct = lookup(from, to);
   if (direct != null) return amount * direct;
-  // 無對應對：經 USD 中轉
-  const toUsd = RATE_TABLE[`${from}_USD`];
-  const fromUsd = RATE_TABLE[`USD_${to}`];
-  if (toUsd != null && fromUsd != null) return amount * toUsd * fromUsd;
-  return amount; // 找不到 → 不換算（避免靜默變 0）
+  // 經 USD 中轉（兩段都允許用反查）
+  const fromUsd = lookup(from, 'USD');
+  const usdTo = lookup('USD', to);
+  if (fromUsd != null && usdTo != null) return amount * fromUsd * usdTo;
+  return null;
 }
 
 export function isSupported(currency: string): boolean {
-  return RATE_TABLE[`${currency}_USD`] != null;
+  return lookup(currency, 'USD') != null;
 }
 
 export const SUPPORTED_BASE_CURRENCIES = ['TWD', 'USD'] as const;

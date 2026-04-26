@@ -25,7 +25,7 @@ export function Login() {
     setSubmitting(true);
     // TODO(backend): 這裡之後換成 api.post('/auth/login', { email, password })
     await new Promise((r) => setTimeout(r, 400));
-    loginMock(email);
+    loginMock(email, password);
     setSubmitting(false);
     navigate(redirectTo, { replace: true });
   }
@@ -35,6 +35,9 @@ export function Login() {
       title="登入"
       subtitle="輸入你的 Email 與密碼，進入個人持股儀表板"
     >
+      <div className="mb-4 rounded-lg border border-amber-300/40 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200">
+        Demo 模式：本機 mock，密碼僅檢查長度、不會送到後端驗證
+      </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">

@@ -129,18 +129,26 @@ export function Assets() {
     }));
   }, [primary]);
 
-  /** 把所有快照依日期 group，把每個幣別折算到 base 後加總 */
-  const combinedSeries = useMemo(() => {
-    if (assets.length === 0 || grouped.length <= 1) return [];
+  /** 把所有快照依日期 group，把每個幣別折算到 base 後加總；換不到匯率的幣別會被跳過並列在 unsupported 中 */
+  const { combinedSeries, unsupportedCurrencies } = useMemo(() => {
+    if (assets.length === 0 || grouped.length <= 1) {
+      return { combinedSeries: [], unsupportedCurrencies: [] as string[] };
+    }
     const byDate = new Map<string, number>();
+    const unsupported = new Set<string>();
     for (const a of assets) {
       const total = a.cash + a.securities + a.other;
       const inBase = convert(total, a.currency, baseCurrency);
+      if (inBase == null) {
+        unsupported.add(a.currency);
+        continue;
+      }
       byDate.set(a.date, (byDate.get(a.date) ?? 0) + inBase);
     }
-    return Array.from(byDate.entries())
+    const series = Array.from(byDate.entries())
       .sort((x, y) => x[0].localeCompare(y[0]))
       .map(([time, value]) => ({ time, value: Math.round(value * 100) / 100 }));
+    return { combinedSeries: series, unsupportedCurrencies: Array.from(unsupported) };
   }, [assets, grouped.length, baseCurrency]);
 
   const combinedLatest = combinedSeries[combinedSeries.length - 1]?.value ?? 0;
@@ -367,6 +375,14 @@ export function Assets() {
                     {formatNumber(combinedChange)} {baseCurrency}
                   </span>
                 </div>
+                {unsupportedCurrencies.length > 0 && (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    ⚠ 缺少匯率對應，下列幣別未納入合計：
+                    <span className="ml-1 font-mono">
+                      {unsupportedCurrencies.join('、')}
+                    </span>
+                  </p>
+                )}
                 <LineAreaChart data={combinedSeries} />
               </div>
             </section>

@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
+import { version as APP_VERSION } from '../../../package.json';
 
 const NAV = [
   {
@@ -106,7 +107,7 @@ export function Sidebar({ open = false, onClose }: Props) {
           ))}
         </nav>
         <div className="border-t border-black/5 px-5 py-3 text-xs text-ink-mute dark:border-white/10">
-          v0.4.0 · Yahoo Finance
+          v{APP_VERSION} · Yahoo Finance
         </div>
       </aside>
     </>

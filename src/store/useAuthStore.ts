@@ -14,8 +14,10 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
-  loginMock: (email: string, name?: string) => void;
-  registerMock: (email: string, name: string) => void;
+  /** demo 用：password 傳進來但不驗證，僅維持與真後端一致的呼叫介面 */
+  loginMock: (email: string, password: string, name?: string) => void;
+  /** demo 用：password 同上，未來接後端時這裡會被 api.post('/auth/register') 取代 */
+  registerMock: (email: string, password: string, name: string) => void;
   logout: () => void;
   bindLine: (lineUserId: string, lineDisplayName: string) => void;
   unbindLine: () => void;
@@ -27,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
-      loginMock: (email, name) =>
+      loginMock: (email, _password, name) =>
         set({
           token: 'mock-token-' + Math.random().toString(36).slice(2),
           user: {
@@ -36,7 +38,7 @@ export const useAuthStore = create<AuthState>()(
             name: name ?? email.split('@')[0],
           },
         }),
-      registerMock: (email, name) =>
+      registerMock: (email, _password, name) =>
         set({
           token: 'mock-token-' + Math.random().toString(36).slice(2),
           user: {

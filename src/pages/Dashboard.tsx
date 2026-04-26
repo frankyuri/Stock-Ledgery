@@ -38,6 +38,8 @@ export function Dashboard() {
   const chart = useQuery({
     queryKey: ['chart', selected, '1D'],
     queryFn: () => fetchCandles(selected, '1D'),
+    // 與 quote 對齊：盤中最新一根 K 線會跟著動，不更新會跟報價不一致
+    refetchInterval: 5 * 60_000,
   });
 
   const watch = useQuery({

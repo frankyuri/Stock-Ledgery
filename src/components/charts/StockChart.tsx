@@ -77,6 +77,12 @@ export function StockChart({
     ma60: null,
   });
   const priceLinesRef = useRef<IPriceLine[]>([]);
+  // crosshair callback 訂閱一次就不再 re-subscribe，靠 ref 抓最新 data
+  const dataRef = useRef<Candle[]>(data);
+  dataRef.current = data;
+  // 用第一根 K 線時間判斷「整段資料系列換了」（換股 / 換 resolution）；
+  // 同系列只是 append 最新報價時保留使用者目前的縮放範圍。
+  const fittedSeriesKeyRef = useRef<string | null>(null);
 
   const [enabledMA, setEnabledMA] = useState<Record<MaKey, boolean>>({
     ma5: false,
@@ -181,8 +187,9 @@ export function StockChart({
         setHover(null);
         return;
       }
-      const idx = data.findIndex((d) => d.time === (param.time as unknown as string));
-      const src = idx >= 0 ? data[idx] : undefined;
+      const latest = dataRef.current;
+      const idx = latest.findIndex((d) => d.time === (param.time as unknown as string));
+      const src = idx >= 0 ? latest[idx] : undefined;
       const maVals: Partial<Record<MaKey, number>> = {};
       for (const { key } of MA_OPTIONS) {
         const series = maSeriesRef.current[key];
@@ -210,8 +217,9 @@ export function StockChart({
       volumeRef.current = null;
       maSeriesRef.current = { ma5: null, ma20: null, ma60: null };
       priceLinesRef.current = [];
+      fittedSeriesKeyRef.current = null;
     };
-  }, [height, data]);
+  }, [height]);
 
   useEffect(() => {
     if (!candleRef.current || !volumeRef.current) return;
@@ -284,8 +292,16 @@ export function StockChart({
       candle.setMarkers([]);
     }
 
-    chartRef.current?.timeScale().fitContent();
-  }, [data, enabledMA, maData, fiftyTwoWeekHigh, fiftyTwoWeekLow, markers]);
+    if (data.length > 0) {
+      // 起始時間 + resolution 一變代表換股 / 換時間刻度，需要重新 fit；
+      // 同系列只是補上最新一根 K 線時，第一根時間不變 → 保留縮放範圍
+      const seriesKey = `${data[0].time}|${resolution}`;
+      if (fittedSeriesKeyRef.current !== seriesKey) {
+        chartRef.current?.timeScale().fitContent();
+        fittedSeriesKeyRef.current = seriesKey;
+      }
+    }
+  }, [data, enabledMA, maData, fiftyTwoWeekHigh, fiftyTwoWeekLow, markers, resolution]);
 
   function setRangeBars(bars: number | 'all') {
     const chart = chartRef.current;

@@ -31,7 +31,7 @@ export function Register() {
     setSubmitting(true);
     // TODO(backend): api.post('/auth/register', { email, password, name, lineUserId })
     await new Promise((r) => setTimeout(r, 400));
-    registerMock(email, name.trim());
+    registerMock(email, password, name.trim());
     if (lineUserId && lineDisplayName) {
       bindLine(lineUserId, lineDisplayName);
     }
