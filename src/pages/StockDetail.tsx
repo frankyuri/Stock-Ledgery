@@ -7,6 +7,11 @@ import { fetchChartBundle, fetchQuote } from '@/services/stocks';
 import { useStockStore } from '@/store/useStockStore';
 import { changeColor, formatNumber, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import {
+  computeDividendStats,
+  estimateAnnualIncome,
+  type DividendStats,
+} from '@/lib/dividends';
 import type {
   DividendEvent,
   Holding,
@@ -61,6 +66,11 @@ export function StockDetail() {
 
   const dividends = bundle.data?.dividends ?? [];
   const splits = bundle.data?.splits ?? [];
+
+  const dividendStats = useMemo(
+    () => computeDividendStats(symbol, transactions, dividends),
+    [symbol, transactions, dividends],
+  );
 
   const markers = useMemo<ChartMarker[]>(() => {
     const out: ChartMarker[] = [];
@@ -142,12 +152,18 @@ export function StockDetail() {
               dividends={dividends}
               splits={splits}
               currency={quote.data?.currency}
+              dividendStats={dividendStats}
             />
           )}
         </div>
 
         <aside className="space-y-5">
-          <HoldingCard symbol={symbol} holding={holding} quote={quote.data} />
+          <HoldingCard
+            symbol={symbol}
+            holding={holding}
+            quote={quote.data}
+            stats={dividendStats}
+          />
           <RangeCard quote={quote.data} />
         </aside>
       </div>
@@ -281,10 +297,12 @@ function HoldingCard({
   symbol,
   holding,
   quote,
+  stats,
 }: {
   symbol: string;
   holding?: Holding;
   quote?: Quote;
+  stats?: DividendStats;
 }) {
   if (!holding || !quote) {
     return (
@@ -304,6 +322,14 @@ function HoldingCard({
   const cost = holding.shares * holding.avgCost;
   const gainLoss = marketValue - cost;
   const gainLossPercent = cost ? (gainLoss / cost) * 100 : 0;
+
+  // 預估年化配息（trailing 12m × 目前持股）；殖利率以「成本」基準，比較貼近個人實際 yield
+  const annualIncome = stats
+    ? estimateAnnualIncome(stats.trailing12mPerShare, holding.shares)
+    : 0;
+  const yieldOnCost = cost && annualIncome ? (annualIncome / cost) * 100 : 0;
+  const showDividend = !!stats && stats.totalIncome > 0;
+  const showForwardYield = !!stats && stats.trailing12mPerShare > 0;
 
   return (
     <div className="card p-5">
@@ -340,6 +366,39 @@ function HoldingCard({
           </span>
         </div>
       </div>
+
+      {(showDividend || showForwardYield) && (
+        <div className="mt-3 rounded-xl border border-black/5 bg-black/[0.02] p-3.5 dark:border-white/10 dark:bg-white/[0.04]">
+          {showDividend && (
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm text-ink-mute">
+                累計配息
+                <span className="ml-1 text-[11px] text-ink-faint">
+                  · {stats!.paidEventCount} 次
+                </span>
+              </span>
+              <span className="font-mono text-[15px] font-semibold text-up num">
+                +{formatNumber(stats!.totalIncome)}
+              </span>
+            </div>
+          )}
+          {showForwardYield && (
+            <div className={cn('flex items-baseline justify-between', showDividend && 'mt-1')}>
+              <span className="text-xs text-ink-faint">
+                預估年化（TTM × 目前持股）
+              </span>
+              <span className="font-mono text-xs font-medium text-ink-soft num dark:text-zinc-300">
+                {formatNumber(annualIncome)}
+                {yieldOnCost > 0 && (
+                  <span className="ml-1 text-ink-faint">
+                    · {yieldOnCost.toFixed(2)}%
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -462,10 +521,12 @@ function EventsCard({
   dividends,
   splits,
   currency,
+  dividendStats,
 }: {
   dividends: DividendEvent[];
   splits: SplitEvent[];
   currency?: string;
+  dividendStats?: DividendStats;
 }) {
   const recentDivs = [...dividends]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -473,6 +534,10 @@ function EventsCard({
   const recentSplits = [...splits]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 4);
+  // 把「我那次持有幾股」對應到公司事件那一欄
+  const incomeByDate = new Map(
+    (dividendStats?.rows ?? []).map((r) => [r.date, r]),
+  );
 
   return (
     <section className="card">
@@ -481,6 +546,11 @@ function EventsCard({
           <h2 className="section-title">公司事件</h2>
           <p className="section-hint">
             來自 Yahoo Finance · 配息 {dividends.length} 筆 · 拆股 {splits.length} 次
+            {dividendStats && dividendStats.totalIncome > 0 && (
+              <span className="ml-1.5 text-up">
+                · 累計領到 +{formatNumber(dividendStats.totalIncome)} {currency ?? ''}
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -491,17 +561,32 @@ function EventsCard({
             <p className="mt-3 text-sm text-ink-mute">沒有配息資料</p>
           ) : (
             <ul className="mt-3 space-y-2 text-sm">
-              {recentDivs.map((d) => (
-                <li
-                  key={d.date}
-                  className="flex items-baseline justify-between font-mono"
-                >
-                  <span className="text-ink-soft num dark:text-zinc-300">{d.date}</span>
-                  <span className="font-semibold text-ink num dark:text-zinc-100">
-                    {d.amount} {currency ?? ''}
-                  </span>
-                </li>
-              ))}
+              {recentDivs.map((d) => {
+                const myRow = incomeByDate.get(d.date);
+                return (
+                  <li
+                    key={d.date}
+                    className="flex items-baseline justify-between gap-2 font-mono"
+                  >
+                    <span className="text-ink-soft num dark:text-zinc-300">
+                      {d.date}
+                    </span>
+                    <span className="flex items-baseline gap-2">
+                      <span className="font-semibold text-ink num dark:text-zinc-100">
+                        {d.amount} {currency ?? ''}
+                      </span>
+                      {myRow && (
+                        <span
+                          className="rounded-md bg-up/[0.1] px-1.5 py-0.5 text-[11px] font-medium text-up num"
+                          title={`你當時持有 ${formatNumber(myRow.shares, 4)} 股`}
+                        >
+                          +{formatNumber(myRow.income)}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

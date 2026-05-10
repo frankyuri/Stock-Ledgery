@@ -141,7 +141,7 @@ export function AllocationPie({
             onMouseLeave={() => setHover(null)}
             className={cn(
               'flex items-center gap-3 rounded-lg px-2 py-1.5 transition',
-              hover === p.key && 'bg-black/[0.04]',
+              hover === p.key && 'bg-black/[0.04] dark:bg-white/[0.06]',
             )}
           >
             <span

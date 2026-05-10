@@ -82,7 +82,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             if (e.key === 'Enter' && results[0]) goto(results[0].symbol);
           }}
           placeholder="搜尋股票代號或公司名稱（例：AAPL、2330）"
-          className="w-full rounded-lg border border-black/10 bg-white/80 py-2.5 pl-9 pr-3 text-[15px] text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25"
+          className="w-full rounded-lg border border-black/10 bg-white/80 py-2.5 pl-9 pr-3 text-[15px] text-ink placeholder:text-ink-faint shadow-sm focus:border-brand/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/25 dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-800"
         />
         {open && query && results.length > 0 && (
           <ul className="absolute left-0 right-0 top-full mt-2 max-h-72 overflow-y-auto rounded-xl border border-black/5 bg-white/85 shadow-pop backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-900/90">
@@ -151,17 +151,17 @@ export function Header({ onMenuClick }: HeaderProps) {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white"
+            className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:hover:bg-zinc-800"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-sm font-semibold text-white">
               {user.name.slice(0, 1).toUpperCase()}
             </span>
-            <span className="hidden text-ink-soft md:inline">{user.name}</span>
+            <span className="hidden text-ink-soft md:inline dark:text-zinc-300">{user.name}</span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-black/5 bg-white/90 shadow-pop backdrop-blur-2xl">
-              <div className="border-b border-black/5 px-4 py-3.5">
-                <p className="text-[15px] font-medium text-ink">{user.name}</p>
+            <div className="absolute right-0 top-full z-30 mt-2 w-64 overflow-hidden rounded-xl border border-black/5 bg-white/90 shadow-pop backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-900/90">
+              <div className="border-b border-black/5 px-4 py-3.5 dark:border-white/10">
+                <p className="text-[15px] font-medium text-ink dark:text-zinc-100">{user.name}</p>
                 <p className="mt-0.5 text-sm text-ink-mute">{user.email}</p>
                 <p className="mt-1.5 text-xs text-ink-faint">
                   LINE：
@@ -175,7 +175,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               <Link
                 to="/settings/line"
                 onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2.5 text-sm text-ink-soft hover:bg-black/[0.04]"
+                className="block px-4 py-2.5 text-sm text-ink-soft hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5"
               >
                 LINE 綁定設定
               </Link>
@@ -186,7 +186,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   setMenuOpen(false);
                   navigate('/login');
                 }}
-                className="block w-full px-4 py-2.5 text-left text-sm text-down hover:bg-black/[0.04]"
+                className="block w-full px-4 py-2.5 text-left text-sm text-down hover:bg-black/[0.04] dark:hover:bg-white/5"
               >
                 登出
               </button>
