@@ -176,7 +176,10 @@ export function StockChart({
     volumeRef.current = volume;
 
     chart.subscribeCrosshairMove((param: MouseEventParams) => {
-      if (!param.time || !param.seriesData?.size) {
+      // 用 logical index（資料 array 上的位置）查 source candle，
+      // 不要用 param.time——lightweight-charts 會把 ISO 字串轉成 BusinessDay
+      // 物件，跟原始字串永遠不相等，volume 會永遠抓不到。
+      if (param.logical == null || !param.seriesData?.size) {
         setHover(null);
         return;
       }
@@ -188,8 +191,8 @@ export function StockChart({
         return;
       }
       const latest = dataRef.current;
-      const idx = latest.findIndex((d) => d.time === (param.time as unknown as string));
-      const src = idx >= 0 ? latest[idx] : undefined;
+      const idx = Math.round(param.logical as unknown as number);
+      const src = idx >= 0 && idx < latest.length ? latest[idx] : undefined;
       const maVals: Partial<Record<MaKey, number>> = {};
       for (const { key } of MA_OPTIONS) {
         const series = maSeriesRef.current[key];
@@ -199,7 +202,7 @@ export function StockChart({
       }
       setHover({
         candle: {
-          time: (param.time as unknown as string) ?? src?.time ?? '',
+          time: src?.time ?? '',
           open: c.open,
           high: c.high,
           low: c.low,

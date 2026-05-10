@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   type ColumnDef,
+  type SortingState,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
@@ -20,6 +21,9 @@ interface Props {
 
 export function WatchlistTable({ data, onRemove, stale }: Props) {
   const navigate = useNavigate();
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'changePercent', desc: true },
+  ]);
   const columns = useMemo<ColumnDef<Quote>[]>(
     () => [
       {
@@ -87,6 +91,8 @@ export function WatchlistTable({ data, onRemove, stale }: Props) {
   const table = useReactTable({
     data,
     columns,
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -102,14 +108,28 @@ export function WatchlistTable({ data, onRemove, stale }: Props) {
         <thead>
           {table.getHeaderGroups().map((group) => (
             <tr key={group.id} className="bg-black/[0.02]">
-              {group.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-mute"
-                >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
-              ))}
+              {group.headers.map((header) => {
+                const sorted = header.column.getIsSorted();
+                const sortable = header.column.getCanSort() && header.id !== 'actions';
+                return (
+                  <th
+                    key={header.id}
+                    onClick={
+                      sortable ? header.column.getToggleSortingHandler() : undefined
+                    }
+                    className={cn(
+                      'select-none px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-mute transition',
+                      sortable && 'cursor-pointer hover:text-ink',
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {sorted === 'asc' && '▲'}
+                      {sorted === 'desc' && '▼'}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
           ))}
         </thead>

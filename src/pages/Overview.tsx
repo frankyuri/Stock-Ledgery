@@ -63,7 +63,7 @@ export function Overview() {
       ) : (
         <>
           {stale && (
-            <div className="card border-amber-300/40 bg-amber-50/60 px-5 py-3 text-sm text-amber-800">
+            <div className="card border-amber-300/40 bg-amber-50/60 px-5 py-3 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200">
               ⚠ 以下標的報價載入失敗，數值用持股成本暫代：
               <span className="ml-1 font-mono">{failedSymbols.join('、')}</span>
             </div>
@@ -119,7 +119,9 @@ function SummaryCards({
   if (!primary) return null;
   const { currency, marketValue, gainLoss, dayChange, cost } = primary;
   const gainPct = cost ? (gainLoss / cost) * 100 : 0;
-  const dayPct = marketValue ? (dayChange / marketValue) * 100 : 0;
+  // 今日變動% 的基準應為「昨收市值」= 現市值 − 今日變動
+  const prevValue = marketValue - dayChange;
+  const dayPct = prevValue ? (dayChange / prevValue) * 100 : 0;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -257,7 +259,7 @@ function TopHoldingsCard({ primary }: { primary?: GroupEntry }) {
                     </div>
                   </div>
                   <div className="mt-1.5 flex items-center gap-3">
-                    <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+                    <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/10">
                       <div
                         className="absolute inset-y-0 left-0 rounded-full bg-brand"
                         style={{ width: `${barPct}%` }}
@@ -285,7 +287,7 @@ function MultiCurrencyCard({ groups }: { groups: GroupEntry[] }) {
         {groups.map((g) => (
           <div
             key={g.currency}
-            className="rounded-xl border border-black/5 bg-white/60 p-4 backdrop-blur"
+            className="rounded-xl border border-black/5 bg-white/60 p-4 backdrop-blur dark:border-white/10 dark:bg-zinc-800/40"
           >
             <div className="flex items-center justify-between">
               <span className="text-base font-semibold text-ink">{g.currency}</span>

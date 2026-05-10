@@ -24,6 +24,7 @@ interface YahooChartResult {
     symbol: string;
     currency?: string;
     regularMarketPrice?: number;
+    regularMarketOpen?: number;
     regularMarketPreviousClose?: number;
     chartPreviousClose?: number;
     previousClose?: number;
@@ -84,15 +85,39 @@ export interface ChartBundle {
   splits: SplitEvent[];
 }
 
+/**
+ * 包一層 retry：429 / 5xx / 網路錯誤指數退避一次。
+ * 不重試的情況：4xx（除 429）—— 那通常是代號錯，重打也沒用。
+ */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 2): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const retryable = status == null || status === 429 || status >= 500;
+      if (!retryable || i === attempts - 1) throw err;
+      // 250ms → 750ms 退避，加抖動避免同步重打
+      const delay = 250 * Math.pow(3, i) + Math.random() * 100;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
+
 /** 完整版：抓 K 線 + meta + events，給 StockDetail / Dashboard 主圖用 */
 export async function yahooChart(
   symbol: string,
   resolution: Resolution,
 ): Promise<ChartBundle> {
   const { interval, range } = INTERVAL_MAP[resolution];
-  const { data } = await yahoo.get<YahooChartResponse>(
-    `/v8/finance/chart/${encodeURIComponent(symbol)}`,
-    { params: { interval, range, includePrePost: false, events: 'div,split' } },
+  const { data } = await withRetry(() =>
+    yahoo.get<YahooChartResponse>(
+      `/v8/finance/chart/${encodeURIComponent(symbol)}`,
+      { params: { interval, range, includePrePost: false, events: 'div,split' } },
+    ),
   );
   if (data.chart.error) throw new Error(data.chart.error.description);
   const result = data.chart.result?.[0];
@@ -146,60 +171,73 @@ export async function yahooQuote(symbol: string): Promise<Quote> {
 
 /**
  * 精簡版：每支只抓 5 天 1d K 線，比完整版省 ~100x 資料量。
- * 用 Promise.allSettled 平行打，回傳「拿得到的」+ 失敗清單。
+ * 分批送 + 每支自帶 retry，避免 watchlist 變大後一次打掛被 429。
  */
 export interface QuotesResult {
   quotes: Quote[];
   failed: string[];
 }
 
+const QUOTES_CHUNK_SIZE = 5;
+
+async function fetchOneQuoteLite(sym: string): Promise<Quote> {
+  const { data } = await withRetry(() =>
+    yahoo.get<YahooChartResponse>(
+      `/v8/finance/chart/${encodeURIComponent(sym)}`,
+      { params: { interval: '1d', range: '5d', includePrePost: false } },
+    ),
+  );
+  if (data.chart.error) throw new Error(data.chart.error.description);
+  const result = data.chart.result?.[0];
+  if (!result) throw new Error(`no data for ${sym}`);
+  const { meta, timestamp = [], indicators } = result;
+  const q = indicators.quote[0];
+  const candles: Candle[] = [];
+  for (let i = 0; i < timestamp.length; i += 1) {
+    const o = q.open[i];
+    const h = q.high[i];
+    const l = q.low[i];
+    const c = q.close[i];
+    if (o == null || h == null || l == null || c == null) continue;
+    candles.push({
+      time: unixToISODate(timestamp[i]),
+      open: r2(o),
+      high: r2(h),
+      low: r2(l),
+      close: r2(c),
+      volume: q.volume[i] ?? 0,
+    });
+  }
+  return buildQuoteFromMeta(meta, candles);
+}
+
 export async function yahooQuotesLite(
   symbols: string[],
 ): Promise<QuotesResult> {
   if (symbols.length === 0) return { quotes: [], failed: [] };
-  const tasks = symbols.map(async (sym) => {
-    const { data } = await yahoo.get<YahooChartResponse>(
-      `/v8/finance/chart/${encodeURIComponent(sym)}`,
-      { params: { interval: '1d', range: '5d', includePrePost: false } },
-    );
-    if (data.chart.error) throw new Error(data.chart.error.description);
-    const result = data.chart.result?.[0];
-    if (!result) throw new Error(`no data for ${sym}`);
-    const { meta, timestamp = [], indicators } = result;
-    const q = indicators.quote[0];
-    const candles: Candle[] = [];
-    for (let i = 0; i < timestamp.length; i += 1) {
-      const o = q.open[i];
-      const h = q.high[i];
-      const l = q.low[i];
-      const c = q.close[i];
-      if (o == null || h == null || l == null || c == null) continue;
-      candles.push({
-        time: unixToISODate(timestamp[i]),
-        open: r2(o),
-        high: r2(h),
-        low: r2(l),
-        close: r2(c),
-        volume: q.volume[i] ?? 0,
-      });
-    }
-    return buildQuoteFromMeta(meta, candles);
-  });
-  const settled = await Promise.allSettled(tasks);
+
   const quotes: Quote[] = [];
   const failed: string[] = [];
-  settled.forEach((s, i) => {
-    if (s.status === 'fulfilled') quotes.push(s.value);
-    else failed.push(symbols[i]);
-  });
+
+  for (let i = 0; i < symbols.length; i += QUOTES_CHUNK_SIZE) {
+    const chunk = symbols.slice(i, i + QUOTES_CHUNK_SIZE);
+    const settled = await Promise.allSettled(chunk.map(fetchOneQuoteLite));
+    settled.forEach((s, idx) => {
+      if (s.status === 'fulfilled') quotes.push(s.value);
+      else failed.push(chunk[idx]);
+    });
+  }
+
   return { quotes, failed };
 }
 
 export async function yahooSearch(query: string): Promise<SearchResult[]> {
   if (!query.trim()) return [];
-  const { data } = await yahoo.get<YahooSearchResponse>('/v1/finance/search', {
-    params: { q: query, quotesCount: 8, newsCount: 0 },
-  });
+  const { data } = await withRetry(() =>
+    yahoo.get<YahooSearchResponse>('/v1/finance/search', {
+      params: { q: query, quotesCount: 8, newsCount: 0 },
+    }),
+  );
   return (data.quotes ?? [])
     .filter(
       (q) =>
@@ -243,7 +281,7 @@ function buildQuoteFromMeta(
     change,
     changePercent,
     previousClose: r2(prevClose),
-    open: meta.regularMarketPrice != null && last ? r2(last.open) : last?.open,
+    open: meta.regularMarketOpen != null ? r2(meta.regularMarketOpen) : last?.open,
     dayHigh: meta.regularMarketDayHigh ?? last?.high,
     dayLow: meta.regularMarketDayLow ?? last?.low,
     fiftyTwoWeekHigh: fiftyTwoWeekHigh != null ? r2(fiftyTwoWeekHigh) : undefined,

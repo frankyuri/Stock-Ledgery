@@ -212,9 +212,11 @@ export function LineSettings() {
 
 function Info({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="rounded-xl border border-black/5 bg-white/60 p-4">
+    <div className="rounded-xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-zinc-800/40">
       <p className="label-caps">{label}</p>
-      <p className={cn('mt-2 text-[15px] text-ink', mono && 'font-mono')}>{value}</p>
+      <p className={cn('mt-2 text-[15px] text-ink dark:text-zinc-100', mono && 'font-mono')}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -280,7 +282,7 @@ function EnvRow({
     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
       <span className="label-caps">{label}</span>
       <div className="flex min-w-0 flex-1 items-center gap-2 md:justify-end">
-        <code className="truncate rounded bg-black/[0.05] px-2.5 py-1.5 font-mono text-sm text-ink-soft">
+        <code className="truncate rounded bg-black/[0.05] px-2.5 py-1.5 font-mono text-sm text-ink-soft dark:bg-white/[0.06] dark:text-zinc-300">
           {value}
         </code>
         <button
