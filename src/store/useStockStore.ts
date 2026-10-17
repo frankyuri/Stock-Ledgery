@@ -6,6 +6,8 @@ import type {
   Resolution,
   Transaction,
 } from '@/types/stock';
+import { apiClient } from '@/services/api';
+import { useAuthStore } from './useAuthStore';
 
 const DEFAULT_WATCHLIST = ['AAPL', 'MSFT', 'NVDA', 'TSLA', '2330.TW'];
 
@@ -30,7 +32,7 @@ type PersistedStockState = Pick<
 >;
 
 export type AddTransactionResult =
-  | { ok: true; realizedGainLoss?: number }
+  | { ok: true; realizedGainLoss?: number; synced?: boolean; warning?: string }
   | { ok: false; error: string };
 
 interface StockState {
@@ -42,23 +44,26 @@ interface StockState {
   transactions: Transaction[];
   assets: AssetSnapshot[];
   linePrefs: LinePrefs;
+  isSyncing?: boolean;
   setSelectedSymbol: (symbol: string) => void;
   setResolution: (resolution: Resolution) => void;
-  addToWatchlist: (symbol: string) => void;
-  removeFromWatchlist: (symbol: string) => void;
+  addToWatchlist: (symbol: string) => Promise<void>;
+  removeFromWatchlist: (symbol: string) => Promise<void>;
   addTransaction: (
     t: Omit<Transaction, 'id' | 'realizedGainLoss'>,
-  ) => AddTransactionResult;
+  ) => Promise<AddTransactionResult>;
   updateTransaction: (
     id: string,
     patch: Partial<Omit<Transaction, 'id'>>,
-  ) => AddTransactionResult;
-  removeTransaction: (id: string) => void;
-  addAssetSnapshot: (a: Omit<AssetSnapshot, 'id'>) => void;
-  removeAssetSnapshot: (id: string) => void;
+  ) => Promise<AddTransactionResult>;
+  removeTransaction: (id: string) => Promise<void>;
+  addAssetSnapshot: (a: Omit<AssetSnapshot, 'id'>) => Promise<void>;
+  removeAssetSnapshot: (id: string) => Promise<void>;
   setLinePrefs: (patch: Partial<LinePrefs>) => void;
   /** 完整匯入備份，覆寫所有資料 */
   importBackup: (snapshot: BackupSnapshot) => void;
+  /** 從雲端 PostgreSQL 拉取最新資料 */
+  syncFromCloud: () => Promise<boolean>;
 }
 
 export interface BackupSnapshot {
@@ -228,7 +233,7 @@ const safeStorage: PersistStorage<PersistedStockState> = {
 
 export const useStockStore = create<StockState>()(
   persist<StockState, [], [], PersistedStockState>(
-    (set): StockState => ({
+    (set, get): StockState => ({
       selectedSymbol: 'AAPL',
       resolution: '1D',
       watchlist: DEFAULT_WATCHLIST,
@@ -238,23 +243,40 @@ export const useStockStore = create<StockState>()(
       linePrefs: DEFAULT_LINE_PREFS,
       setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
       setResolution: (resolution) => set({ resolution }),
-      addToWatchlist: (symbol) =>
+      addToWatchlist: async (symbol) => {
+        const norm = symbol.trim().toUpperCase();
         set((s) => ({
-          watchlist: s.watchlist.includes(symbol)
-            ? s.watchlist
-            : [...s.watchlist, symbol],
-        })),
-      removeFromWatchlist: (symbol) =>
+          watchlist: s.watchlist.includes(norm) ? s.watchlist : [...s.watchlist, norm],
+        }));
+        const token = useAuthStore.getState().token;
+        if (token && !token.startsWith('mock-')) {
+          try {
+            await apiClient.post('/watchlist', { symbol: norm });
+          } catch {}
+        }
+      },
+      removeFromWatchlist: async (symbol) => {
+        const norm = symbol.trim().toUpperCase();
         set((s) => ({
-          watchlist: s.watchlist.filter((x) => x !== symbol),
-        })),
-      addTransaction: (t) => {
+          watchlist: s.watchlist.filter((x) => x !== norm),
+        }));
+        const token = useAuthStore.getState().token;
+        if (token && !token.startsWith('mock-')) {
+          try {
+            await apiClient.delete(`/watchlist/${norm}`);
+          } catch {}
+        }
+      },
+      addTransaction: async (t) => {
         const state = useStockStore.getState();
         if (!Number.isFinite(t.shares) || t.shares <= 0) {
           return { ok: false, error: '股數需為正數' };
         }
         if (!Number.isFinite(t.price) || t.price <= 0) {
           return { ok: false, error: '成交價需為正數' };
+        }
+        if (t.fee < 0) {
+          return { ok: false, error: '手續費不可為負數' };
         }
         if (t.type === 'SELL') {
           const prev = state.holdings.find((h) => h.symbol === t.symbol);
@@ -268,6 +290,59 @@ export const useStockStore = create<StockState>()(
             };
           }
         }
+
+        const token = useAuthStore.getState().token;
+        const isCloudActive = Boolean(token && !token.startsWith('mock-'));
+
+        if (isCloudActive) {
+          try {
+            const res = await apiClient.post('/transactions', {
+              symbol: t.symbol,
+              type: t.type,
+              shares: t.shares,
+              price: t.price,
+              fee: t.fee,
+              tax: 0,
+              tradedAt: t.tradedAt,
+              note: t.note || null,
+            });
+
+            if (res.data?.success && res.data?.data?.transaction) {
+              const serverTxn = res.data.data.transaction;
+              const full: Transaction = {
+                id: serverTxn.id,
+                symbol: serverTxn.symbol,
+                type: serverTxn.type,
+                shares: serverTxn.shares,
+                price: serverTxn.price,
+                fee: serverTxn.fee,
+                tradedAt: serverTxn.tradedAt,
+                note: serverTxn.note || undefined,
+                realizedGainLoss: serverTxn.realizedGainLoss != null ? serverTxn.realizedGainLoss : undefined,
+              };
+
+              const currentList = state.transactions.filter((x) => x.id !== full.id);
+              const nextTxns = [full, ...currentList].sort((a, b) => b.tradedAt.localeCompare(a.tradedAt));
+              set({
+                transactions: nextTxns,
+                holdings: reconcileHoldings(nextTxns),
+              });
+
+              return {
+                ok: true,
+                realizedGainLoss: full.realizedGainLoss,
+                synced: true,
+              };
+            }
+          } catch (apiErr: any) {
+            if (apiErr.response?.data?.error?.message) {
+              return { ok: false, error: apiErr.response.data.error.message };
+            }
+            console.warn('[Cloud transaction save failed, falling back to local]', apiErr);
+          }
+        }
+
+        // Local fallback / offline mode
         const realized =
           t.type === 'SELL'
             ? computeRealizedForSell(state.transactions, t)
@@ -282,9 +357,14 @@ export const useStockStore = create<StockState>()(
           transactions: nextTxns,
           holdings: reconcileHoldings(nextTxns),
         });
-        return { ok: true, realizedGainLoss: realized };
+        return {
+          ok: true,
+          realizedGainLoss: realized,
+          synced: false,
+          warning: isCloudActive ? '網路暫時無法連線至雲端，已為您安全暫存於本機' : undefined,
+        };
       },
-      updateTransaction: (id, patch) => {
+      updateTransaction: async (id, patch) => {
         const state = useStockStore.getState();
         const existing = state.transactions.find((t) => t.id === id);
         if (!existing) {
@@ -301,38 +381,145 @@ export const useStockStore = create<StockState>()(
           return { ok: false, error: '手續費不能為負數' };
         }
 
+        const token = useAuthStore.getState().token;
+        const isCloudActive = Boolean(token && !token.startsWith('mock-'));
+
+        if (isCloudActive) {
+          try {
+            const res = await apiClient.put(`/transactions/${id}`, {
+              symbol: updatedTarget.symbol,
+              type: updatedTarget.type,
+              shares: updatedTarget.shares,
+              price: updatedTarget.price,
+              fee: updatedTarget.fee,
+              tradedAt: updatedTarget.tradedAt,
+              note: updatedTarget.note || null,
+            });
+
+            if (res.data?.success && res.data?.data?.transaction) {
+              const serverTxn = res.data.data.transaction;
+              const candidateTxns = state.transactions.map((t) =>
+                t.id === id
+                  ? {
+                      ...t,
+                      symbol: serverTxn.symbol,
+                      type: serverTxn.type,
+                      shares: serverTxn.shares,
+                      price: serverTxn.price,
+                      fee: serverTxn.fee,
+                      tradedAt: serverTxn.tradedAt,
+                      note: serverTxn.note || undefined,
+                      realizedGainLoss: serverTxn.realizedGainLoss != null ? serverTxn.realizedGainLoss : undefined,
+                    }
+                  : t
+              );
+              const recalculated = recalculateAllRealizedGains(candidateTxns);
+              set({
+                transactions: recalculated,
+                holdings: reconcileHoldings(recalculated),
+              });
+              const targetAfter = recalculated.find((t) => t.id === id);
+              return { ok: true, realizedGainLoss: targetAfter?.realizedGainLoss, synced: true };
+            }
+          } catch (apiErr: any) {
+            if (apiErr.response?.data?.error?.message) {
+              return { ok: false, error: apiErr.response.data.error.message };
+            }
+            console.warn('[Cloud update failed, falling back to local]', apiErr);
+          }
+        }
+
+        // Local fallback
         const candidateTxns = state.transactions.map((t) =>
-          t.id === id ? updatedTarget : t,
+          t.id === id ? updatedTarget : t
         );
         const recalculated = recalculateAllRealizedGains(candidateTxns);
-        const newHoldings = reconcileHoldings(recalculated);
-
         set({
           transactions: recalculated,
-          holdings: newHoldings,
+          holdings: reconcileHoldings(recalculated),
         });
-
         const targetAfter = recalculated.find((t) => t.id === id);
-        return { ok: true, realizedGainLoss: targetAfter?.realizedGainLoss };
+        return { ok: true, realizedGainLoss: targetAfter?.realizedGainLoss, synced: false };
       },
-      removeTransaction: (id: string) =>
-        set((s) => {
+      removeTransaction: async (id: string) => {
+        const token = useAuthStore.getState().token;
+        const isCloudActive = Boolean(token && !token.startsWith('mock-'));
+
+        if (isCloudActive) {
+          try {
+            await apiClient.delete(`/transactions/${id}`);
+          } catch (apiErr) {
+            console.warn('[Cloud delete failed, falling back to local delete]', apiErr);
+          }
+        }
+
+        useStockStore.setState((s) => {
           const nextTxns = recalculateAllRealizedGains(
-            s.transactions.filter((t) => t.id !== id),
+            s.transactions.filter((t) => t.id !== id)
           );
           return {
             transactions: nextTxns,
             holdings: reconcileHoldings(nextTxns),
           };
-        }),
-      addAssetSnapshot: (a: Omit<AssetSnapshot, 'id'>) =>
+        });
+      },
+      addAssetSnapshot: async (a: Omit<AssetSnapshot, 'id'>) => {
+        const token = useAuthStore.getState().token;
+        const isCloudActive = Boolean(token && !token.startsWith('mock-'));
+
+        if (isCloudActive) {
+          try {
+            const res = await apiClient.post('/assets', {
+              date: a.date,
+              currency: a.currency,
+              cash: a.cash,
+              securities: a.securities,
+              other: a.other,
+              note: a.note || null,
+            });
+            if (res.data?.success && res.data?.data) {
+              const serverAsset = res.data.data;
+              const item: AssetSnapshot = {
+                id: serverAsset.id,
+                date: serverAsset.date,
+                currency: serverAsset.currency,
+                cash: serverAsset.cash,
+                securities: serverAsset.securities,
+                other: serverAsset.other,
+                note: serverAsset.note || undefined,
+              };
+              set((s) => ({
+                assets: [...s.assets.filter((x) => x.id !== item.id), item].sort((x, y) =>
+                  x.date.localeCompare(y.date)
+                ),
+              }));
+              return;
+            }
+          } catch (apiErr) {
+            console.warn('[Cloud asset snapshot save failed, falling back to local]', apiErr);
+          }
+        }
+
         set((s) => ({
           assets: [...s.assets, { id: genId(), ...a }].sort((x, y) =>
-            x.date.localeCompare(y.date),
+            x.date.localeCompare(y.date)
           ),
-        })),
-      removeAssetSnapshot: (id: string) =>
-        set((s) => ({ assets: s.assets.filter((a) => a.id !== id) })),
+        }));
+      },
+      removeAssetSnapshot: async (id: string) => {
+        const token = useAuthStore.getState().token;
+        const isCloudActive = Boolean(token && !token.startsWith('mock-'));
+
+        if (isCloudActive) {
+          try {
+            await apiClient.delete(`/assets/${id}`);
+          } catch (apiErr) {
+            console.warn('[Cloud asset delete failed]', apiErr);
+          }
+        }
+
+        set((s) => ({ assets: s.assets.filter((a) => a.id !== id) }));
+      },
       setLinePrefs: (patch: Partial<LinePrefs>) =>
         set((s) => ({ linePrefs: { ...s.linePrefs, ...patch } })),
       importBackup: (snapshot: BackupSnapshot) =>
@@ -345,6 +532,86 @@ export const useStockStore = create<StockState>()(
           linePrefs: snapshot.linePrefs ?? s.linePrefs,
           holdings: reconcileHoldings(snapshot.transactions ?? []),
         })),
+      syncFromCloud: async () => {
+        const token = useAuthStore.getState().token;
+        if (!token || token.startsWith('mock-')) return false;
+
+        set({ isSyncing: true });
+        try {
+          const res = await apiClient.get('/backup/export');
+          if (res.data?.success && res.data?.data) {
+            const data = res.data.data;
+            const hasCloudTxns =
+              Array.isArray(data.transactions) && data.transactions.length > 0;
+            const hasCloudAssets =
+              Array.isArray(data.assets) && data.assets.length > 0;
+
+            if (hasCloudTxns || hasCloudAssets) {
+              const cloudTxns: Transaction[] = (data.transactions || []).map(
+                (t: any) => ({
+                  id: t.id,
+                  symbol: t.symbol,
+                  type: t.type,
+                  shares: Number(t.shares),
+                  price: Number(t.price),
+                  fee: Number(t.fee || 0),
+                  tradedAt: t.tradedAt,
+                  note: t.note || undefined,
+                  realizedGainLoss:
+                    t.realizedGainLoss != null
+                      ? Number(t.realizedGainLoss)
+                      : undefined,
+                })
+              );
+              const cloudAssets: AssetSnapshot[] = (data.assets || []).map(
+                (a: any) => ({
+                  id: a.id,
+                  date: a.date,
+                  currency: a.currency,
+                  cash: Number(a.cash),
+                  securities: Number(a.securities),
+                  other: Number(a.other),
+                  note: a.note || undefined,
+                })
+              );
+
+              set({
+                transactions: cloudTxns,
+                holdings: reconcileHoldings(cloudTxns),
+                assets: cloudAssets,
+                ...(Array.isArray(data.watchlist) && data.watchlist.length > 0
+                  ? { watchlist: data.watchlist }
+                  : {}),
+                ...(data.linePrefs ? { linePrefs: data.linePrefs } : {}),
+              });
+              return true;
+            } else {
+              // 雲端目前無紀錄：若本地有累積資料，自動備份推送至雲端
+              const localTxns = get().transactions;
+              const localAssets = get().assets;
+              if (localTxns.length > 0 || localAssets.length > 0) {
+                try {
+                  await apiClient.post('/backup/import', {
+                    version: 1,
+                    watchlist: get().watchlist,
+                    transactions: localTxns,
+                    assets: localAssets,
+                    linePrefs: get().linePrefs,
+                  });
+                  return true;
+                } catch (e) {
+                  console.warn('[Auto upload local data to cloud failed]', e);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[Sync from cloud error]:', err);
+        } finally {
+          set({ isSyncing: false });
+        }
+        return false;
+      },
     }),
     {
       name: STORAGE_KEY,

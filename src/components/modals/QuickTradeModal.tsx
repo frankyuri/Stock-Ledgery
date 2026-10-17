@@ -51,6 +51,7 @@ export function QuickTradeModal({
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize or reset when modal opens or edit target changes
   useEffect(() => {
@@ -151,7 +152,7 @@ export function QuickTradeModal({
     return newShares > 0 ? newTotalCost / newShares : parsedPrice;
   }, [type, currentHolding, parsedShares, parsedPrice, parsedFee]);
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     const s = symbol.trim().toUpperCase();
@@ -172,45 +173,59 @@ export function QuickTradeModal({
       return;
     }
 
-    if (editTransaction) {
-      const res = updateTransaction(editTransaction.id, {
-        symbol: s,
-        type,
-        shares: parsedShares,
-        price: parsedPrice,
-        fee: parsedFee,
-        tradedAt,
-        note,
-      });
-      if (!res.ok) {
-        setError(res.error);
-        toast.error(res.error);
-        return;
-      }
-      toast.success(`已更新 ${s} 交易紀錄`);
-      onClose();
-    } else {
-      const res = addTransaction({
-        symbol: s,
-        type,
-        shares: parsedShares,
-        price: parsedPrice,
-        fee: parsedFee,
-        tradedAt,
-        note,
-      });
-      if (!res.ok) {
-        setError(res.error);
-        toast.error(res.error);
-        return;
-      }
-      if (type === 'SELL' && typeof res.realizedGainLoss === 'number') {
-        const sign = res.realizedGainLoss >= 0 ? '+' : '';
-        toast.success(`已記帳 ${s} 賣出 · 已實現損益 ${sign}${formatNumber(res.realizedGainLoss)}`);
+    setIsSubmitting(true);
+    try {
+      if (editTransaction) {
+        const res = await updateTransaction(editTransaction.id, {
+          symbol: s,
+          type,
+          shares: parsedShares,
+          price: parsedPrice,
+          fee: parsedFee,
+          tradedAt,
+          note,
+        });
+        if (!res.ok) {
+          setError(res.error);
+          toast.error(res.error);
+          return;
+        }
+        toast.success(`已更新 ${s} 交易紀錄${res.synced ? '（已同步至雲端）' : ''}`);
+        onClose();
       } else {
-        toast.success(`已記帳 ${s} 買進 ${parsedShares} 股`);
+        const res = await addTransaction({
+          symbol: s,
+          type,
+          shares: parsedShares,
+          price: parsedPrice,
+          fee: parsedFee,
+          tradedAt,
+          note,
+        });
+        if (!res.ok) {
+          setError(res.error);
+          toast.error(res.error);
+          return;
+        }
+        if (res.warning) {
+          toast.warning(res.warning);
+        }
+        if (type === 'SELL' && typeof res.realizedGainLoss === 'number') {
+          const sign = res.realizedGainLoss >= 0 ? '+' : '';
+          toast.success(
+            `已記帳 ${s} 賣出 · 已實現損益 ${sign}${formatNumber(res.realizedGainLoss)}${
+              res.synced ? '（已同步至雲端）' : ''
+            }`
+          );
+        } else {
+          toast.success(
+            `已記帳 ${s} 買進 ${parsedShares} 股${res.synced ? '（已同步至雲端）' : ''}`
+          );
+        }
+        onClose();
       }
-      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -486,15 +501,22 @@ export function QuickTradeModal({
             </button>
             <button
               type="submit"
+              disabled={isSubmitting}
               className={cn(
-                'btn text-sm text-white',
+                'btn text-sm text-white disabled:opacity-50',
                 type === 'BUY'
                   ? 'border-up bg-up hover:bg-emerald-600'
                   : 'border-down bg-down hover:bg-rose-600',
               )}
             >
               <CheckCircle2 className="h-4 w-4" />
-              {editTransaction ? '確認儲存' : type === 'BUY' ? '確認買進記帳' : '確認賣出記帳'}
+              {isSubmitting
+                ? '同步儲存中…'
+                : editTransaction
+                ? '確認儲存'
+                : type === 'BUY'
+                ? '確認買進記帳'
+                : '確認賣出記帳'}
             </button>
           </div>
         </form>

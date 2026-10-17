@@ -1,8 +1,9 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const Dashboard = lazy(() =>
   import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })),
@@ -12,6 +13,12 @@ const Overview = lazy(() =>
 );
 const Portfolio = lazy(() =>
   import('@/pages/Portfolio').then((m) => ({ default: m.Portfolio })),
+);
+const Dividends = lazy(() =>
+  import('@/pages/Dividends').then((m) => ({ default: m.Dividends })),
+);
+const Analytics = lazy(() =>
+  import('@/pages/Analytics').then((m) => ({ default: m.Analytics })),
 );
 const StockDetail = lazy(() =>
   import('@/pages/StockDetail').then((m) => ({ default: m.StockDetail })),
@@ -50,6 +57,10 @@ function LazyPage({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    void useAuthStore.getState().bootstrap();
+  }, []);
+
   return (
     <Routes>
       <Route
@@ -102,6 +113,26 @@ export default function App() {
             <RequireAuth>
               <LazyPage>
                 <Portfolio />
+              </LazyPage>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="dividends"
+          element={
+            <RequireAuth>
+              <LazyPage>
+                <Dividends />
+              </LazyPage>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="analytics"
+          element={
+            <RequireAuth>
+              <LazyPage>
+                <Analytics />
               </LazyPage>
             </RequireAuth>
           }

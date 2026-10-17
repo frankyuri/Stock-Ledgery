@@ -106,14 +106,14 @@ export function Dashboard() {
       <section>
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2">
               大盤總覽
               <span className="flex items-center gap-1 text-xs font-normal text-ink-mute dark:text-zinc-400">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 每 60 秒自動更新
               </span>
             </h1>
-            <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
+            <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">
               全球主要指數行情、個股 K 線走勢、自選清單即時追蹤
             </p>
           </div>
@@ -366,18 +366,21 @@ function IndexCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative flex flex-col justify-between rounded-2xl border p-4 text-left transition shadow-xs active:scale-[0.98]',
+        'group relative flex flex-col justify-between rounded-xl border p-4 text-left transition shadow-xs active:scale-[0.98] min-w-0',
         isSelected
           ? 'border-brand bg-brand/[0.04] ring-2 ring-brand/30 dark:bg-brand/10'
-          : 'border-black/5 bg-surface-card hover:border-black/15 dark:border-white/10 dark:bg-zinc-900/55 dark:hover:border-white/20',
+          : 'border-slate-200/80 bg-white hover:border-slate-300 dark:border-zinc-800 dark:bg-zinc-900/60 dark:hover:border-zinc-700',
       )}
     >
-      <div>
-        <div className="flex items-center justify-between">
+      <div className="min-w-0">
+        <div className="flex items-center justify-between gap-1">
           <span className="text-xs font-bold text-ink dark:text-zinc-100 truncate">{label}</span>
-          <span className="font-mono text-[10px] text-ink-faint dark:text-zinc-500">{symbol}</span>
+          <span className="font-mono text-[10px] text-ink-faint dark:text-zinc-500 shrink-0">{symbol}</span>
         </div>
-        <p className="mt-2 font-mono text-xl font-bold leading-tight text-ink dark:text-zinc-100 num">
+        <p
+          className="mt-2 font-mono text-lg sm:text-xl font-bold leading-tight truncate tracking-tight text-ink dark:text-zinc-100 num"
+          title={quote ? formatNumber(quote.price) : undefined}
+        >
           {quote ? formatNumber(quote.price) : '—'}
         </p>
       </div>

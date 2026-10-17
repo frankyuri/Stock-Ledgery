@@ -1,0 +1,17 @@
+{
+  "name": "Stocktify 專業美台股資產管理系統",
+  "short_name": "Stocktify",
+  "description": "專業美股台股投資組合追蹤、加權損益記帳、股息現金流預測與自動化推播系統",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a84ff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

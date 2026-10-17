@@ -12,19 +12,24 @@ interface StatCardProps {
 export function StatCard({ label, value, change, changePercent, hint }: StatCardProps) {
   const showChange = typeof change === 'number' && typeof changePercent === 'number';
   return (
-    <div className="card p-6">
-      <p className="label-caps">{label}</p>
-      <p className="mt-3 font-mono text-[30px] font-semibold leading-none tracking-tight text-ink dark:text-zinc-100 num">
+    <div className="card p-4 sm:p-5 overflow-hidden">
+      <p className="label-caps truncate">{label}</p>
+      <p
+        className="mt-2 font-mono text-xl sm:text-2xl font-bold leading-tight tracking-tight text-slate-900 dark:text-zinc-100 num truncate"
+        title={value}
+      >
         {value}
       </p>
       {showChange && (
-        <p className={cn('mt-3 text-[15px] font-medium num', changeColor(change!))}>
-          {change! > 0 ? '+' : ''}
-          {change!.toFixed(2)}{' '}
-          <span className="text-sm opacity-80">({formatPercent(changePercent!)})</span>
+        <p className={cn('mt-2 text-xs font-semibold num flex items-center gap-1 truncate', changeColor(change!))}>
+          <span>
+            {change! > 0 ? '+' : ''}
+            {change!.toFixed(2)}
+          </span>
+          <span className="opacity-75">({formatPercent(changePercent!)})</span>
         </p>
       )}
-      {hint && <p className="mt-2 text-sm text-ink-mute">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400 truncate">{hint}</p>}
     </div>
   );
 }

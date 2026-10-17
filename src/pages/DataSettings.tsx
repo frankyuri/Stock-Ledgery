@@ -9,8 +9,14 @@ import {
   ShieldCheck,
   AlertCircle,
   FileCheck2,
+  Cloud,
+  CloudUpload,
+  CloudDownload,
+  RefreshCw,
 } from 'lucide-react';
 import { useStockStore, buildBackupSnapshot, type BackupSnapshot } from '@/store/useStockStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { apiClient } from '@/services/api';
 import { useToast } from '@/lib/toast';
 import { formatNumber } from '@/lib/format';
 
@@ -45,6 +51,7 @@ function isValidSnapshot(x: unknown): x is BackupSnapshot {
 }
 
 export function DataSettings() {
+  const user = useAuthStore((s) => s.user);
   const transactions = useStockStore((s) => s.transactions);
   const assets = useStockStore((s) => s.assets);
   const watchlist = useStockStore((s) => s.watchlist);
@@ -52,6 +59,7 @@ export function DataSettings() {
   const fileRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
   const stats = useMemo(
     () => ({
@@ -95,16 +103,66 @@ export function DataSettings() {
     }
   }
 
+  // 雲端備份上傳 (將本機 localStorage 資料同步覆寫至雲端資料庫)
+  async function handleCloudUpload() {
+    if (!user) {
+      toast.error('請先登入帳號方可同步至雲端');
+      return;
+    }
+    const ok = window.confirm(
+      `確定將本機 ${transactions.length} 筆交易與 ${assets.length} 筆淨值快照同步上傳至雲端 PostgreSQL 資料庫？`
+    );
+    if (!ok) return;
+
+    setIsCloudSyncing(true);
+    try {
+      const snapshot = buildBackupSnapshot();
+      const res = await apiClient.post('/backup/import', snapshot);
+      if (res.data?.success) {
+        toast.success(`☁️ 雲端備份成功！已同步 ${snapshot.transactions.length} 筆交易`);
+      }
+    } catch (err: any) {
+      toast.error(`同步失敗：${err?.response?.data?.error?.message || err.message}`);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  }
+
+  // 雲端備份下載 (從雲端 PostgreSQL 資料庫拉取最新資料並覆寫本機)
+  async function handleCloudDownload() {
+    if (!user) {
+      toast.error('請先登入帳號方可從雲端下載');
+      return;
+    }
+    const ok = window.confirm(
+      '確定從雲端資料庫還原最新交易與持股資料？這將以雲端資料覆寫本機當前內容。'
+    );
+    if (!ok) return;
+
+    setIsCloudSyncing(true);
+    try {
+      const res = await apiClient.get('/backup/export');
+      const cloudData = res.data?.data;
+      if (isValidSnapshot(cloudData)) {
+        importBackup(cloudData);
+        toast.success(`☁️ 已成功從雲端還原 ${cloudData.transactions.length} 筆交易！`);
+      }
+    } catch (err: any) {
+      toast.error(`下載失敗：${err?.response?.data?.error?.message || err.message}`);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
-          <Database className="h-7 w-7 text-brand" />
-          資料備份與還原
+        <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
+          <Database className="h-6 w-6 text-brand" />
+          資料備份與雲端同步
         </h1>
-        <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
-          所有持股、交易紀錄與淨值快照均持久化保存在瀏覽器本機儲存空間中。
-          更換設備或清理快取前，請隨時匯出 JSON 備份檔。
+        <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">
+          支援本機 JSON 檔案離線備份，亦可一鍵同步儲存至雲端 PostgreSQL 資料庫，實現多裝置跨端同步。
         </p>
       </div>
 
@@ -114,19 +172,57 @@ export function DataSettings() {
         <Stat label="自選追蹤標的" value={stats.watchlist} icon={Bookmark} />
       </div>
 
+      {/* 雲端資料庫雙向同步卡片 */}
+      <section className="card border-brand/20 bg-brand/[0.02]">
+        <div className="card-header flex-wrap gap-3">
+          <div>
+            <h2 className="section-title flex items-center gap-2">
+              <Cloud className="h-5 w-5 text-brand" />
+              雲端資料庫即時同步
+            </h2>
+            <p className="section-hint">
+              {user
+                ? `已登入帳號：${user.email}，可自由雙向備份或還原`
+                : '登入帳號後即可一鍵將本機資料遷移或同步至 PostgreSQL 雲端資料庫'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              type="button"
+              disabled={isCloudSyncing || !user}
+              onClick={handleCloudUpload}
+              className="btn btn-primary text-xs font-semibold py-2 px-3.5 flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+            >
+              {isCloudSyncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
+              <span>本機上傳至雲端</span>
+            </button>
+            <button
+              type="button"
+              disabled={isCloudSyncing || !user}
+              onClick={handleCloudDownload}
+              className="btn text-xs font-semibold py-2 px-3.5 flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <CloudDownload className="h-4 w-4 text-brand" />
+              <span>從雲端拉取至本機</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 本機 JSON 檔案匯出 */}
       <section className="card">
         <div className="card-header flex-wrap gap-3">
           <div>
             <h2 className="section-title flex items-center gap-2">
               <Download className="h-4 w-4 text-brand" />
-              匯出全站備份檔
+              匯出本機 JSON 備份檔
             </h2>
-            <p className="section-hint">下載單一完整 JSON 檔案，妥善存於本機或雲端硬碟</p>
+            <p className="section-hint">下載單一完整 JSON 檔案，妥善存於本機硬碟作為離線冷備份</p>
           </div>
           <button
             type="button"
             onClick={handleExport}
-            className="btn btn-primary text-xs font-semibold py-2 px-4 flex items-center gap-1.5 shadow-sm"
+            className="btn text-xs font-semibold py-2 px-4 flex items-center gap-1.5 shadow-sm"
           >
             <Download className="h-4 w-4" />
             <span>下載備份 JSON</span>
@@ -134,12 +230,13 @@ export function DataSettings() {
         </div>
       </section>
 
+      {/* 從本機 JSON 檔案還原 */}
       <section className="card">
         <div className="card-header flex-wrap gap-3">
           <div>
             <h2 className="section-title flex items-center gap-2">
               <Upload className="h-4 w-4 text-brand" />
-              從備份檔案還原
+              從本機 JSON 檔案還原
             </h2>
             <p className="section-hint">
               選擇先前匯出的 JSON 檔；持股與損益將依據交易歷程自動完整重建
@@ -176,8 +273,8 @@ export function DataSettings() {
         </p>
         <ul className="list-disc space-y-1 pl-5 leading-relaxed">
           <li>備份檔內含未加密的完整交易紀錄與持股數據，請妥善保管避免外洩。</li>
-          <li>還原動作將會「完整覆寫」目前的本機資料，執行前建議先匯出目前的備份。</li>
-          <li>支援無縫導入後續自架後端 API 系統作為初始資料集。</li>
+          <li>還原動作將會「完整覆寫」目前的本機資料，執行前建議先匯出一份目前的備份。</li>
+          <li>雲端同步會將您的交易紀錄安全保存於專屬 PostgreSQL 資料庫，支援無縫多裝置同步。</li>
         </ul>
       </section>
     </div>
@@ -194,12 +291,15 @@ function Stat({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between">
-        <p className="label-caps">{label}</p>
-        <Icon className="h-4 w-4 text-ink-faint" />
+    <div className="card p-5 min-w-0">
+      <div className="flex items-center justify-between gap-1">
+        <p className="label-caps truncate">{label}</p>
+        <Icon className="h-4 w-4 text-ink-faint shrink-0" />
       </div>
-      <p className="mt-2.5 font-mono text-[28px] font-bold text-ink dark:text-zinc-100 num">
+      <p
+        className="mt-2 font-mono text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+        title={formatNumber(value, 0)}
+      >
         {formatNumber(value, 0)}
       </p>
     </div>

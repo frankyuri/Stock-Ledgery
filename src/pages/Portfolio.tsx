@@ -63,11 +63,11 @@ export function Portfolio() {
       {/* Page Title & Actions */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
-            <Briefcase className="h-7 w-7 text-brand" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
+            <Briefcase className="h-6 w-6 text-brand" />
             持股明細
           </h1>
-          <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">
             目前持有的所有標的與即時部位市值（由
             <Link to="/transactions" className="mx-1 font-semibold text-brand hover:underline inline-flex items-center gap-0.5">
               交易紀錄
@@ -98,36 +98,40 @@ export function Portfolio() {
       {/* Top Summary Cards */}
       {holdings.length > 0 && !isLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="card p-5">
-            <span className="label-caps flex items-center gap-1.5">
+          <div className="card p-5 min-w-0">
+            <span className="label-caps flex items-center gap-1.5 truncate">
               <Wallet className="h-3.5 w-3.5 text-brand" />
               持股總市值
             </span>
-            <p className="mt-2.5 font-mono text-2xl font-bold text-ink dark:text-zinc-100 num">
+            <p
+              className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+              title={formatCurrency(summary.totalValue, summary.currency)}
+            >
               {formatCurrency(summary.totalValue, summary.currency)}
             </p>
-            <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+            <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
               持股總成本：{formatCurrency(summary.totalCost, summary.currency)}
             </p>
           </div>
 
-          <div className="card p-5">
-            <span className="label-caps flex items-center gap-1.5">
+          <div className="card p-5 min-w-0">
+            <span className="label-caps flex items-center gap-1.5 truncate">
               <TrendingUp className="h-3.5 w-3.5 text-brand" />
               未實現總損益
             </span>
             <p
               className={cn(
-                'mt-2.5 font-mono text-2xl font-bold num',
+                'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
                 changeColor(summary.totalGainLoss),
               )}
+              title={`${summary.totalGainLoss > 0 ? '+' : ''}${formatCurrency(summary.totalGainLoss, summary.currency)}`}
             >
               {summary.totalGainLoss > 0 ? '+' : ''}
               {formatCurrency(summary.totalGainLoss, summary.currency)}
             </p>
             <p
               className={cn(
-                'mt-1 font-mono text-xs font-semibold num',
+                'mt-1 font-mono text-xs font-semibold num truncate',
                 changeColor(summary.totalGainLoss),
               )}
             >
@@ -135,23 +139,24 @@ export function Portfolio() {
             </p>
           </div>
 
-          <div className="card p-5">
-            <span className="label-caps flex items-center gap-1.5">
+          <div className="card p-5 min-w-0">
+            <span className="label-caps flex items-center gap-1.5 truncate">
               <DollarSign className="h-3.5 w-3.5 text-brand" />
               今日市值變動
             </span>
             <p
               className={cn(
-                'mt-2.5 font-mono text-2xl font-bold num',
+                'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
                 changeColor(summary.totalDayChange),
               )}
+              title={`${summary.totalDayChange > 0 ? '+' : ''}${formatCurrency(summary.totalDayChange, summary.currency)}`}
             >
               {summary.totalDayChange > 0 ? '+' : ''}
               {formatCurrency(summary.totalDayChange, summary.currency)}
             </p>
             <p
               className={cn(
-                'mt-1 font-mono text-xs font-semibold num',
+                'mt-1 font-mono text-xs font-semibold num truncate',
                 changeColor(summary.totalDayChange),
               )}
             >
@@ -159,18 +164,18 @@ export function Portfolio() {
             </p>
           </div>
 
-          <div className="card p-5">
-            <span className="label-caps flex items-center gap-1.5">
+          <div className="card p-5 min-w-0">
+            <span className="label-caps flex items-center gap-1.5 truncate">
               <PieChart className="h-3.5 w-3.5 text-brand" />
               持股部位數量
             </span>
-            <p className="mt-2.5 font-mono text-2xl font-bold text-ink dark:text-zinc-100 num">
+            <p className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num">
               {holdings.length}{' '}
               <span className="text-sm font-normal text-ink-mute dark:text-zinc-400">檔標的</span>
             </p>
             <Link
               to="/overview"
-              className="mt-1 text-xs font-medium text-brand hover:underline inline-flex items-center gap-1"
+              className="mt-1 text-xs font-medium text-brand hover:underline inline-flex items-center gap-1 truncate"
             >
               查看資產配置圓餅圖 <ArrowRight className="h-3 w-3" />
             </Link>

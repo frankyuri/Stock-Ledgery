@@ -73,11 +73,11 @@ export function Overview() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
-            <PieChart className="h-7 w-7 text-brand" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
+            <PieChart className="h-6 w-6 text-brand" />
             資產總覽
           </h1>
-          <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">
             視覺化分析總資產部位、今日波動、配置權重與集中度。
           </p>
         </div>
@@ -216,19 +216,22 @@ function SummaryCards({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <div className="card p-5">
-        <div className="flex items-baseline justify-between">
-          <p className="label-caps">總部位市值</p>
+      <div className="card p-5 min-w-0">
+        <div className="flex items-baseline justify-between gap-1">
+          <p className="label-caps truncate">總部位市值</p>
           {groups.length > 1 && (
-            <span className="text-[11px] text-ink-faint">
+            <span className="text-[11px] text-ink-faint shrink-0">
               主要幣別 · 共 {groups.length} 種
             </span>
           )}
         </div>
-        <p className="mt-2.5 font-mono text-[28px] font-bold text-ink dark:text-zinc-100 num">
+        <p
+          className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+          title={formatCurrency(marketValue, currency)}
+        >
           {formatCurrency(marketValue, currency)}
         </p>
-        <p className="mt-1.5 text-xs text-ink-mute dark:text-zinc-400">
+        <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
           總成本 {formatCurrency(cost, currency)} · 淨現金流{' '}
           <span className={cn('font-mono font-semibold num', netFlow >= 0 ? 'text-up' : 'text-down')}>
             {netFlow >= 0 ? '+' : ''}
@@ -237,50 +240,53 @@ function SummaryCards({
         </p>
       </div>
 
-      <div className="card p-5">
-        <p className="label-caps">今日波動</p>
+      <div className="card p-5 min-w-0">
+        <p className="label-caps truncate">今日波動</p>
         <p
           className={cn(
-            'mt-2.5 font-mono text-[28px] font-bold num',
+            'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
             changeColor(dayChange),
           )}
+          title={`${dayChange >= 0 ? '+' : ''}${formatNumber(dayChange)}`}
         >
           {dayChange >= 0 ? '+' : ''}
           {formatNumber(dayChange)}
         </p>
-        <p className={cn('mt-1.5 font-mono text-xs font-semibold num', changeColor(dayChange))}>
+        <p className={cn('mt-1 font-mono text-xs font-semibold num truncate', changeColor(dayChange))}>
           {formatPercent(dayPct)} 今日變化
         </p>
       </div>
 
-      <div className="card p-5">
-        <p className="label-caps">未實現總損益</p>
+      <div className="card p-5 min-w-0">
+        <p className="label-caps truncate">未實現總損益</p>
         <p
           className={cn(
-            'mt-2.5 font-mono text-[28px] font-bold num',
+            'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
             changeColor(gainLoss),
           )}
+          title={`${gainLoss >= 0 ? '+' : ''}${formatNumber(gainLoss)}`}
         >
           {gainLoss >= 0 ? '+' : ''}
           {formatNumber(gainLoss)}
         </p>
-        <p className={cn('mt-1.5 font-mono text-xs font-semibold num', changeColor(gainLoss))}>
+        <p className={cn('mt-1 font-mono text-xs font-semibold num truncate', changeColor(gainLoss))}>
           報酬率 {formatPercent(gainPct)}
         </p>
       </div>
 
-      <div className="card p-5">
-        <p className="label-caps">累計已實現損益</p>
+      <div className="card p-5 min-w-0">
+        <p className="label-caps truncate">累計已實現損益</p>
         <p
           className={cn(
-            'mt-2.5 font-mono text-[28px] font-bold num',
+            'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
             changeColor(realizedTotal),
           )}
+          title={`${realizedTotal >= 0 ? '+' : ''}${formatNumber(realizedTotal)}`}
         >
           {realizedTotal >= 0 ? '+' : ''}
           {formatNumber(realizedTotal)}
         </p>
-        <p className="mt-1.5 text-xs text-ink-mute dark:text-zinc-400">
+        <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
           賣出交易已落袋結算
         </p>
       </div>
@@ -296,7 +302,7 @@ function AllocationCard({ primary }: { primary?: GroupEntry }) {
     value: h.marketValue,
   }));
   return (
-    <section className="card">
+    <section className="card min-w-0">
       <div className="card-header">
         <div>
           <h2 className="section-title">資產配置比例</h2>
@@ -315,7 +321,7 @@ function TopHoldingsCard({ primary }: { primary?: GroupEntry }) {
   const sorted = [...primary.items].sort((a, b) => b.marketValue - a.marketValue).slice(0, 6);
   const max = sorted[0]?.marketValue ?? 1;
   return (
-    <section className="card">
+    <section className="card min-w-0">
       <div className="card-header">
         <div>
           <h2 className="section-title">主要持股部位排行</h2>
@@ -330,12 +336,12 @@ function TopHoldingsCard({ primary }: { primary?: GroupEntry }) {
             return (
               <li key={h.symbol}>
                 <Link to={`/stock/${h.symbol}`} className="block group">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[15px] font-bold text-ink group-hover:text-brand dark:text-zinc-100 transition">
+                  <div className="flex items-baseline justify-between gap-3 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-ink group-hover:text-brand dark:text-zinc-100 transition truncate">
                         {h.symbol}
                       </p>
-                      <p className="truncate text-xs text-ink-mute dark:text-zinc-400">{h.name}</p>
+                      <p className="truncate text-xs text-ink-mute dark:text-zinc-400" title={h.name}>{h.name}</p>
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="font-mono text-sm font-bold text-ink dark:text-zinc-100 num">
@@ -356,7 +362,7 @@ function TopHoldingsCard({ primary }: { primary?: GroupEntry }) {
                   <div className="mt-1.5 flex items-center gap-3">
                     <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/10">
                       <div
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand to-brand-dark transition-all duration-300"
+                        className="absolute inset-y-0 left-0 rounded-full bg-brand transition-all duration-300"
                         style={{ width: `${barPct}%` }}
                       />
                     </div>
@@ -376,24 +382,27 @@ function TopHoldingsCard({ primary }: { primary?: GroupEntry }) {
 
 function MultiCurrencyCard({ groups }: { groups: GroupEntry[] }) {
   return (
-    <div className="card card-body">
+    <div className="card card-body min-w-0">
       <p className="label-caps mb-3">各幣別資產小計</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map((g) => (
           <div
             key={g.currency}
-            className="rounded-xl border border-black/5 bg-white/60 p-4 backdrop-blur dark:border-white/10 dark:bg-zinc-800/40"
+            className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-850 min-w-0"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-1">
               <span className="text-base font-bold text-ink dark:text-zinc-100">{g.currency}</span>
-              <span className="text-xs text-ink-mute dark:text-zinc-400">{g.items.length} 檔持股</span>
+              <span className="text-xs text-ink-mute dark:text-zinc-400 shrink-0">{g.items.length} 檔持股</span>
             </div>
-            <p className="mt-2 font-mono text-xl font-bold text-ink dark:text-zinc-100 num">
+            <p
+              className="mt-2 font-mono text-xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+              title={formatCurrency(g.marketValue, g.currency)}
+            >
               {formatCurrency(g.marketValue, g.currency)}
             </p>
             <p
               className={cn(
-                'mt-1 font-mono text-xs font-semibold num',
+                'mt-1 font-mono text-xs font-semibold num truncate',
                 changeColor(g.gainLoss),
               )}
             >
@@ -420,7 +429,7 @@ function DetailTable({ data }: { data: PortfolioHolding[] }) {
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-black/5 dark:divide-white/10 text-sm">
           <thead>
-            <tr className="bg-black/[0.02] dark:bg-white/[0.02] text-xs uppercase tracking-[0.12em] text-ink-mute dark:text-zinc-400 font-bold">
+            <tr className="bg-black/[0.02] dark:bg-white/[0.02] text-xs uppercase tracking-[0.12em] text-ink-mute dark:text-zinc-400 font-bold whitespace-nowrap">
               <th className="px-5 py-3 text-left">代號 / 名稱</th>
               <th className="px-5 py-3 text-right">持有股數</th>
               <th className="px-5 py-3 text-right">平均成本</th>
@@ -443,18 +452,18 @@ function DetailTable({ data }: { data: PortfolioHolding[] }) {
                     <p className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[140px]">{h.name}</p>
                   </Link>
                 </td>
-                <td className="px-5 py-3.5 text-right font-mono font-medium num text-ink dark:text-zinc-100">
+                <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono font-medium num text-ink dark:text-zinc-100">
                   {formatNumber(h.shares, 4)}
                 </td>
-                <td className="px-5 py-3.5 text-right font-mono num">
+                <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono num">
                   {formatNumber(h.avgCost)}
                 </td>
-                <td className="px-5 py-3.5 text-right font-mono font-semibold num text-ink dark:text-zinc-100">
+                <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono font-semibold num text-ink dark:text-zinc-100">
                   {formatNumber(h.price)}
                 </td>
                 <td
                   className={cn(
-                    'px-5 py-3.5 text-right font-mono font-semibold num',
+                    'whitespace-nowrap px-5 py-3.5 text-right font-mono font-semibold num',
                     changeColor(h.change),
                   )}
                 >
@@ -464,12 +473,12 @@ function DetailTable({ data }: { data: PortfolioHolding[] }) {
                     ({formatPercent(h.changePercent)})
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-right font-mono font-bold num text-ink dark:text-zinc-100">
+                <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono font-bold num text-ink dark:text-zinc-100">
                   {formatNumber(h.marketValue)} {h.currency}
                 </td>
                 <td
                   className={cn(
-                    'px-5 py-3.5 text-right font-mono font-bold num',
+                    'whitespace-nowrap px-5 py-3.5 text-right font-mono font-bold num',
                     changeColor(h.gainLoss),
                   )}
                 >
@@ -478,7 +487,7 @@ function DetailTable({ data }: { data: PortfolioHolding[] }) {
                 </td>
                 <td
                   className={cn(
-                    'px-5 py-3.5 text-right font-mono font-bold num',
+                    'whitespace-nowrap px-5 py-3.5 text-right font-mono font-bold num',
                     changeColor(h.gainLoss),
                   )}
                 >
