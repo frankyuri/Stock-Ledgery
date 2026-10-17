@@ -16,14 +16,14 @@ export function AuthShell({ title, subtitle, children }: Props) {
           to="/"
           className="mb-6 flex items-center gap-2.5"
         >
-          <LogoMark className="h-9 w-9 shrink-0" />
-          <span className="text-base font-semibold tracking-tight text-ink">
+          <LogoMark className="h-9 w-9 shrink-0 shadow-xs" />
+          <span className="text-base font-bold tracking-tight text-ink dark:text-zinc-100">
             Stock-Ledgery
           </span>
         </Link>
         <div className="card p-8">
-          <h1 className="text-[26px] font-semibold tracking-tight text-ink">{title}</h1>
-          {subtitle && <p className="mt-2 text-[15px] text-ink-mute">{subtitle}</p>}
+          <h1 className="text-[26px] font-bold tracking-tight text-ink dark:text-zinc-100">{title}</h1>
+          {subtitle && <p className="mt-2 text-sm text-ink-mute dark:text-zinc-400">{subtitle}</p>}
           <div className="mt-7">{children}</div>
         </div>
         <p className="mt-6 text-center text-xs text-ink-faint">

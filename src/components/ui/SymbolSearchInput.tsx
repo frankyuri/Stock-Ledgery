@@ -122,10 +122,10 @@ export function SymbolSearchInput({
         <div
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-auto rounded-xl border border-black/10 bg-white/95 shadow-[0_12px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl"
+          className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-auto rounded-xl border border-black/10 bg-white/95 shadow-[0_12px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/95"
         >
           {help ? (
-            <p className="px-4 py-3 text-sm text-ink-mute">{help}</p>
+            <p className="px-4 py-3 text-sm text-ink-mute dark:text-zinc-400">{help}</p>
           ) : (
             results.map((r, i) => (
               <button
@@ -137,16 +137,18 @@ export function SymbolSearchInput({
                 onClick={() => commit(r)}
                 className={cn(
                   'flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition',
-                  i === activeIdx ? 'bg-brand-soft' : 'hover:bg-black/[0.03]',
+                  i === activeIdx
+                    ? 'bg-brand-soft text-brand dark:bg-brand/20 dark:text-brand'
+                    : 'text-ink hover:bg-black/[0.03] dark:text-zinc-100 dark:hover:bg-white/5',
                 )}
               >
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-ink">
+                  <p className="truncate text-[15px] font-semibold text-ink dark:text-zinc-100">
                     {r.symbol}
                   </p>
-                  <p className="truncate text-xs text-ink-mute">{r.name}</p>
+                  <p className="truncate text-xs text-ink-mute dark:text-zinc-400">{r.name}</p>
                 </div>
-                <span className="shrink-0 rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[11px] text-ink-mute">
+                <span className="shrink-0 rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[11px] text-ink-mute dark:border-white/10 dark:bg-zinc-800/80 dark:text-zinc-400">
                   {r.exchange}
                 </span>
               </button>

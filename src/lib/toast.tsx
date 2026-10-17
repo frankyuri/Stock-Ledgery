@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 export type ToastTone = 'info' | 'success' | 'error';
@@ -28,17 +29,11 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TONE_STYLE: Record<ToastTone, string> = {
-  info: 'border-brand/30 bg-white/95 dark:bg-zinc-900/95 text-ink dark:text-zinc-100',
+  info: 'border-brand/30 bg-white/95 dark:bg-zinc-900/95 text-ink dark:text-zinc-100 shadow-glass',
   success:
-    'border-up/40 bg-up/[0.08] dark:bg-up/[0.16] text-up dark:text-emerald-300',
+    'border-up/40 bg-emerald-50/95 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-200 shadow-glass',
   error:
-    'border-down/40 bg-down/[0.08] dark:bg-down/[0.16] text-down dark:text-rose-300',
-};
-
-const TONE_ICON: Record<ToastTone, string> = {
-  info: 'ℹ',
-  success: '✓',
-  error: '⚠',
+    'border-down/40 bg-rose-50/95 dark:bg-rose-950/90 text-rose-800 dark:text-rose-200 shadow-glass',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -87,23 +82,30 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed right-4 top-4 z-[100] flex w-[min(92vw,360px)] flex-col gap-2"
+        className="pointer-events-none fixed right-4 top-4 z-[100] flex w-[min(92vw,360px)] flex-col gap-2.5"
       >
         {toasts.map((t) => (
-          <button
+          <div
             key={t.id}
-            type="button"
-            onClick={() => dismiss(t.id)}
             className={cn(
-              'pointer-events-auto flex items-start gap-2.5 rounded-xl border px-4 py-3 text-left text-sm shadow-pop backdrop-blur-xl transition',
+              'pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-left text-sm shadow-pop backdrop-blur-2xl transition animate-in fade-in slide-in-from-top-2',
               TONE_STYLE[t.tone],
             )}
           >
-            <span className="mt-0.5 font-mono text-base leading-none">
-              {TONE_ICON[t.tone]}
+            <span className="mt-0.5 shrink-0">
+              {t.tone === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+              {t.tone === 'error' && <AlertCircle className="h-4 w-4 text-rose-500" />}
+              {t.tone === 'info' && <Info className="h-4 w-4 text-brand" />}
             </span>
-            <span className="flex-1 leading-snug">{t.message}</span>
-          </button>
+            <span className="flex-1 text-xs font-semibold leading-relaxed">{t.message}</span>
+            <button
+              type="button"
+              onClick={() => dismiss(t.id)}
+              className="shrink-0 p-0.5 text-ink-mute hover:text-ink dark:hover:text-zinc-100"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         ))}
       </div>
     </ToastContext.Provider>

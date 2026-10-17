@@ -76,9 +76,9 @@ export function Login() {
       </form>
 
       <div className="my-5 flex items-center gap-3 text-xs text-ink-faint">
-        <div className="h-px flex-1 bg-black/10" />
+        <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
         <span>或</span>
-        <div className="h-px flex-1 bg-black/10" />
+        <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
       </div>
 
       <button
