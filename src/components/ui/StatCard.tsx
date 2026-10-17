@@ -14,7 +14,7 @@ export function StatCard({ label, value, change, changePercent, hint }: StatCard
   return (
     <div className="card p-6">
       <p className="label-caps">{label}</p>
-      <p className="mt-3 font-mono text-[30px] font-semibold leading-none tracking-tight text-ink num">
+      <p className="mt-3 font-mono text-[30px] font-semibold leading-none tracking-tight text-ink dark:text-zinc-100 num">
         {value}
       </p>
       {showChange && (

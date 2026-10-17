@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { computeRealizedForSell, reconcileHoldings } from './useStockStore';
+import {
+  computeRealizedForSell,
+  recalculateAllRealizedGains,
+  reconcileHoldings,
+} from './useStockStore';
 import type { Transaction } from '@/types/stock';
 
 function tx(partial: Partial<Transaction> & Pick<Transaction, 'type' | 'symbol' | 'shares' | 'price' | 'tradedAt'>): Transaction {
@@ -103,3 +107,26 @@ describe('computeRealizedForSell', () => {
     expect(realized).toBe(0);
   });
 });
+
+describe('recalculateAllRealizedGains', () => {
+  it('自動重新計算 SELL 交易的已實現損益', () => {
+    const list = [
+      tx({ id: '1', type: 'BUY', symbol: 'AAPL', shares: 10, price: 100, fee: 0, tradedAt: '2025-01-01' }),
+      tx({ id: '2', type: 'SELL', symbol: 'AAPL', shares: 5, price: 150, fee: 2, tradedAt: '2025-01-02' }),
+    ];
+    const updated = recalculateAllRealizedGains(list);
+    expect(updated.find((t) => t.id === '2')?.realizedGainLoss).toBe(248);
+  });
+
+  it('前置 BUY 價格變動後，後續 SELL 損益跟著調整', () => {
+    const original = [
+      tx({ id: '1', type: 'BUY', symbol: 'AAPL', shares: 10, price: 100, fee: 0, tradedAt: '2025-01-01' }),
+      tx({ id: '2', type: 'SELL', symbol: 'AAPL', shares: 5, price: 150, fee: 0, tradedAt: '2025-01-02' }),
+    ];
+    const modified = original.map((t) => t.id === '1' ? { ...t, price: 120 } : t);
+    const updated = recalculateAllRealizedGains(modified);
+    // (150 - 120) * 5 = 150
+    expect(updated.find((t) => t.id === '2')?.realizedGainLoss).toBe(150);
+  });
+});
+

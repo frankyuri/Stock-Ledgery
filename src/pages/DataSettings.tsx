@@ -1,4 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
+import {
+  Database,
+  Download,
+  Upload,
+  History,
+  Layers,
+  Bookmark,
+  ShieldCheck,
+  AlertCircle,
+  FileCheck2,
+} from 'lucide-react';
 import { useStockStore, buildBackupSnapshot, type BackupSnapshot } from '@/store/useStockStore';
 import { useToast } from '@/lib/toast';
 import { formatNumber } from '@/lib/format';
@@ -87,37 +98,51 @@ export function DataSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[28px] font-semibold tracking-tight text-ink">資料備份與還原</h1>
-        <p className="mt-1.5 text-[15px] text-ink-mute">
-          所有持股 / 交易 / 淨值快照都存在你瀏覽器的 localStorage。
-          換瀏覽器、清快取或重灌前請務必匯出 JSON 備份。
+        <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
+          <Database className="h-7 w-7 text-brand" />
+          資料備份與還原
+        </h1>
+        <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
+          所有持股、交易紀錄與淨值快照均持久化保存在瀏覽器本機儲存空間中。
+          更換設備或清理快取前，請隨時匯出 JSON 備份檔。
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Stat label="交易紀錄" value={stats.transactions} />
-        <Stat label="淨值快照" value={stats.assets} />
-        <Stat label="自選股" value={stats.watchlist} />
+        <Stat label="交易歷史紀錄" value={stats.transactions} icon={History} />
+        <Stat label="淨值快照存檔" value={stats.assets} icon={Layers} />
+        <Stat label="自選追蹤標的" value={stats.watchlist} icon={Bookmark} />
       </div>
 
       <section className="card">
-        <div className="card-header">
+        <div className="card-header flex-wrap gap-3">
           <div>
-            <h2 className="section-title">匯出備份</h2>
-            <p className="section-hint">下載一份 JSON，可以儲存到雲端硬碟或 USB</p>
+            <h2 className="section-title flex items-center gap-2">
+              <Download className="h-4 w-4 text-brand" />
+              匯出全站備份檔
+            </h2>
+            <p className="section-hint">下載單一完整 JSON 檔案，妥善存於本機或雲端硬碟</p>
           </div>
-          <button type="button" onClick={handleExport} className="btn btn-primary">
-            ↓ 下載 JSON
+          <button
+            type="button"
+            onClick={handleExport}
+            className="btn btn-primary text-xs font-semibold py-2 px-4 flex items-center gap-1.5 shadow-sm"
+          >
+            <Download className="h-4 w-4" />
+            <span>下載備份 JSON</span>
           </button>
         </div>
       </section>
 
       <section className="card">
-        <div className="card-header">
+        <div className="card-header flex-wrap gap-3">
           <div>
-            <h2 className="section-title">從備份還原</h2>
+            <h2 className="section-title flex items-center gap-2">
+              <Upload className="h-4 w-4 text-brand" />
+              從備份檔案還原
+            </h2>
             <p className="section-hint">
-              選擇之前匯出的 JSON 檔；持股會依交易紀錄自動重新計算
+              選擇先前匯出的 JSON 檔；持股與損益將依據交易歷程自動完整重建
             </p>
           </div>
           <input
@@ -131,34 +156,50 @@ export function DataSettings() {
             className="hidden"
             id="backup-import"
           />
-          <label htmlFor="backup-import" className="btn cursor-pointer">
-            選擇檔案…
+          <label htmlFor="backup-import" className="btn cursor-pointer text-xs font-semibold py-2 px-4 flex items-center gap-1.5">
+            <FileCheck2 className="h-4 w-4" />
+            <span>選擇 JSON 檔案…</span>
           </label>
         </div>
         {previewError && (
-          <div className="card-body border-t border-down/20 bg-down/[0.05] text-sm text-down">
-            {previewError}
+          <div className="card-body border-t border-rose-300/40 bg-rose-50/60 text-xs text-rose-700 dark:border-rose-500/20 dark:bg-rose-950/20 dark:text-rose-300 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{previewError}</span>
           </div>
         )}
       </section>
 
-      <section className="card card-body text-xs text-ink-mute">
-        <p className="font-medium text-ink-soft">小提醒</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>備份檔包含完整交易歷史，請避免外流（檔案沒加密）。</li>
-          <li>還原會「覆寫」目前資料，不是合併；建議先匯出再還原。</li>
-          <li>未來接上後端後，這份檔案也能用作初始匯入。</li>
+      <section className="card card-body text-xs text-ink-mute dark:text-zinc-400 space-y-2">
+        <p className="font-semibold text-ink dark:text-zinc-200 flex items-center gap-1.5">
+          <ShieldCheck className="h-4 w-4 text-emerald-500" />
+          資料安全與隱私注意事項
+        </p>
+        <ul className="list-disc space-y-1 pl-5 leading-relaxed">
+          <li>備份檔內含未加密的完整交易紀錄與持股數據，請妥善保管避免外洩。</li>
+          <li>還原動作將會「完整覆寫」目前的本機資料，執行前建議先匯出目前的備份。</li>
+          <li>支援無縫導入後續自架後端 API 系統作為初始資料集。</li>
         </ul>
       </section>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
   return (
-    <div className="card p-6">
-      <p className="label-caps">{label}</p>
-      <p className="mt-3 font-mono text-[28px] font-semibold text-ink num">
+    <div className="card p-5">
+      <div className="flex items-center justify-between">
+        <p className="label-caps">{label}</p>
+        <Icon className="h-4 w-4 text-ink-faint" />
+      </div>
+      <p className="mt-2.5 font-mono text-[28px] font-bold text-ink dark:text-zinc-100 num">
         {formatNumber(value, 0)}
       </p>
     </div>

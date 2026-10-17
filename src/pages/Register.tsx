@@ -42,9 +42,9 @@ export function Register() {
   return (
     <AuthShell title="註冊" subtitle="建立你的 Stock-Ledgery 帳號，管理你的持股資產">
       {lineUserId && (
-        <div className="mb-4 rounded-lg border border-[#06C755]/30 bg-[#06C755]/[0.08] px-3 py-2 text-xs text-ink-soft">
+        <div className="mb-4 rounded-lg border border-[#06C755]/30 bg-[#06C755]/[0.08] px-3 py-2 text-xs text-ink-soft dark:text-zinc-200">
           偵測到 LINE 授權，註冊完成後將自動綁定
-          <span className="ml-1 font-mono text-ink">{lineDisplayName ?? lineUserId}</span>
+          <span className="ml-1 font-mono text-ink dark:text-zinc-100 font-semibold">{lineDisplayName ?? lineUserId}</span>
         </div>
       )}
 

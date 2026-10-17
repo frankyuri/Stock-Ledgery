@@ -6,6 +6,7 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts';
+import { useTheme } from '@/lib/theme';
 
 export interface LinePoint {
   time: string;
@@ -18,6 +19,9 @@ interface Props {
 }
 
 export function LineAreaChart({ data, height = 280 }: Props) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
@@ -30,15 +34,15 @@ export function LineAreaChart({ data, height = 280 }: Props) {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#6e6e73',
+        textColor: isDark ? '#a1a1aa' : '#6e6e73',
       },
       grid: {
-        vertLines: { color: 'rgba(0, 0, 0, 0.04)' },
-        horzLines: { color: 'rgba(0, 0, 0, 0.04)' },
+        vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
+        horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
       },
-      rightPriceScale: { borderColor: 'rgba(0, 0, 0, 0.08)' },
+      rightPriceScale: { borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)' },
       timeScale: {
-        borderColor: 'rgba(0, 0, 0, 0.08)',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
         timeVisible: false,
         secondsVisible: false,
       },
@@ -59,6 +63,21 @@ export function LineAreaChart({ data, height = 280 }: Props) {
       seriesRef.current = null;
     };
   }, [height]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.applyOptions({
+      layout: {
+        textColor: isDark ? '#a1a1aa' : '#6e6e73',
+      },
+      grid: {
+        vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
+        horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
+      },
+      rightPriceScale: { borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)' },
+      timeScale: { borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)' },
+    });
+  }, [isDark]);
 
   useEffect(() => {
     if (!seriesRef.current) return;

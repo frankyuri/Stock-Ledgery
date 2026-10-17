@@ -49,6 +49,10 @@ interface StockState {
   addTransaction: (
     t: Omit<Transaction, 'id' | 'realizedGainLoss'>,
   ) => AddTransactionResult;
+  updateTransaction: (
+    id: string,
+    patch: Partial<Omit<Transaction, 'id'>>,
+  ) => AddTransactionResult;
   removeTransaction: (id: string) => void;
   addAssetSnapshot: (a: Omit<AssetSnapshot, 'id'>) => void;
   removeAssetSnapshot: (id: string) => void;
@@ -135,6 +139,46 @@ export function computeRealizedForSell(
   const prev = before.find((h) => h.symbol === pending.symbol);
   if (!prev) return 0;
   return round((pending.price - prev.avgCost) * pending.shares - pending.fee);
+}
+
+/** 依時間順序重新計算所有 SELL 交易的已實現損益 */
+export function recalculateAllRealizedGains(transactions: Transaction[]): Transaction[] {
+  const indexed = transactions.map((t, index) => ({ t, index }));
+  indexed.sort((a, b) => a.t.tradedAt.localeCompare(b.t.tradedAt) || b.index - a.index);
+
+  const runningHoldings = new Map<string, Holding>();
+  const updatedMap = new Map<string, Transaction>();
+
+  for (const { t } of indexed) {
+    const prev = runningHoldings.get(t.symbol);
+    if (t.type === 'BUY') {
+      if (!prev) {
+        const avg = t.shares > 0 ? t.price + t.fee / t.shares : t.price;
+        runningHoldings.set(t.symbol, { symbol: t.symbol, shares: t.shares, avgCost: round(avg) });
+      } else {
+        const newShares = prev.shares + t.shares;
+        const newAvg =
+          newShares > 0
+            ? (prev.shares * prev.avgCost + t.shares * t.price + t.fee) / newShares
+            : prev.avgCost;
+        runningHoldings.set(t.symbol, { symbol: t.symbol, shares: newShares, avgCost: round(newAvg) });
+      }
+      updatedMap.set(t.id, { ...t, realizedGainLoss: undefined });
+    } else if (t.type === 'SELL') {
+      const realized = prev ? round((t.price - prev.avgCost) * t.shares - t.fee) : 0;
+      if (prev) {
+        const newShares = prev.shares - t.shares;
+        if (newShares <= 1e-6) {
+          runningHoldings.delete(t.symbol);
+        } else {
+          runningHoldings.set(t.symbol, { symbol: t.symbol, shares: newShares, avgCost: prev.avgCost });
+        }
+      }
+      updatedMap.set(t.id, { ...t, realizedGainLoss: realized });
+    }
+  }
+
+  return transactions.map((t) => updatedMap.get(t.id) ?? t);
 }
 
 const STORAGE_KEY = 'stock-ledgery-store';
@@ -240,9 +284,42 @@ export const useStockStore = create<StockState>()(
         });
         return { ok: true, realizedGainLoss: realized };
       },
+      updateTransaction: (id, patch) => {
+        const state = useStockStore.getState();
+        const existing = state.transactions.find((t) => t.id === id);
+        if (!existing) {
+          return { ok: false, error: '找不到指定交易紀錄' };
+        }
+        const updatedTarget = { ...existing, ...patch };
+        if (!Number.isFinite(updatedTarget.shares) || updatedTarget.shares <= 0) {
+          return { ok: false, error: '股數需為正數' };
+        }
+        if (!Number.isFinite(updatedTarget.price) || updatedTarget.price <= 0) {
+          return { ok: false, error: '成交價需為正數' };
+        }
+        if (updatedTarget.fee < 0) {
+          return { ok: false, error: '手續費不能為負數' };
+        }
+
+        const candidateTxns = state.transactions.map((t) =>
+          t.id === id ? updatedTarget : t,
+        );
+        const recalculated = recalculateAllRealizedGains(candidateTxns);
+        const newHoldings = reconcileHoldings(recalculated);
+
+        set({
+          transactions: recalculated,
+          holdings: newHoldings,
+        });
+
+        const targetAfter = recalculated.find((t) => t.id === id);
+        return { ok: true, realizedGainLoss: targetAfter?.realizedGainLoss };
+      },
       removeTransaction: (id: string) =>
         set((s) => {
-          const nextTxns = s.transactions.filter((t) => t.id !== id);
+          const nextTxns = recalculateAllRealizedGains(
+            s.transactions.filter((t) => t.id !== id),
+          );
           return {
             transactions: nextTxns,
             holdings: reconcileHoldings(nextTxns),
