@@ -13,6 +13,7 @@ import {
   Coins,
   Activity,
   Flame,
+  Scale,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
@@ -76,6 +77,11 @@ export function Sidebar({ open = false, onClose }: Props) {
           to: '/fire',
           label: 'FIRE 財務自由',
           icon: Flame,
+        },
+        {
+          to: '/rebalance',
+          label: '資產再平衡',
+          icon: Scale,
         },
         {
           to: '/transactions',

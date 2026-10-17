@@ -1,6 +1,6 @@
 # Stocktify｜專業美股台股全端投資管理系統
 
-[![Build & Test](https://img.shields.io/badge/tests-37%20passed-emerald)](package.json)
+[![Build & Test](https://img.shields.io/badge/tests-41%20passed-emerald)](package.json)
 [![Fullstack](https://img.shields.io/badge/Architecture-Fullstack%20Fastify%20%2B%20React-blue)](docs/fullstack-optimization-spec.md)
 [![License](https://img.shields.io/badge/license-MIT-slate)](LICENSE)
 
@@ -62,7 +62,14 @@ flowchart LR
 * **30 年長期財富積累曲線**：清楚呈現本金投入 vs 複利滾存收益 vs FIRE 門檻交叉點。
 * **智慧加速策略建議**：自動試算每月加碼投資或開銷精省 10% 能提前幾年退休。
 
-### 6. 📱 PWA 行動端原生體驗
+### 6. ⚖️ 目標資產配置與一鍵自動再平衡計算器 (`/rebalance`)
+* **五大經典資產配置模板**：積極成長 80/20、穩健平衡 60/40、達利歐全天候、台美核心衛星、高股息現金流一鍵套用與自訂標的。
+* **即時偏離度監控 (Drift Analysis)**：以雙層對比長條圖精準標記超配 (Overweight)、平衡 (Balanced) 與低配 (Underweight) 部位。
+* **新資金加碼最佳化 (Cash-in Only)**：水填充算法分配新資金，優先補強低配部位，零賣出、零證交稅、零摩擦成本。
+* **全盤直接再平衡 (Full Rebalance)**：試算 100% 歸位之買賣股數，並扣除預估 0.3% 證券交易稅與券商折扣手續費。
+* **一鍵快速下單記帳**：算單右側直接喚起 `QuickTradeModal` 彈窗，預填代號與股數迅速完成交易記錄。
+
+### 7. 📱 PWA 行動端原生體驗
 * 支援 iOS / Android / Desktop Chrome 一鍵「安裝至主畫面」，享受全螢幕原生 App 流暢體驗。
 
 ---

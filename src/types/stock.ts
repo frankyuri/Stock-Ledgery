@@ -92,3 +92,4 @@ export interface AssetSnapshot {
 }
 
 export type { FireSettings, FireType } from '@/lib/fireAnalytics';
+export type { RebalanceSettings, TargetAllocationItem } from '@/lib/rebalanceAnalytics';

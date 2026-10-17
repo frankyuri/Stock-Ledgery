@@ -7,6 +7,10 @@ import type {
   Transaction,
 } from '@/types/stock';
 import { DEFAULT_FIRE_SETTINGS, type FireSettings } from '@/lib/fireAnalytics';
+import {
+  DEFAULT_REBALANCE_SETTINGS,
+  type RebalanceSettings,
+} from '@/lib/rebalanceAnalytics';
 import { apiClient } from '@/services/api';
 import { useAuthStore } from './useAuthStore';
 
@@ -31,6 +35,7 @@ type PersistedStockState = Pick<
   | 'assets'
   | 'linePrefs'
   | 'fireSettings'
+  | 'rebalanceSettings'
 >;
 
 export type AddTransactionResult =
@@ -47,12 +52,14 @@ interface StockState {
   assets: AssetSnapshot[];
   linePrefs: LinePrefs;
   fireSettings: FireSettings;
+  rebalanceSettings: RebalanceSettings;
   isSyncing?: boolean;
   setSelectedSymbol: (symbol: string) => void;
   setResolution: (resolution: Resolution) => void;
   addToWatchlist: (symbol: string) => Promise<void>;
   removeFromWatchlist: (symbol: string) => Promise<void>;
   setFireSettings: (patch: Partial<FireSettings>) => void;
+  setRebalanceSettings: (patch: Partial<RebalanceSettings>) => void;
   addTransaction: (
     t: Omit<Transaction, 'id' | 'realizedGainLoss'>,
   ) => Promise<AddTransactionResult>;
@@ -78,6 +85,7 @@ export interface BackupSnapshot {
   assets: AssetSnapshot[];
   linePrefs?: LinePrefs;
   fireSettings?: FireSettings;
+  rebalanceSettings?: RebalanceSettings;
 }
 
 function genId(): string {
@@ -207,6 +215,7 @@ const DEFAULT_PERSISTED_STATE: PersistedStockState = {
   assets: [],
   linePrefs: DEFAULT_LINE_PREFS,
   fireSettings: DEFAULT_FIRE_SETTINGS,
+  rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
 };
 
 const STORAGE_VERSION = 5;
@@ -248,10 +257,15 @@ export const useStockStore = create<StockState>()(
       assets: [],
       linePrefs: DEFAULT_LINE_PREFS,
       fireSettings: DEFAULT_FIRE_SETTINGS,
+      rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
       setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
       setResolution: (resolution) => set({ resolution }),
       setFireSettings: (patch) =>
         set((s) => ({ fireSettings: { ...s.fireSettings, ...patch } })),
+      setRebalanceSettings: (patch) =>
+        set((s) => ({
+          rebalanceSettings: { ...s.rebalanceSettings, ...patch },
+        })),
       addToWatchlist: async (symbol) => {
         const norm = symbol.trim().toUpperCase();
         set((s) => ({
@@ -540,6 +554,7 @@ export const useStockStore = create<StockState>()(
           assets: snapshot.assets ?? [],
           linePrefs: snapshot.linePrefs ?? s.linePrefs,
           fireSettings: snapshot.fireSettings ?? s.fireSettings,
+          rebalanceSettings: snapshot.rebalanceSettings ?? s.rebalanceSettings,
           holdings: reconcileHoldings(snapshot.transactions ?? []),
         })),
       syncFromCloud: async () => {
@@ -635,6 +650,7 @@ export const useStockStore = create<StockState>()(
         assets: state.assets,
         linePrefs: state.linePrefs,
         fireSettings: state.fireSettings,
+        rebalanceSettings: state.rebalanceSettings,
       }),
       migrate: (persistedState, version): PersistedStockState => {
         const state = (persistedState ?? {}) as Partial<PersistedStockState> & {
@@ -664,6 +680,8 @@ export const useStockStore = create<StockState>()(
             transactions: nextTxns,
             linePrefs: state.linePrefs ?? DEFAULT_LINE_PREFS,
             fireSettings: state.fireSettings ?? DEFAULT_FIRE_SETTINGS,
+            rebalanceSettings:
+              state.rebalanceSettings ?? DEFAULT_REBALANCE_SETTINGS,
           };
         }
         // v4 → v5：把已存的 holdings 欄位丟掉（onRehydrateStorage 會重算）
@@ -672,6 +690,8 @@ export const useStockStore = create<StockState>()(
           ...state,
           linePrefs: state.linePrefs ?? DEFAULT_LINE_PREFS,
           fireSettings: state.fireSettings ?? DEFAULT_FIRE_SETTINGS,
+          rebalanceSettings:
+            state.rebalanceSettings ?? DEFAULT_REBALANCE_SETTINGS,
         };
       },
       onRehydrateStorage: () => (state) => {
@@ -694,5 +714,6 @@ export function buildBackupSnapshot(): BackupSnapshot {
     assets: s.assets,
     linePrefs: s.linePrefs,
     fireSettings: s.fireSettings,
+    rebalanceSettings: s.rebalanceSettings,
   };
 }
