@@ -12,6 +12,7 @@ import {
   Wallet,
   BarChart3,
   Percent,
+  Bell,
 } from 'lucide-react';
 import type { ChartMarker } from '@/components/charts/StockChart';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -290,22 +291,22 @@ function TickerHeader({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-2.5">
-            <h1 className="text-[32px] font-bold tracking-tight text-ink dark:text-zinc-100">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink dark:text-zinc-100 truncate">
               {symbol}
             </h1>
             {quote && (
-              <span className="text-base text-ink-mute dark:text-zinc-400 font-medium">
+              <span className="text-sm sm:text-base text-ink-mute dark:text-zinc-400 font-medium truncate">
                 {quote.name}
               </span>
             )}
             {quote?.exchangeName && (
-              <span className="chip font-semibold">{quote.exchangeName}</span>
+              <span className="chip font-semibold shrink-0">{quote.exchangeName}</span>
             )}
           </div>
 
           {quote ? (
             <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
-              <span className="font-mono text-4xl font-bold leading-none tracking-tight text-ink dark:text-zinc-100 num">
+              <span className="font-mono text-3xl sm:text-4xl font-bold leading-none tracking-tight text-ink dark:text-zinc-100 num truncate">
                 {formatNumber(quote.price)}
               </span>
               <span
@@ -379,6 +380,15 @@ function TickerHeader({
             <Share2 className="h-4 w-4" />
           </button>
 
+          {/* Price Alert Button */}
+          <Link
+            to="/settings/line"
+            className="btn text-xs py-2 px-2.5 flex items-center text-amber-600 hover:text-amber-700 dark:text-amber-400"
+            title="設定此檔股票價格警示"
+          >
+            <Bell className="h-4 w-4" />
+          </Link>
+
           {/* Quick Trade Button */}
           <button
             type="button"
@@ -422,7 +432,7 @@ function TickerStatsBar({ quote }: { quote?: Quote }) {
             </p>
             <p
               className={cn(
-                'mt-0.5 font-mono text-[15px] font-bold text-ink num dark:text-zinc-100',
+                'mt-0.5 font-mono text-sm font-bold text-ink num dark:text-zinc-100',
                 it.tone === 'up' && 'text-up',
                 it.tone === 'down' && 'text-down',
               )}

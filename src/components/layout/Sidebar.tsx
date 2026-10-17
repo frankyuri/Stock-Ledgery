@@ -9,7 +9,9 @@ import {
   Bell,
   Database,
   X,
-  Sparkles,
+  DatabaseZap,
+  Coins,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
@@ -17,7 +19,6 @@ import { useStockStore } from '@/store/useStockStore';
 import { version as APP_VERSION } from '../../../package.json';
 
 interface Props {
-  /** 行動版抽屜開關。桌機可忽略 */
   open?: boolean;
   onClose?: () => void;
 }
@@ -36,7 +37,7 @@ export function Sidebar({ open = false, onClose }: Props) {
           to: '/',
           label: '大盤總覽',
           icon: LayoutDashboard,
-          badge: `${watchlist.length} 自選`,
+          badge: `${watchlist.length}`,
         },
         {
           to: `/stock/${selectedSymbol || 'AAPL'}`,
@@ -61,6 +62,16 @@ export function Sidebar({ open = false, onClose }: Props) {
           badge: holdings.length > 0 ? `${holdings.length}` : undefined,
         },
         {
+          to: '/dividends',
+          label: '股息現金流',
+          icon: Coins,
+        },
+        {
+          to: '/analytics',
+          label: '績效與風險',
+          icon: Activity,
+        },
+        {
           to: '/transactions',
           label: '交易紀錄',
           icon: ArrowLeftRight,
@@ -74,16 +85,16 @@ export function Sidebar({ open = false, onClose }: Props) {
       ],
     },
     {
-      section: '系統與設定',
+      section: '系統與雲端',
       items: [
         {
           to: '/settings/line',
-          label: 'LINE 綁定',
+          label: '推播與通知中心',
           icon: Bell,
         },
         {
           to: '/settings/data',
-          label: '資料備份',
+          label: '資料備份與同步',
           icon: Database,
         },
       ],
@@ -92,11 +103,11 @@ export function Sidebar({ open = false, onClose }: Props) {
 
   return (
     <>
-      {/* mobile backdrop */}
+      {/* Mobile backdrop */}
       <div
         onClick={onClose}
         className={cn(
-          'fixed inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity md:hidden',
+          'fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs transition-opacity md:hidden',
           open ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
         aria-hidden
@@ -104,27 +115,26 @@ export function Sidebar({ open = false, onClose }: Props) {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-black/5 bg-white/95 backdrop-blur-2xl backdrop-saturate-150 transition-transform dark:border-white/10 dark:bg-zinc-900/95',
-          'md:static md:translate-x-0 md:bg-white/60 dark:md:bg-zinc-900/60',
+          'fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col border-r border-slate-200/80 bg-white transition-transform dark:border-zinc-800 dark:bg-zinc-900',
+          'md:static md:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
       >
-        <div className="flex h-16 items-center justify-between gap-3 border-b border-black/5 px-5 dark:border-white/10">
-          <div className="flex items-center gap-3">
-            <LogoMark className="h-9 w-9 shrink-0 shadow-xs rounded-xl" />
+        <div className="flex h-14 items-center justify-between gap-3 border-b border-slate-200/80 px-4 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5">
+            <LogoMark className="h-7 w-7 shrink-0 rounded-lg" />
             <div className="leading-tight">
-              <p className="text-base font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-1.5">
-                Stock-Ledgery
-                <span className="flex h-2 w-2 rounded-full bg-brand animate-pulse" />
+              <p className="text-sm font-bold tracking-tight text-slate-900 dark:text-zinc-100">
+                Stocktify
               </p>
-              <p className="text-xs text-ink-mute dark:text-zinc-400">專業股票追蹤管理</p>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">投資組合追蹤系統</p>
             </div>
           </div>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-ink-mute hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10 md:hidden"
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:text-zinc-500 dark:hover:bg-zinc-800 md:hidden"
               aria-label="關閉選單"
             >
               <X className="h-5 w-5" />
@@ -132,13 +142,13 @@ export function Sidebar({ open = false, onClose }: Props) {
           )}
         </div>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto p-3.5">
+        <nav className="flex-1 space-y-5 overflow-y-auto p-3">
           {NAV.map((group) => (
             <div key={group.section}>
-              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-faint dark:text-zinc-500">
+              <p className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                 {group.section}
               </p>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -149,19 +159,19 @@ export function Sidebar({ open = false, onClose }: Props) {
                       onClick={onClose}
                       className={({ isActive }) =>
                         cn(
-                          'group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                          'group flex items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium transition',
                           isActive
-                            ? 'bg-brand-soft text-brand font-semibold shadow-[inset_0_0_0_1px_rgba(10,132,255,0.2)] dark:bg-brand/15 dark:text-brand'
-                            : 'text-ink-soft hover:bg-black/[0.04] hover:text-ink dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-zinc-100',
+                            ? 'bg-slate-100 text-slate-950 font-semibold dark:bg-zinc-800 dark:text-white'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200',
                         )
                       }
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-600 dark:text-zinc-500 dark:group-hover:text-zinc-300" />
                         <span className="truncate">{item.label}</span>
                       </div>
                       {item.badge && (
-                        <span className="rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-ink-mute dark:bg-white/10 dark:text-zinc-400">
+                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
                           {item.badge}
                         </span>
                       )}
@@ -174,12 +184,12 @@ export function Sidebar({ open = false, onClose }: Props) {
         </nav>
 
         {/* Bottom Footer Info */}
-        <div className="border-t border-black/5 p-4 dark:border-white/10 space-y-2">
-          <div className="flex items-center justify-between text-xs text-ink-mute dark:text-zinc-400">
+        <div className="border-t border-slate-200/80 p-3.5 dark:border-zinc-800">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-zinc-500">
             <span>v{APP_VERSION}</span>
-            <span className="flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              Yahoo Finance
+            <span className="flex items-center gap-1 font-mono">
+              <DatabaseZap className="h-3 w-3 text-emerald-500" />
+              Connected
             </span>
           </div>
         </div>

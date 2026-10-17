@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
+import { useToast } from '@/lib/toast';
 import { formatCurrency, formatNumber } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { LineAreaChart } from '@/components/charts/LineAreaChart';
@@ -35,6 +36,7 @@ function newRow(currency = 'TWD'): Row {
 }
 
 export function Assets() {
+  const toast = useToast();
   const assets = useStockStore((s) => s.assets);
   const holdings = useStockStore((s) => s.holdings);
   const addAssetSnapshot = useStockStore((s) => s.addAssetSnapshot);
@@ -75,7 +77,7 @@ export function Assets() {
     if (v != null) updateRow(row.id, { securities: String(Math.round(v * 100) / 100) });
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -97,7 +99,7 @@ export function Assets() {
     if (parsed.length === 0) return setError('至少需填入一個幣別的金額');
 
     for (const p of parsed) {
-      addAssetSnapshot({ date, note, ...p });
+      await addAssetSnapshot({ date, note, ...p });
     }
 
     setRows([newRow('TWD')]);
@@ -169,11 +171,11 @@ export function Assets() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
-          <Layers className="h-7 w-7 text-brand" />
+        <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
+          <Layers className="h-6 w-6 text-brand" />
           淨值快照與總資產趨勢
         </h1>
-        <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
+        <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">
           定期記錄現金存款、證券市值與其他資產，繪製個人的長期淨值成長曲線。
         </p>
       </div>
@@ -297,36 +299,40 @@ export function Assets() {
       {primary ? (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="card p-5">
-              <span className="label-caps flex items-center gap-1.5">
+            <div className="card p-5 min-w-0">
+              <span className="label-caps flex items-center gap-1.5 truncate">
                 <Wallet className="h-3.5 w-3.5 text-brand" />
                 最新快照淨值
               </span>
-              <p className="mt-2.5 font-mono text-[28px] font-bold text-ink dark:text-zinc-100 num">
+              <p
+                className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+                title={latest ? formatCurrency(latest.cash + latest.securities + latest.other, latest.currency) : undefined}
+              >
                 {latest
                   ? formatCurrency(latest.cash + latest.securities + latest.other, latest.currency)
                   : '—'}
               </p>
-              <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+              <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
                 記錄日期：{latest?.date ?? '—'}
               </p>
             </div>
 
-            <div className="card p-5">
-              <span className="label-caps flex items-center gap-1.5">
+            <div className="card p-5 min-w-0">
+              <span className="label-caps flex items-center gap-1.5 truncate">
                 <TrendingUp className="h-3.5 w-3.5 text-brand" />
                 歷史期間淨資產變化
               </span>
               <p
                 className={cn(
-                  'mt-2.5 font-mono text-[28px] font-bold num',
+                  'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
                   change >= 0 ? 'text-up' : 'text-down',
                 )}
+                title={`${change >= 0 ? '+' : ''}${formatNumber(change)}`}
               >
                 {change >= 0 ? '+' : ''}
                 {formatNumber(change)}
               </p>
-              <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+              <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
                 {first?.date} → {latest?.date}
                 {spanDays > 0 && (
                   <span className="ml-1.5 text-ink-faint">· 跨越 {spanDays} 天</span>
@@ -456,7 +462,10 @@ export function Assets() {
                           <td className="px-5 py-3.5 text-center">
                             <button
                               type="button"
-                              onClick={() => removeAssetSnapshot(a.id)}
+                              onClick={async () => {
+                                await removeAssetSnapshot(a.id);
+                                toast.info('已刪除快照紀錄');
+                              }}
                               className="rounded-lg p-1 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
                               title="刪除此快照"
                             >

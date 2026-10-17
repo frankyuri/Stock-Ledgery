@@ -42,6 +42,7 @@ export function Transactions() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filters & Modal
   const [filterType, setFilterType] = useState<'ALL' | TransactionType>('ALL');
@@ -79,7 +80,7 @@ export function Transactions() {
     setPrice(String(quote.price));
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     const s = symbol.trim().toUpperCase();
@@ -91,34 +92,48 @@ export function Transactions() {
     if (!Number.isFinite(p) || p <= 0) return setError('成交價需為正數');
     if (f < 0) return setError('手續費不可為負數');
 
-    const result = addTransaction({
-      type,
-      symbol: s,
-      shares: sh,
-      price: p,
-      fee: f,
-      tradedAt,
-      note,
-    });
-    if (!result.ok) {
-      setError(result.error);
-      toast.error(result.error);
-      return;
+    setIsSubmitting(true);
+    try {
+      const result = await addTransaction({
+        type,
+        symbol: s,
+        shares: sh,
+        price: p,
+        fee: f,
+        tradedAt,
+        note,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        toast.error(result.error);
+        return;
+      }
+      if (result.warning) {
+        toast.warning(result.warning);
+      }
+      if (type === 'SELL' && typeof result.realizedGainLoss === 'number') {
+        const r = result.realizedGainLoss;
+        toast.success(
+          `已記錄 ${s} 賣出 · 已實現損益 ${r >= 0 ? '+' : ''}${formatNumber(r)}${
+            result.synced ? '（已同步至雲端）' : ''
+          }`,
+        );
+      } else {
+        toast.success(
+          `已記錄 ${s} ${type === 'BUY' ? '買進' : '賣出'} ${sh} 股${
+            result.synced ? '（已同步至雲端）' : ''
+          }`,
+        );
+      }
+      setSymbol('');
+      setShares('');
+      setPrice('');
+      setFee('0');
+      setNote('');
+      setQuote(null);
+    } finally {
+      setIsSubmitting(false);
     }
-    if (type === 'SELL' && typeof result.realizedGainLoss === 'number') {
-      const r = result.realizedGainLoss;
-      toast.success(
-        `已記錄 ${s} 賣出 · 已實現損益 ${r >= 0 ? '+' : ''}${formatNumber(r)}`,
-      );
-    } else {
-      toast.success(`已記錄 ${s} ${type === 'BUY' ? '買進' : '賣出'} ${sh} 股`);
-    }
-    setSymbol('');
-    setShares('');
-    setPrice('');
-    setFee('0');
-    setNote('');
-    setQuote(null);
   }
 
   // Summary statistics
@@ -194,7 +209,7 @@ export function Transactions() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const text = event.target?.result as string;
         const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -231,7 +246,7 @@ export function Transactions() {
           const dt = dateIdx !== -1 && cols[dateIdx] ? cols[dateIdx] : todayISO();
           const nt = noteIdx !== -1 ? cols[noteIdx] : '';
 
-          addTransaction({
+          await addTransaction({
             type: tType,
             symbol: s,
             shares: sh,
@@ -258,11 +273,11 @@ export function Transactions() {
       {/* Page Title */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
-            <ArrowLeftRight className="h-7 w-7 text-brand" />
+          <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-zinc-100 flex items-center gap-2.5">
+            <ArrowLeftRight className="h-6 w-6 text-brand" />
             交易紀錄與記帳簿
           </h1>
-          <p className="mt-1 text-[15px] text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">
             記錄每筆買進與賣出，即時加權計算平均成本與已實現獲利。
           </p>
         </div>
@@ -299,60 +314,70 @@ export function Transactions() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card p-5">
-          <span className="label-caps flex items-center gap-1.5">
+        <div className="card p-5 min-w-0">
+          <span className="label-caps flex items-center gap-1.5 truncate">
             <TrendingUp className="h-3.5 w-3.5 text-up" />
             累計買進總額
           </span>
-          <p className="mt-2.5 font-mono text-2xl font-bold text-ink dark:text-zinc-100 num">
+          <p
+            className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+            title={`$${formatNumber(summary.totalBuy)}`}
+          >
             ${formatNumber(summary.totalBuy)}
           </p>
-          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
             包含手續費總支出：${formatNumber(summary.totalFee)}
           </p>
         </div>
 
-        <div className="card p-5">
-          <span className="label-caps flex items-center gap-1.5">
+        <div className="card p-5 min-w-0">
+          <span className="label-caps flex items-center gap-1.5 truncate">
             <TrendingDown className="h-3.5 w-3.5 text-down" />
             累計賣出回收金額
           </span>
-          <p className="mt-2.5 font-mono text-2xl font-bold text-ink dark:text-zinc-100 num">
+          <p
+            className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+            title={`$${formatNumber(summary.totalSell)}`}
+          >
             ${formatNumber(summary.totalSell)}
           </p>
-          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
             共結清 {summary.sellCount} 筆賣出交易
           </p>
         </div>
 
-        <div className="card p-5">
-          <span className="label-caps flex items-center gap-1.5">
+        <div className="card p-5 min-w-0">
+          <span className="label-caps flex items-center gap-1.5 truncate">
             <DollarSign className="h-3.5 w-3.5 text-brand" />
             已實現總損益
           </span>
           <p
             className={cn(
-              'mt-2.5 font-mono text-2xl font-bold num',
+              'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
               changeColor(summary.totalRealized),
             )}
+            title={`${summary.totalRealized > 0 ? '+' : ''}$${formatNumber(summary.totalRealized)}`}
           >
             {summary.totalRealized > 0 ? '+' : ''}
             ${formatNumber(summary.totalRealized)}
           </p>
-          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
             賣出時已落袋結算之真實盈虧
           </p>
         </div>
 
-        <div className="card p-5">
-          <span className="label-caps flex items-center gap-1.5">
+        <div className="card p-5 min-w-0">
+          <span className="label-caps flex items-center gap-1.5 truncate">
             <Percent className="h-3.5 w-3.5 text-brand" />
             已結清交易勝率
           </span>
-          <p className="mt-2.5 font-mono text-2xl font-bold text-ink dark:text-zinc-100 num">
+          <p
+            className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
+            title={summary.sellCount > 0 ? `${summary.winRate.toFixed(1)}%` : undefined}
+          >
             {summary.sellCount > 0 ? `${summary.winRate.toFixed(1)}%` : '—'}
           </p>
-          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400">
+          <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
             {summary.sellCount > 0 ? `勝率基於 ${summary.sellCount} 筆獲利 / 停損賣出` : '尚無賣出平倉紀錄'}
           </p>
         </div>
@@ -476,15 +501,22 @@ export function Transactions() {
             </div>
             <button
               type="submit"
+              disabled={isSubmitting}
               className={cn(
-                'btn font-semibold text-xs py-2 px-5 text-white shadow-xs',
+                'btn font-semibold text-xs py-2 px-5 text-white shadow-xs disabled:opacity-50',
                 type === 'BUY'
                   ? 'border-up bg-up hover:bg-emerald-600'
                   : 'border-down bg-down hover:bg-rose-600',
               )}
             >
               <PlusCircle className="h-4 w-4" />
-              <span>{type === 'BUY' ? '確認加入買進' : '確認加入賣出'}</span>
+              <span>
+                {isSubmitting
+                  ? '同步儲存中…'
+                  : type === 'BUY'
+                  ? '確認加入買進'
+                  : '確認加入賣出'}
+              </span>
             </button>
           </div>
 
@@ -643,8 +675,8 @@ export function Transactions() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            removeTransaction(t.id);
+                          onClick={async () => {
+                            await removeTransaction(t.id);
                             toast.info(`已刪除 ${t.symbol} 交易紀錄`);
                           }}
                           className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"

@@ -11,7 +11,7 @@ import {
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-export type ToastTone = 'info' | 'success' | 'error';
+export type ToastTone = 'info' | 'success' | 'error' | 'warning';
 
 export interface Toast {
   id: string;
@@ -24,6 +24,7 @@ interface ToastContextValue {
   success: (message: string) => void;
   error: (message: string) => void;
   info: (message: string) => void;
+  warning: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -34,6 +35,8 @@ const TONE_STYLE: Record<ToastTone, string> = {
     'border-up/40 bg-emerald-50/95 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-200 shadow-glass',
   error:
     'border-down/40 bg-rose-50/95 dark:bg-rose-950/90 text-rose-800 dark:text-rose-200 shadow-glass',
+  warning:
+    'border-amber-400/40 bg-amber-50/95 dark:bg-amber-950/90 text-amber-800 dark:text-amber-200 shadow-glass',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -73,6 +76,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       success: (m) => push('success', m),
       error: (m) => push('error', m),
       info: (m) => push('info', m),
+      warning: (m) => push('warning', m),
     }),
     [push],
   );
@@ -96,6 +100,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               {t.tone === 'success' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
               {t.tone === 'error' && <AlertCircle className="h-4 w-4 text-rose-500" />}
               {t.tone === 'info' && <Info className="h-4 w-4 text-brand" />}
+              {t.tone === 'warning' && <AlertCircle className="h-4 w-4 text-amber-500" />}
             </span>
             <span className="flex-1 text-xs font-semibold leading-relaxed">{t.message}</span>
             <button
@@ -120,6 +125,7 @@ export function useToast(): ToastContextValue {
       success: (m) => console.warn('[toast: no provider]', m),
       error: (m) => console.warn('[toast: no provider]', m),
       info: (m) => console.warn('[toast: no provider]', m),
+      warning: (m) => console.warn('[toast: no provider]', m),
     };
   }
   return ctx;

@@ -1,0 +1,181 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. 使用者主表
+model User {
+  id            String          @id @default(uuid()) @db.Uuid
+  email         String          @unique
+  passwordHash  String          @map("password_hash")
+  name          String
+  avatarUrl     String?         @map("avatar_url")
+  currency      String          @default("TWD")
+  taxRate       Decimal         @default(0.003) @map("tax_rate") @db.Decimal(6, 4)
+  feeDiscount   Decimal         @default(0.6)   @map("fee_discount") @db.Decimal(4, 2)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  transactions  Transaction[]
+  assets        AssetSnapshot[]
+  watchlist     WatchlistItem[]
+  priceAlerts   PriceAlert[]
+  refreshTokens RefreshToken[]
+  lineBinding   LineBinding?
+  linePrefs     LinePreference?
+  logs          NotificationLog[]
+
+  @@map("users")
+}
+
+// 2. Refresh Token 權杖管理表
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  userAgent  String?   @map("user_agent")
+  ip         String?   @db.VarChar(45)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("refresh_tokens")
+}
+
+// 3. 交易紀錄表
+model Transaction {
+  id               String          @id @default(uuid()) @db.Uuid
+  userId           String          @map("user_id") @db.Uuid
+  symbol           String          @db.VarChar(16)
+  type             TransactionType
+  shares           Decimal         @db.Decimal(20, 8)
+  price            Decimal         @db.Decimal(20, 8)
+  fee              Decimal         @default(0) @db.Decimal(20, 8)
+  tax              Decimal         @default(0) @db.Decimal(20, 8)
+  tradedAt         String          @map("traded_at") @db.VarChar(10)
+  note             String?         @db.Text
+  realizedGainLoss Decimal?        @map("realized_gain_loss") @db.Decimal(20, 4)
+  clientId         String?         @map("client_id")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientId])
+  @@index([userId, tradedAt(sort: Desc)])
+  @@index([userId, symbol, tradedAt])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  BUY
+  SELL
+}
+
+// 4. 資產淨值快照表
+model AssetSnapshot {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  date       String   @db.VarChar(10)
+  currency   String   @default("TWD") @db.VarChar(8)
+  cash       Decimal  @default(0) @db.Decimal(20, 4)
+  securities Decimal  @default(0) @db.Decimal(20, 4)
+  other      Decimal  @default(0) @db.Decimal(20, 4)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, currency])
+  @@index([userId, date(sort: Desc)])
+  @@map("asset_snapshots")
+}
+
+// 5. 自選追蹤清單表
+model WatchlistItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  symbol    String   @db.VarChar(16)
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([userId, position])
+  @@map("watchlist_items")
+}
+
+// 6. 價格警示條件表
+model PriceAlert {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @map("user_id") @db.Uuid
+  symbol      String         @db.VarChar(16)
+  direction   AlertDirection
+  threshold   Decimal        @db.Decimal(20, 4)
+  isActive    Boolean        @default(true) @map("is_active")
+  lastFiredAt DateTime?      @map("last_fired_at") @db.Timestamptz(6)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isActive, symbol])
+  @@map("price_alerts")
+}
+
+enum AlertDirection {
+  ABOVE
+  BELOW
+  PCT_UP
+  PCT_DOWN
+}
+
+// 7. LINE 帳號綁定表
+model LineBinding {
+  userId          String   @id @map("user_id") @db.Uuid
+  lineUserId      String   @unique @map("line_user_id")
+  lineDisplayName String?  @map("line_display_name")
+  boundAt         DateTime @default(now()) @map("bound_at") @db.Timestamptz(6)
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("line_bindings")
+}
+
+// 8. LINE 推播通知偏好設定表
+model LinePreference {
+  userId       String   @id @map("user_id") @db.Uuid
+  priceAlert   Boolean  @default(true) @map("price_alert")
+  dailySummary Boolean  @default(true) @map("daily_summary")
+  tradeConfirm Boolean  @default(true) @map("trade_confirm")
+  webhookUrl   String?  @map("webhook_url") @db.VarChar(512)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("line_preferences")
+}
+
+// 9. 推播紀錄審計表
+model NotificationLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  channel   String   @default("LINE") @db.VarChar(16)
+  kind      String   @db.VarChar(32)
+  payload   Json
+  status    String   @db.VarChar(16)
+  error     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notification_logs")
+}

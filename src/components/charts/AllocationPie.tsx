@@ -17,22 +17,22 @@ interface Props {
 }
 
 const PALETTE = [
-  '#0A84FF',
-  '#30D158',
-  '#FF9F0A',
-  '#BF5AF2',
-  '#64D2FF',
-  '#FF375F',
-  '#5E5CE6',
-  '#FFD60A',
-  '#34C759',
-  '#FF9500',
+  '#2563eb', // Royal Blue
+  '#16a34a', // Emerald
+  '#d97706', // Amber
+  '#7c3aed', // Violet
+  '#0891b2', // Cyan
+  '#e11d48', // Rose
+  '#4f46e5', // Indigo
+  '#059669', // Teal
+  '#ea580c', // Orange
+  '#475569', // Slate
 ];
 
 export function AllocationPie({
   data,
-  size = 220,
-  thickness = 34,
+  size = 200,
+  thickness = 32,
   currency,
   maxLegend = 8,
 }: Props) {
@@ -60,7 +60,7 @@ export function AllocationPie({
 
   if (total <= 0) {
     return (
-      <div className="flex h-48 items-center justify-center text-sm text-ink-mute">
+      <div className="flex h-48 items-center justify-center text-sm text-ink-mute dark:text-zinc-500">
         尚無資料可繪製配置
       </div>
     );
@@ -88,7 +88,7 @@ export function AllocationPie({
   const hovered = paths.find((p) => p.key === hover) ?? null;
 
   return (
-    <div className="flex flex-col items-center gap-5 md:flex-row md:items-start md:gap-7">
+    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:gap-6 min-w-0">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
           {paths.length === 1 ? (
@@ -109,7 +109,7 @@ export function AllocationPie({
                 key={p.key}
                 d={p.d}
                 fill={p.color}
-                opacity={hover && hover !== p.key ? 0.4 : 1}
+                opacity={hover && hover !== p.key ? 0.35 : 1}
                 onMouseEnter={() => setHover(p.key)}
                 onMouseLeave={() => setHover(null)}
                 className="transition-opacity"
@@ -118,14 +118,20 @@ export function AllocationPie({
             ))
           )}
         </svg>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
+          <p
+            className="max-w-[120px] truncate text-[11px] font-semibold uppercase tracking-wider text-ink-mute dark:text-zinc-400"
+            title={hovered ? hovered.label : '總計'}
+          >
             {hovered ? hovered.label : '總計'}
           </p>
-          <p className="mt-1 font-mono text-[22px] font-semibold text-ink num">
+          <p
+            className="mt-0.5 max-w-[120px] truncate font-mono text-base sm:text-lg font-bold tracking-tight text-ink dark:text-zinc-100 num"
+            title={formatNumber(hovered ? hovered.value : total)}
+          >
             {formatNumber(hovered ? hovered.value : total)}
           </p>
-          <p className="mt-0.5 text-xs text-ink-mute">
+          <p className="text-[11px] font-medium text-ink-mute dark:text-zinc-400">
             {hovered
               ? `${(hovered.frac * 100).toFixed(1)}%`
               : currency ?? ''}
@@ -133,14 +139,14 @@ export function AllocationPie({
         </div>
       </div>
 
-      <ul className="w-full flex-1 space-y-1.5 text-sm">
+      <ul className="w-full min-w-0 flex-1 space-y-1.5 text-xs sm:text-sm">
         {paths.map((p) => (
           <li
             key={p.key}
             onMouseEnter={() => setHover(p.key)}
             onMouseLeave={() => setHover(null)}
             className={cn(
-              'flex items-center gap-3 rounded-lg px-2 py-1.5 transition',
+              'flex items-center gap-2 sm:gap-2.5 rounded-lg px-2 py-1.5 transition min-w-0',
               hover === p.key && 'bg-black/[0.04] dark:bg-white/[0.06]',
             )}
           >
@@ -148,9 +154,16 @@ export function AllocationPie({
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: p.color }}
             />
-            <span className="min-w-0 flex-1 truncate text-ink-soft">{p.label}</span>
-            <span className="font-mono num text-ink">{formatNumber(p.value)}</span>
-            <span className="w-14 text-right text-xs text-ink-mute num">
+            <span
+              className="min-w-0 flex-1 truncate font-medium text-ink-soft dark:text-zinc-300"
+              title={p.label}
+            >
+              {p.label}
+            </span>
+            <span className="font-mono text-xs sm:text-sm font-semibold num text-ink dark:text-zinc-100 shrink-0">
+              {formatNumber(p.value)}
+            </span>
+            <span className="w-12 sm:w-14 text-right font-mono text-xs text-ink-mute dark:text-zinc-400 num shrink-0">
               {(p.frac * 100).toFixed(1)}%
             </span>
           </li>

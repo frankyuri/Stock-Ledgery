@@ -4,12 +4,11 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { AuthShell } from '@/components/auth/AuthShell';
 
 export function Register() {
-  const registerMock = useAuthStore((s) => s.registerMock);
+  const register = useAuthStore((s) => s.register);
   const bindLine = useAuthStore((s) => s.bindLine);
   const navigate = useNavigate();
   const [search] = useSearchParams();
 
-  // 預留 LINE 綁定流程：?line_user_id=U1234&line_display_name=xxx
   const lineUserId = search.get('line_user_id');
   const lineDisplayName = search.get('line_display_name');
 
@@ -29,14 +28,17 @@ export function Register() {
     if (password !== password2) return setError('兩次密碼不一致');
 
     setSubmitting(true);
-    // TODO(backend): api.post('/auth/register', { email, password, name, lineUserId })
-    await new Promise((r) => setTimeout(r, 400));
-    registerMock(email, password, name.trim());
-    if (lineUserId && lineDisplayName) {
-      bindLine(lineUserId, lineDisplayName);
+    try {
+      await register(email, password, name.trim());
+      if (lineUserId && lineDisplayName) {
+        bindLine(lineUserId, lineDisplayName);
+      }
+      navigate('/', { replace: true });
+    } catch (err: any) {
+      setError(err.message || '註冊失敗，請重試');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
-    navigate('/', { replace: true });
   }
 
   return (
@@ -59,6 +61,7 @@ export function Register() {
             autoComplete="name"
             placeholder="你的顯示名稱"
             className="input mt-1.5"
+            required
           />
         </div>
         <div>
@@ -72,6 +75,7 @@ export function Register() {
             autoComplete="email"
             placeholder="you@example.com"
             className="input mt-1.5"
+            required
           />
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -86,6 +90,7 @@ export function Register() {
               autoComplete="new-password"
               placeholder="至少 6 位"
               className="input mt-1.5"
+              required
             />
           </div>
           <div>
@@ -99,6 +104,7 @@ export function Register() {
               autoComplete="new-password"
               placeholder="確認密碼"
               className="input mt-1.5"
+              required
             />
           </div>
         </div>
