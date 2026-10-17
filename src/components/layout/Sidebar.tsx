@@ -12,6 +12,7 @@ import {
   DatabaseZap,
   Coins,
   Activity,
+  Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
@@ -70,6 +71,11 @@ export function Sidebar({ open = false, onClose }: Props) {
           to: '/analytics',
           label: '績效與風險',
           icon: Activity,
+        },
+        {
+          to: '/fire',
+          label: 'FIRE 財務自由',
+          icon: Flame,
         },
         {
           to: '/transactions',

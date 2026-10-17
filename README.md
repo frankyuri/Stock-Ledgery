@@ -1,6 +1,6 @@
 # Stocktify｜專業美股台股全端投資管理系統
 
-[![Build & Test](https://img.shields.io/badge/tests-36%20passed-emerald)](package.json)
+[![Build & Test](https://img.shields.io/badge/tests-37%20passed-emerald)](package.json)
 [![Fullstack](https://img.shields.io/badge/Architecture-Fullstack%20Fastify%20%2B%20React-blue)](docs/fullstack-optimization-spec.md)
 [![License](https://img.shields.io/badge/license-MIT-slate)](LICENSE)
 
@@ -55,7 +55,14 @@ flowchart LR
 * **每日收盤日報**：BullMQ 排程每日 16:30 自動彙整持股市值、當日變動與累計損益推播。
 * **盤中價格警示巡檢**：每 60 秒自動掃描價格突破與跌破條件，即時提醒投資人。
 
-### 5. 📱 PWA 行動端原生體驗
+### 5. 🎯 FIRE 財務自由倒數與被動收入生活覆蓋儀表板 (`/fire`)
+* **4% 安全提領法則與達標倒數**：動態依目前總淨值、每月定期定額投入額與實質年化報酬率，精算預估退休年份與倒數計時器。
+* **四大 FIRE 生活型態即時切換**：標準自由 (Standard 100%)、極簡自由 (Lean 75%)、富裕自由 (Fat 135%)、兼職自由 (Barista 50%)。
+* **被動股息生活開銷覆蓋階梯 (Crossover Ladder)**：追蹤目前被動股息現金流已逐步解鎖基礎水電、日常伙食、居住房貸或完全自由等人生里程碑。
+* **30 年長期財富積累曲線**：清楚呈現本金投入 vs 複利滾存收益 vs FIRE 門檻交叉點。
+* **智慧加速策略建議**：自動試算每月加碼投資或開銷精省 10% 能提前幾年退休。
+
+### 6. 📱 PWA 行動端原生體驗
 * 支援 iOS / Android / Desktop Chrome 一鍵「安裝至主畫面」，享受全螢幕原生 App 流暢體驗。
 
 ---

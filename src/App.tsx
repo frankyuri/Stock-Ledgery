@@ -20,6 +20,9 @@ const Dividends = lazy(() =>
 const Analytics = lazy(() =>
   import('@/pages/Analytics').then((m) => ({ default: m.Analytics })),
 );
+const FireTracker = lazy(() =>
+  import('@/pages/FireTracker').then((m) => ({ default: m.FireTracker })),
+);
 const StockDetail = lazy(() =>
   import('@/pages/StockDetail').then((m) => ({ default: m.StockDetail })),
 );
@@ -133,6 +136,16 @@ export default function App() {
             <RequireAuth>
               <LazyPage>
                 <Analytics />
+              </LazyPage>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="fire"
+          element={
+            <RequireAuth>
+              <LazyPage>
+                <FireTracker />
               </LazyPage>
             </RequireAuth>
           }

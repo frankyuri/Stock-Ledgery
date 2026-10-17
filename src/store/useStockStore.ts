@@ -6,6 +6,7 @@ import type {
   Resolution,
   Transaction,
 } from '@/types/stock';
+import { DEFAULT_FIRE_SETTINGS, type FireSettings } from '@/lib/fireAnalytics';
 import { apiClient } from '@/services/api';
 import { useAuthStore } from './useAuthStore';
 
@@ -29,6 +30,7 @@ type PersistedStockState = Pick<
   | 'transactions'
   | 'assets'
   | 'linePrefs'
+  | 'fireSettings'
 >;
 
 export type AddTransactionResult =
@@ -44,11 +46,13 @@ interface StockState {
   transactions: Transaction[];
   assets: AssetSnapshot[];
   linePrefs: LinePrefs;
+  fireSettings: FireSettings;
   isSyncing?: boolean;
   setSelectedSymbol: (symbol: string) => void;
   setResolution: (resolution: Resolution) => void;
   addToWatchlist: (symbol: string) => Promise<void>;
   removeFromWatchlist: (symbol: string) => Promise<void>;
+  setFireSettings: (patch: Partial<FireSettings>) => void;
   addTransaction: (
     t: Omit<Transaction, 'id' | 'realizedGainLoss'>,
   ) => Promise<AddTransactionResult>;
@@ -73,6 +77,7 @@ export interface BackupSnapshot {
   transactions: Transaction[];
   assets: AssetSnapshot[];
   linePrefs?: LinePrefs;
+  fireSettings?: FireSettings;
 }
 
 function genId(): string {
@@ -201,6 +206,7 @@ const DEFAULT_PERSISTED_STATE: PersistedStockState = {
   transactions: [],
   assets: [],
   linePrefs: DEFAULT_LINE_PREFS,
+  fireSettings: DEFAULT_FIRE_SETTINGS,
 };
 
 const STORAGE_VERSION = 5;
@@ -241,8 +247,11 @@ export const useStockStore = create<StockState>()(
       transactions: [],
       assets: [],
       linePrefs: DEFAULT_LINE_PREFS,
+      fireSettings: DEFAULT_FIRE_SETTINGS,
       setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
       setResolution: (resolution) => set({ resolution }),
+      setFireSettings: (patch) =>
+        set((s) => ({ fireSettings: { ...s.fireSettings, ...patch } })),
       addToWatchlist: async (symbol) => {
         const norm = symbol.trim().toUpperCase();
         set((s) => ({
@@ -530,6 +539,7 @@ export const useStockStore = create<StockState>()(
           transactions: snapshot.transactions ?? [],
           assets: snapshot.assets ?? [],
           linePrefs: snapshot.linePrefs ?? s.linePrefs,
+          fireSettings: snapshot.fireSettings ?? s.fireSettings,
           holdings: reconcileHoldings(snapshot.transactions ?? []),
         })),
       syncFromCloud: async () => {
@@ -624,6 +634,7 @@ export const useStockStore = create<StockState>()(
         transactions: state.transactions,
         assets: state.assets,
         linePrefs: state.linePrefs,
+        fireSettings: state.fireSettings,
       }),
       migrate: (persistedState, version): PersistedStockState => {
         const state = (persistedState ?? {}) as Partial<PersistedStockState> & {
@@ -652,6 +663,7 @@ export const useStockStore = create<StockState>()(
             ...state,
             transactions: nextTxns,
             linePrefs: state.linePrefs ?? DEFAULT_LINE_PREFS,
+            fireSettings: state.fireSettings ?? DEFAULT_FIRE_SETTINGS,
           };
         }
         // v4 → v5：把已存的 holdings 欄位丟掉（onRehydrateStorage 會重算）
@@ -659,6 +671,7 @@ export const useStockStore = create<StockState>()(
           ...DEFAULT_PERSISTED_STATE,
           ...state,
           linePrefs: state.linePrefs ?? DEFAULT_LINE_PREFS,
+          fireSettings: state.fireSettings ?? DEFAULT_FIRE_SETTINGS,
         };
       },
       onRehydrateStorage: () => (state) => {
@@ -680,5 +693,6 @@ export function buildBackupSnapshot(): BackupSnapshot {
     transactions: s.transactions,
     assets: s.assets,
     linePrefs: s.linePrefs,
+    fireSettings: s.fireSettings,
   };
 }

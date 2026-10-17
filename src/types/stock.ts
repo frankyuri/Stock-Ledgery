@@ -90,3 +90,5 @@ export interface AssetSnapshot {
   currency: string;
   note?: string;
 }
+
+export type { FireSettings, FireType } from '@/lib/fireAnalytics';
