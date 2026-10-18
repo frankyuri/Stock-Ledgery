@@ -1,5 +1,5 @@
 import { useEffect, useMemo, lazy, Suspense, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp,
@@ -48,6 +48,7 @@ const RESOLUTIONS: Resolution[] = ['1D', '1W', '1M'];
 
 export function StockDetail() {
   const { symbol = 'AAPL' } = useParams();
+  const navigate = useNavigate();
   const resolution = useStockStore((s) => s.resolution);
   const setResolution = useStockStore((s) => s.setResolution);
   const addToWatchlist = useStockStore((s) => s.addToWatchlist);
@@ -195,11 +196,16 @@ export function StockDetail() {
                 <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-xl" />}>
                   <StockChart
                     symbol={symbol}
+                    name={displayQuote?.name}
+                    quote={displayQuote}
                     data={bundle.data.candles}
                     resolution={resolution}
+                    onResolutionChange={setResolution}
                     fiftyTwoWeekHigh={displayQuote?.fiftyTwoWeekHigh}
                     fiftyTwoWeekLow={displayQuote?.fiftyTwoWeekLow}
                     markers={markers}
+                    watchlist={watchlist}
+                    onSelectSymbol={(s) => navigate(`/stock/${encodeURIComponent(s)}`)}
                   />
                 </Suspense>
               ) : (
