@@ -62,16 +62,26 @@ export async function transactionRoutes(
       if (to) where.tradedAt.lte = to;
     }
 
-    const txns = await prisma.transaction.findMany({
-      where,
-      orderBy: [{ tradedAt: 'desc' }, { createdAt: 'desc' }],
-    });
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const offset = query.offset ? parseInt(query.offset, 10) : undefined;
+
+    const [txns, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        orderBy: [{ tradedAt: 'desc' }, { createdAt: 'desc' }],
+        take: limit && limit > 0 ? limit : undefined,
+        skip: offset && offset >= 0 ? offset : undefined,
+      }),
+      prisma.transaction.count({ where }),
+    ]);
 
     return reply.send({
       success: true,
       data: {
         items: txns.map(serializeTxn),
-        total: txns.length,
+        total,
+        limit: limit ?? total,
+        offset: offset ?? 0,
       },
     });
   });
