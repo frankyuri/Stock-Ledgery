@@ -29,6 +29,8 @@ import {
 import { AllocationComparisonChart } from '@/components/charts/AllocationComparisonChart';
 import { QuickTradeModal } from '@/components/modals/QuickTradeModal';
 import { formatNumber } from '@/lib/format';
+import { useCurrency } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/lib/toast';
 import type { ChartBundle } from '@/services/yahoo';
@@ -36,6 +38,7 @@ import type { TransactionType } from '@/types/stock';
 
 export function Rebalance() {
   const toast = useToast();
+  const { formatMoney } = useCurrency();
   const holdings = useStockStore((s) => s.holdings);
   const rebalanceSettings = useStockStore((s) => s.rebalanceSettings);
   const setRebalanceSettings = useStockStore((s) => s.setRebalanceSettings);
@@ -230,32 +233,35 @@ export function Rebalance() {
           </p>
         </div>
 
-        {/* 模式切換 Pill Tabs */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-          <button
-            type="button"
-            onClick={() => updateSettings('mode', 'CASH_IN_ONLY')}
-            className={cn(
-              'rounded-lg px-3 py-1.5 transition-all cursor-pointer',
-              settings.mode === 'CASH_IN_ONLY'
-                ? 'bg-brand text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100',
-            )}
-          >
-            💰 新資金加碼最佳化 (只買不賣)
-          </button>
-          <button
-            type="button"
-            onClick={() => updateSettings('mode', 'FULL_REBALANCE')}
-            className={cn(
-              'rounded-lg px-3 py-1.5 transition-all cursor-pointer',
-              settings.mode === 'FULL_REBALANCE'
-                ? 'bg-brand text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100',
-            )}
-          >
-            ⚖️ 全盤直接再平衡 (買賣歸位)
-          </button>
+        {/* 模式切換 Pill Tabs 與 幣別切換 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <CurrencyToggle />
+          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+            <button
+              type="button"
+              onClick={() => updateSettings('mode', 'CASH_IN_ONLY')}
+              className={cn(
+                'rounded-lg px-3 py-1.5 transition-all cursor-pointer',
+                settings.mode === 'CASH_IN_ONLY'
+                  ? 'bg-brand text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+              )}
+            >
+              💰 新資金加碼最佳化 (只買不賣)
+            </button>
+            <button
+              type="button"
+              onClick={() => updateSettings('mode', 'FULL_REBALANCE')}
+              className={cn(
+                'rounded-lg px-3 py-1.5 transition-all cursor-pointer',
+                settings.mode === 'FULL_REBALANCE'
+                  ? 'bg-brand text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+              )}
+            >
+              ⚖️ 全盤直接再平衡 (買賣歸位)
+            </button>
+          </div>
         </div>
       </div>
 
@@ -269,7 +275,7 @@ export function Rebalance() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              NT$ {formatNumber(driftResult.totalMarketValue)}
+              {formatMoney(driftResult.totalMarketValue, 'TWD')}
             </span>
           </div>
           <div className="mt-3 flex justify-between text-xs text-slate-500 dark:text-zinc-400">
@@ -323,24 +329,24 @@ export function Rebalance() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-              NT${' '}
-              {formatNumber(
+              {formatMoney(
                 settings.mode === 'CASH_IN_ONLY'
                   ? settings.newCashAmount
                   : fullRebalanceResult.totalBuyAmount,
+                'TWD',
               )}
             </span>
           </div>
           <div className="mt-3 flex justify-between text-xs text-slate-500 dark:text-zinc-400">
             {settings.mode === 'CASH_IN_ONLY' ? (
               <>
-                <span>已分配：NT$ {formatNumber(settings.newCashAmount - cashInResult.cashRemaining)}</span>
-                <span>剩餘零頭：NT$ {formatNumber(cashInResult.cashRemaining)}</span>
+                <span>已分配：{formatMoney(settings.newCashAmount - cashInResult.cashRemaining, 'TWD')}</span>
+                <span>剩餘零頭：{formatMoney(cashInResult.cashRemaining, 'TWD')}</span>
               </>
             ) : (
               <>
-                <span>賣出變現：NT$ {formatNumber(fullRebalanceResult.totalSellAmount)}</span>
-                <span>差額補入：NT$ {formatNumber(fullRebalanceResult.netRequiredCash)}</span>
+                <span>賣出變現：{formatMoney(fullRebalanceResult.totalSellAmount, 'TWD')}</span>
+                <span>差額補入：{formatMoney(fullRebalanceResult.netRequiredCash, 'TWD')}</span>
               </>
             )}
           </div>
@@ -354,11 +360,11 @@ export function Rebalance() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold tracking-tight text-purple-600 dark:text-purple-400">
-              NT${' '}
-              {formatNumber(
+              {formatMoney(
                 settings.mode === 'CASH_IN_ONLY'
                   ? 0
                   : fullRebalanceResult.totalFeesAndTaxes,
+                'TWD',
               )}
             </span>
           </div>

@@ -1,6 +1,6 @@
 # Stocktify｜專業美股台股全端投資管理系統
 
-[![Build & Test](https://img.shields.io/badge/tests-41%20passed-emerald)](package.json)
+[![Build & Test](https://img.shields.io/badge/tests-72%20passed-emerald)](package.json)
 [![Fullstack](https://img.shields.io/badge/Architecture-Fullstack%20Fastify%20%2B%20React-blue)](docs/fullstack-optimization-spec.md)
 [![License](https://img.shields.io/badge/license-MIT-slate)](LICENSE)
 
@@ -60,6 +60,7 @@ flowchart LR
 * **四大 FIRE 生活型態即時切換**：標準自由 (Standard 100%)、極簡自由 (Lean 75%)、富裕自由 (Fat 135%)、兼職自由 (Barista 50%)。
 * **被動股息生活開銷覆蓋階梯 (Crossover Ladder)**：追蹤目前被動股息現金流已逐步解鎖基礎水電、日常伙食、居住房貸或完全自由等人生里程碑。
 * **30 年長期財富積累曲線**：清楚呈現本金投入 vs 複利滾存收益 vs FIRE 門檻交叉點。
+* **蒙地卡羅情境壓力測試 (Monte Carlo 2,000次)**：以幾何布朗運動 (GBM) 隨機過程模擬市場極端回撤、計算 30 年不破產成功率、扇形走勢圖 (Fan Chart) 與報酬順序風險 (SRR) 診斷；支援 Guyton-Klinger 護欄法則動態提領。
 * **智慧加速策略建議**：自動試算每月加碼投資或開銷精省 10% 能提前幾年退休。
 
 ### 6. ⚖️ 目標資產配置與一鍵自動再平衡計算器 (`/rebalance`)
@@ -69,7 +70,18 @@ flowchart LR
 * **全盤直接再平衡 (Full Rebalance)**：試算 100% 歸位之買賣股數，並扣除預估 0.3% 證券交易稅與券商折扣手續費。
 * **一鍵快速下單記帳**：算單右側直接喚起 `QuickTradeModal` 彈窗，預填代號與股數迅速完成交易記錄。
 
-### 7. 📱 PWA 行動端原生體驗
+### 7. 📥 券商對帳單智慧匯入引擎 (`Smart Broker Importer`)
+* **台美主流券商自適應解析**：原生支援永豐大戶投 (Sinopac)、富邦證券、國泰證券、元大證券、Interactive Brokers (IBKR)、Firstrade (第一證券)、Charles Schwab 及標準 CSV。
+* **智慧去重與校驗**：自動比對現有交易（日期、代號、方向、股數、價格），支援一鍵排除重複，即時試算批次匯入後之持股加權平均成本。
+* **民國年/代號正規化**：自動將台股民國年份（如 113/03/15）轉為西元年，純數字代號自動對齊 `.TW` 規範。
+
+### 8. 🛡️ 台美雙市場稅務與二代健保試算中心 (`/tax`)
+* **二代健保補充保費 (2.11%) 警戒雷達**：單筆股利達 20,000 元防呆預警，自動計算被扣金額與建議持有上限股數，精準提示避稅拆單策略。
+* **台股綜合所得稅股利申報最佳化**：合併計稅 (享 8.5% 抵減，上限 8 萬) vs 28% 分開計稅即時試算，推薦最省稅/享退稅之申報方案。
+* **美股 30% 預扣稅拖累與 UCITS 效益**：追蹤美股 30% IRS 稅務拖累，並試算改持愛爾蘭 UCITS ETF (15% 預扣) 之 10 年與 20 年複利省稅成長額。
+* **海外所得最低稅負制 (750 萬) 監控**：累計已實現海外利得與美元股息，動態監控 100 萬申報門檻與 750 萬基本免稅額進度條。
+
+### 9. 📱 PWA 行動端原生體驗
 * 支援 iOS / Android / Desktop Chrome 一鍵「安裝至主畫面」，享受全螢幕原生 App 流暢體驗。
 
 ---

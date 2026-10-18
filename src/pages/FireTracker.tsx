@@ -24,14 +24,18 @@ import {
   type FireType,
 } from '@/lib/fireAnalytics';
 import { FireProjectionChart } from '@/components/charts/FireProjectionChart';
-import { formatNumber, formatPercent } from '@/lib/format';
+import { MonteCarloPanel } from '@/components/fire/MonteCarloPanel';
+import { formatPercent } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/lib/toast';
+import { useCurrency } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import type { ChartBundle } from '@/services/yahoo';
 import type { DividendEvent, Quote } from '@/types/stock';
 
 export function FireTracker() {
   const toast = useToast();
+  const { formatMoney, currencySymbol } = useCurrency();
   const holdings = useStockStore((s) => s.holdings);
   const transactions = useStockStore((s) => s.transactions);
   const assets = useStockStore((s) => s.assets);
@@ -40,6 +44,7 @@ export function FireTracker() {
 
   // 本地調整暫存狀態 (即時連動)
   const [params, setParams] = useState<FireSettings>(fireSettings);
+  const [chartMode, setChartMode] = useState<'PROJECTION' | 'MONTE_CARLO'>('PROJECTION');
 
   const symbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
 
@@ -196,26 +201,29 @@ export function FireTracker() {
           </p>
         </div>
 
-        {/* 快捷 FIRE 模式選擇 Tabs */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-          {(['STANDARD', 'LEAN', 'FAT', 'BARISTA'] as FireType[]).map((ft) => (
-            <button
-              key={ft}
-              type="button"
-              onClick={() => updateParam('targetFireType', ft)}
-              className={cn(
-                'rounded-lg px-3 py-1.5 transition-all',
-                params.targetFireType === ft
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100',
-              )}
-            >
-              {ft === 'STANDARD' && '標準 FIRE'}
-              {ft === 'LEAN' && '極簡 Lean'}
-              {ft === 'FAT' && '富足 Fat'}
-              {ft === 'BARISTA' && '咖啡師 Barista'}
-            </button>
-          ))}
+        {/* 快捷 FIRE 模式選擇 Tabs 與 幣別切換 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <CurrencyToggle />
+          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+            {(['STANDARD', 'LEAN', 'FAT', 'BARISTA'] as FireType[]).map((ft) => (
+              <button
+                key={ft}
+                type="button"
+                onClick={() => updateParam('targetFireType', ft)}
+                className={cn(
+                  'rounded-lg px-3 py-1.5 transition-all',
+                  params.targetFireType === ft
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+                )}
+              >
+                {ft === 'STANDARD' && '標準 FIRE'}
+                {ft === 'LEAN' && '極簡 Lean'}
+                {ft === 'FAT' && '富足 Fat'}
+                {ft === 'BARISTA' && '咖啡師 Barista'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -234,7 +242,7 @@ export function FireTracker() {
               {sim.progressPercent}%
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-400">
-              (差額 NT$ {formatNumber(sim.remainingGap)})
+              (差額 {formatMoney(sim.remainingGap, 'TWD')})
             </span>
           </div>
           {/* 進度條 */}
@@ -245,8 +253,8 @@ export function FireTracker() {
             />
           </div>
           <div className="mt-2.5 flex justify-between text-xs text-slate-500 dark:text-zinc-400">
-            <span>目前 NT$ {formatNumber(sim.currentNetWorth)}</span>
-            <span>目標 NT$ {formatNumber(sim.targets.activeTarget)}</span>
+            <span>目前 {formatMoney(sim.currentNetWorth, 'TWD')}</span>
+            <span>目標 {formatMoney(sim.targets.activeTarget, 'TWD')}</span>
           </div>
         </div>
 
@@ -261,7 +269,7 @@ export function FireTracker() {
               {sim.dividendCoveragePercent}%
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-400">
-              月均 NT$ {formatNumber(sim.currentMonthlyDividends)}
+              月均 {formatMoney(sim.currentMonthlyDividends, 'TWD')}
             </span>
           </div>
           {/* 進度條 */}
@@ -272,8 +280,8 @@ export function FireTracker() {
             />
           </div>
           <div className="mt-2.5 flex justify-between text-xs text-slate-500 dark:text-zinc-400">
-            <span>年股息 NT$ {formatNumber(sim.currentAnnualDividends)}</span>
-            <span>年開銷 NT$ {formatNumber(params.monthlyExpense * 12)}</span>
+            <span>年股息 {formatMoney(sim.currentAnnualDividends, 'TWD')}</span>
+            <span>年開銷 {formatMoney(params.monthlyExpense * 12, 'TWD')}</span>
           </div>
         </div>
 
@@ -314,7 +322,7 @@ export function FireTracker() {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold tracking-tight text-purple-600 dark:text-purple-400">
-              NT$ {formatNumber(sim.currentMonthlySafeWithdrawal)}
+              {formatMoney(sim.currentMonthlySafeWithdrawal, 'TWD')}
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-400">/ 月</span>
           </div>
@@ -322,7 +330,7 @@ export function FireTracker() {
             <div className="flex justify-between">
               <span>每年可提領：</span>
               <strong className="text-slate-800 dark:text-zinc-200">
-                NT$ {formatNumber(sim.currentAnnualSafeWithdrawal)}
+                {formatMoney(sim.currentAnnualSafeWithdrawal, 'TWD')}
               </strong>
             </div>
             <div className="flex justify-between">
@@ -343,27 +351,66 @@ export function FireTracker() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* 左側欄位 (7 欄寬) */}
         <div className="space-y-6 lg:col-span-7">
-          {/* 30 年財富增長與達標交叉點圖表 */}
+          {/* 30 年財富增長與達標交叉點圖表 / 蒙地卡羅情境壓力測試 */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-base font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-emerald-500" />
-                  30 年複利財富累積與 FIRE 門檻交叉線
+                  {chartMode === 'PROJECTION'
+                    ? '30 年複利財富累積與 FIRE 門檻交叉線'
+                    : '蒙地卡羅情境壓力測試與動態提領模擬'}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  {params.useInflationAdjusted
-                    ? '已啟用實質抗通膨調整 (淨年化實質報酬率推算)'
-                    : '名目報酬率模擬 (未扣除通膨)'}
+                  {chartMode === 'PROJECTION'
+                    ? params.useInflationAdjusted
+                      ? '已啟用實質抗通膨調整 (淨年化實質報酬率推算)'
+                      : '名目報酬率模擬 (未扣除通膨)'
+                    : '2,000 次隨機過程模擬、破產率精算與報酬順序風險 (SRR) 診斷'}
                 </p>
               </div>
 
-              <div className="text-xs text-slate-500 dark:text-zinc-400">
-                每月投入：<strong>NT$ {formatNumber(params.monthlyInvestment)}</strong>
+              {/* Mode switch pills */}
+              <div className="inline-flex rounded-xl border border-black/10 bg-black/[0.03] p-1 dark:border-white/10 dark:bg-white/5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setChartMode('PROJECTION')}
+                  className={cn(
+                    'rounded-lg px-3 py-1 font-semibold transition',
+                    chartMode === 'PROJECTION'
+                      ? 'bg-brand text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
+                  )}
+                >
+                  📈 定額複利路徑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartMode('MONTE_CARLO')}
+                  className={cn(
+                    'rounded-lg px-3 py-1 font-semibold transition flex items-center gap-1.5',
+                    chartMode === 'MONTE_CARLO'
+                      ? 'bg-brand text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
+                  )}
+                >
+                  <Sparkles className="h-3 w-3" />
+                  🎲 蒙地卡羅壓力測試
+                </button>
               </div>
             </div>
 
-            <FireProjectionChart data={sim.projections} height={320} />
+            {chartMode === 'PROJECTION' ? (
+              <FireProjectionChart data={sim.projections} height={320} />
+            ) : (
+              <MonteCarloPanel
+                currentNetWorth={sim.currentNetWorth}
+                annualExpense={sim.targets.activeTarget * (params.swr / 100)}
+                annualInvestment={params.monthlyInvestment * 12}
+                expectedAnnualReturn={params.expectedAnnualReturn}
+                inflationRate={params.inflationRate}
+              />
+            )}
           </div>
 
           {/* 被動股息生活支出覆蓋階梯 (Milestone Ladder) */}
@@ -425,14 +472,14 @@ export function FireTracker() {
                   </div>
 
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400">
-                    <span>月需：NT$ {formatNumber(m.targetMonthlyAmount)}</span>
+                    <span>月需：{formatMoney(m.targetMonthlyAmount, 'TWD')}</span>
                     <span>
                       {m.isUnlocked ? (
                         <strong className="text-emerald-600 dark:text-emerald-400">
                           已完全達成
                         </strong>
                       ) : (
-                        `還差 NT$ ${formatNumber(m.remainingAnnual)}/年`
+                        `還差 ${formatMoney(m.remainingAnnual, 'TWD')}/年`
                       )}
                     </span>
                   </div>
@@ -466,7 +513,7 @@ export function FireTracker() {
                   🚀 開源加速
                 </span>
                 <p className="mt-1 text-xs text-slate-700 dark:text-zinc-300">
-                  若每月額外多投入 <strong>NT$ 5,000</strong>，可提早約{' '}
+                  若每月額外多投入 <strong>{formatMoney(5000, 'TWD')}</strong>，可提早約{' '}
                   <strong className="text-blue-600 dark:text-blue-400 text-sm">
                     {sim.accelerators.boostInvestmentAdvanceYears} 年
                   </strong>{' '}
@@ -482,7 +529,7 @@ export function FireTracker() {
                 <p className="mt-1 text-xs text-slate-700 dark:text-zinc-300">
                   若生活開支減少 <strong>10%</strong>，本金目標立減{' '}
                   <strong>
-                    NT$ {formatNumber(sim.accelerators.cutExpenseTargetReduced)}
+                    {formatMoney(sim.accelerators.cutExpenseTargetReduced, 'TWD')}
                   </strong>
                   ，可提早約{' '}
                   <strong className="text-emerald-600 dark:text-emerald-400 text-sm">
@@ -565,7 +612,7 @@ export function FireTracker() {
                     <div className="mt-2 flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400">
                       <span>{item.sub}</span>
                       <strong className="text-slate-900 dark:text-zinc-100">
-                        NT$ {formatNumber(item.target)}
+                        {formatMoney(item.target, 'TWD')}
                       </strong>
                     </div>
 
@@ -608,7 +655,7 @@ export function FireTracker() {
                     目標每月生活開銷
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-slate-500">NT$</span>
+                    <span className="text-slate-500 font-semibold">{currencySymbol}</span>
                     <input
                       type="number"
                       step={5000}
@@ -632,11 +679,11 @@ export function FireTracker() {
                   className="w-full accent-amber-500 cursor-pointer"
                 />
                 <div className="flex justify-between text-[11px] text-slate-400 mt-0.5">
-                  <span>NT$ 1萬</span>
+                  <span>{formatMoney(10000, 'TWD')}</span>
                   <span>
-                    年支出 NT$ {formatNumber(params.monthlyExpense * 12)}
+                    年支出 {formatMoney(params.monthlyExpense * 12, 'TWD')}
                   </span>
-                  <span>NT$ 20萬</span>
+                  <span>{formatMoney(200000, 'TWD')}</span>
                 </div>
               </div>
 
@@ -647,7 +694,7 @@ export function FireTracker() {
                     每月定期定額投入
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-slate-500">NT$</span>
+                    <span className="text-slate-500 font-semibold">{currencySymbol}</span>
                     <input
                       type="number"
                       step={2000}
@@ -673,9 +720,9 @@ export function FireTracker() {
                   className="w-full accent-blue-500 cursor-pointer"
                 />
                 <div className="flex justify-between text-[11px] text-slate-400 mt-0.5">
-                  <span>NT$ 0</span>
-                  <span>年投入 NT$ {formatNumber(params.monthlyInvestment * 12)}</span>
-                  <span>NT$ 15萬</span>
+                  <span>{formatMoney(0, 'TWD')}</span>
+                  <span>年投入 {formatMoney(params.monthlyInvestment * 12, 'TWD')}</span>
+                  <span>{formatMoney(150000, 'TWD')}</span>
                 </div>
               </div>
 

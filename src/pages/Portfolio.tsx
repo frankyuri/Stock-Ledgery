@@ -16,13 +16,16 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { QuickTradeModal } from '@/components/modals/QuickTradeModal';
 import { portfolioQueryOptions } from '@/lib/queries/portfolio';
 import { useStockStore } from '@/store/useStockStore';
-import { formatCurrency, formatPercent, changeColor } from '@/lib/format';
+import { formatPercent, changeColor } from '@/lib/format';
+import { useCurrency, type CurrencyType } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { cn } from '@/lib/cn';
 import type { fetchPortfolio } from '@/services/stocks';
 
 export function Portfolio() {
   const holdings = useStockStore((s) => s.holdings);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
+  const { baseCurrency, convertToBase, formatMoney } = useCurrency();
 
   const { data, isLoading, isError, error, isStale } = useQuery({
     ...portfolioQueryOptions(holdings),
@@ -31,16 +34,21 @@ export function Portfolio() {
 
   const portfolioList = data ?? [];
 
-  // Summary Metrics
+  // Summary Metrics (以使用者選定之全域基底幣別 TWD / USD 即時換算)
   const summary = useMemo(() => {
     let totalValue = 0;
     let totalCost = 0;
     let totalDayChange = 0;
 
     for (const h of portfolioList) {
-      totalValue += h.marketValue;
-      totalCost += h.shares * h.avgCost;
-      totalDayChange += (h.price * (h.changePercent / 100)) * h.shares;
+      const hCurrency = (h.currency === 'USD' ? 'USD' : 'TWD') as CurrencyType;
+      const mv = convertToBase(h.marketValue, hCurrency);
+      const c = convertToBase(h.shares * h.avgCost, hCurrency);
+      const dc = convertToBase((h.price * (h.changePercent / 100)) * h.shares, hCurrency);
+
+      totalValue += mv;
+      totalCost += c;
+      totalDayChange += dc;
     }
 
     const totalGainLoss = totalValue - totalCost;
@@ -55,9 +63,9 @@ export function Portfolio() {
       totalGainLossPercent,
       totalDayChange,
       totalDayChangePercent,
-      currency: portfolioList[0]?.currency ?? 'USD',
+      currency: baseCurrency,
     };
-  }, [portfolioList]);
+  }, [portfolioList, baseCurrency, convertToBase]);
 
   return (
     <div className="space-y-6">
@@ -79,6 +87,7 @@ export function Portfolio() {
         </div>
 
         <div className="flex items-center gap-2">
+          <CurrencyToggle />
           <button
             type="button"
             onClick={() => setTradeModalOpen(true)}
@@ -102,33 +111,33 @@ export function Portfolio() {
           <div className="card p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <Wallet className="h-3.5 w-3.5 text-brand" />
-              持股總市值
+              持股總市值 ({baseCurrency})
             </span>
             <p
               className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
-              title={formatCurrency(summary.totalValue, summary.currency)}
+              title={formatMoney(summary.totalValue, baseCurrency)}
             >
-              {formatCurrency(summary.totalValue, summary.currency)}
+              {formatMoney(summary.totalValue, baseCurrency)}
             </p>
             <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
-              持股總成本：{formatCurrency(summary.totalCost, summary.currency)}
+              持股總成本：{formatMoney(summary.totalCost, baseCurrency)}
             </p>
           </div>
 
           <div className="card p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <TrendingUp className="h-3.5 w-3.5 text-brand" />
-              未實現總損益
+              未實現總損益 ({baseCurrency})
             </span>
             <p
               className={cn(
                 'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
                 changeColor(summary.totalGainLoss),
               )}
-              title={`${summary.totalGainLoss > 0 ? '+' : ''}${formatCurrency(summary.totalGainLoss, summary.currency)}`}
+              title={`${summary.totalGainLoss > 0 ? '+' : ''}${formatMoney(summary.totalGainLoss, baseCurrency)}`}
             >
               {summary.totalGainLoss > 0 ? '+' : ''}
-              {formatCurrency(summary.totalGainLoss, summary.currency)}
+              {formatMoney(summary.totalGainLoss, baseCurrency)}
             </p>
             <p
               className={cn(
@@ -143,17 +152,17 @@ export function Portfolio() {
           <div className="card p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <DollarSign className="h-3.5 w-3.5 text-brand" />
-              今日市值變動
+              今日市值變動 ({baseCurrency})
             </span>
             <p
               className={cn(
                 'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
                 changeColor(summary.totalDayChange),
               )}
-              title={`${summary.totalDayChange > 0 ? '+' : ''}${formatCurrency(summary.totalDayChange, summary.currency)}`}
+              title={`${summary.totalDayChange > 0 ? '+' : ''}${formatMoney(summary.totalDayChange, baseCurrency)}`}
             >
               {summary.totalDayChange > 0 ? '+' : ''}
-              {formatCurrency(summary.totalDayChange, summary.currency)}
+              {formatMoney(summary.totalDayChange, baseCurrency)}
             </p>
             <p
               className={cn(

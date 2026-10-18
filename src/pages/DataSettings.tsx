@@ -15,12 +15,16 @@ import {
   RefreshCw,
   Sparkles,
   Trash2,
+  Coins,
 } from 'lucide-react';
 import { useStockStore, buildBackupSnapshot, type BackupSnapshot } from '@/store/useStockStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { apiClient } from '@/services/api';
 import { useToast } from '@/lib/toast';
 import { formatNumber } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { useCurrency } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 
 function downloadJson(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -60,6 +64,7 @@ export function DataSettings() {
   const importBackup = useStockStore((s) => s.importBackup);
   const loadDemoData = useStockStore((s) => s.loadDemoData);
   const clearAllData = useStockStore((s) => s.clearAllData);
+  const { baseCurrency, setBaseCurrency, fxRate, setFxRate } = useCurrency();
   const fileRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -175,6 +180,73 @@ export function DataSettings() {
         <Stat label="淨值快照存檔" value={stats.assets} icon={Layers} />
         <Stat label="自選追蹤標的" value={stats.watchlist} icon={Bookmark} />
       </div>
+
+      {/* 偏好設定：基礎計價幣別與匯率設定 */}
+      <section className="card">
+        <div className="card-header flex-wrap gap-3">
+          <div>
+            <h2 className="section-title flex items-center gap-2">
+              <Coins className="h-5 w-5 text-brand" />
+              全域顯示幣別與匯率偏好
+            </h2>
+            <p className="section-hint">
+              設定全系統預設顯示之基準貨幣（支援新台幣與美元隨時切換），並可調整美台匯率折算基準。
+            </p>
+          </div>
+          <CurrencyToggle />
+        </div>
+        <div className="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-800/40">
+            <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 block mb-2">
+              當前預設顯示幣別
+            </label>
+            <div className="flex gap-3">
+              {(['TWD', 'USD'] as const).map((curr) => (
+                <button
+                  key={curr}
+                  type="button"
+                  onClick={() => setBaseCurrency(curr)}
+                  className={cn(
+                    'flex-1 rounded-lg border py-2 px-3 text-xs font-bold transition text-center',
+                    baseCurrency === curr
+                      ? 'border-brand bg-brand text-white shadow-xs'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+                  )}
+                >
+                  {curr === 'TWD' ? '🇹🇼 新台幣 (TWD / NT$)' : '🇺🇸 美元 (USD / $)'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-800/40">
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                USD / TWD 換算參考匯率
+              </label>
+              <span className="text-xs font-mono font-bold text-brand">1 USD = {fxRate} TWD</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                step="0.1"
+                min="20"
+                max="45"
+                value={fxRate}
+                onChange={(e) => setFxRate(Number(e.target.value) || 32.5)}
+                className="input py-1.5 text-xs font-mono font-bold"
+              />
+              <button
+                type="button"
+                onClick={() => setFxRate(32.5)}
+                className="btn py-1.5 px-3 text-xs whitespace-nowrap"
+              >
+                還原 32.5
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 雲端資料庫雙向同步卡片 */}
       <section className="card border-brand/20 bg-brand/[0.02]">
