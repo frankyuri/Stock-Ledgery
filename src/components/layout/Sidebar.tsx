@@ -14,6 +14,7 @@ import {
   Activity,
   Flame,
   Scale,
+  Receipt,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
@@ -82,6 +83,11 @@ export function Sidebar({ open = false, onClose }: Props) {
           to: '/rebalance',
           label: '資產再平衡',
           icon: Scale,
+        },
+        {
+          to: '/tax',
+          label: '稅務試算',
+          icon: Receipt,
         },
         {
           to: '/transactions',

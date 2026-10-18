@@ -65,6 +65,9 @@ interface StockState {
   addTransaction: (
     t: Omit<Transaction, 'id' | 'realizedGainLoss'>,
   ) => Promise<AddTransactionResult>;
+  addTransactionsBatch: (
+    txns: Omit<Transaction, 'id' | 'realizedGainLoss'>[],
+  ) => Promise<{ importedCount: number; failedCount: number; errors: string[] }>;
   updateTransaction: (
     id: string,
     patch: Partial<Omit<Transaction, 'id'>>,
@@ -534,6 +537,78 @@ export const useStockStore = create<StockState>()(
           realizedGainLoss: realized,
           synced: false,
           warning: isCloudActive ? '網路暫時無法連線至雲端，已為您安全暫存於本機' : undefined,
+        };
+      },
+      addTransactionsBatch: async (items) => {
+        const state = useStockStore.getState();
+        const validItems: Transaction[] = [];
+        const errors: string[] = [];
+        const token = useAuthStore.getState().token;
+        const isCloudActive = Boolean(token && !token.startsWith('mock-'));
+
+        // Sort items chronologically (oldest to newest) to maintain sound accounting
+        const sorted = [...items].sort((a, b) => a.tradedAt.localeCompare(b.tradedAt));
+
+        for (let i = 0; i < sorted.length; i++) {
+          const t = sorted[i];
+          if (
+            !t.symbol ||
+            !Number.isFinite(t.shares) ||
+            t.shares <= 0 ||
+            !Number.isFinite(t.price) ||
+            t.price <= 0
+          ) {
+            errors.push(`第 ${i + 1} 筆 (${t.symbol || '無代號'}) 資料不完整或金額無效`);
+            continue;
+          }
+
+          let txnId = genId();
+          if (isCloudActive) {
+            try {
+              const res = await apiClient.post('/transactions', {
+                symbol: t.symbol,
+                type: t.type,
+                shares: t.shares,
+                price: t.price,
+                fee: t.fee,
+                tax: 0,
+                tradedAt: t.tradedAt,
+                note: t.note || null,
+              });
+              if (res.data?.success && res.data?.data?.transaction?.id) {
+                txnId = res.data.data.transaction.id;
+              }
+            } catch (err) {
+              console.warn('[Cloud batch save item error, fallback to local]', err);
+            }
+          }
+
+          validItems.push({
+            id: txnId,
+            symbol: t.symbol,
+            type: t.type,
+            shares: t.shares,
+            price: t.price,
+            fee: t.fee || 0,
+            tradedAt: t.tradedAt,
+            note: t.note,
+          });
+        }
+
+        if (validItems.length > 0) {
+          const combined = [...validItems, ...state.transactions];
+          const recalculated = recalculateAllRealizedGains(combined);
+          recalculated.sort((a, b) => b.tradedAt.localeCompare(a.tradedAt));
+          set({
+            transactions: recalculated,
+            holdings: reconcileHoldings(recalculated),
+          });
+        }
+
+        return {
+          importedCount: validItems.length,
+          failedCount: errors.length,
+          errors,
         };
       },
       updateTransaction: async (id, patch) => {

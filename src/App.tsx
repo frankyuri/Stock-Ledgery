@@ -26,6 +26,9 @@ const FireTracker = lazy(() =>
 const Rebalance = lazy(() =>
   import('@/pages/Rebalance').then((m) => ({ default: m.Rebalance })),
 );
+const TaxCenter = lazy(() =>
+  import('@/pages/TaxCenter').then((m) => ({ default: m.TaxCenter })),
+);
 const StockDetail = lazy(() =>
   import('@/pages/StockDetail').then((m) => ({ default: m.StockDetail })),
 );
@@ -148,6 +151,14 @@ export default function App() {
           element={
             <LazyPage>
               <Rebalance />
+            </LazyPage>
+          }
+        />
+        <Route
+          path="tax"
+          element={
+            <LazyPage>
+              <TaxCenter />
             </LazyPage>
           }
         />

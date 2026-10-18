@@ -24,6 +24,7 @@ import {
   type FireType,
 } from '@/lib/fireAnalytics';
 import { FireProjectionChart } from '@/components/charts/FireProjectionChart';
+import { MonteCarloPanel } from '@/components/fire/MonteCarloPanel';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/lib/toast';
@@ -40,6 +41,7 @@ export function FireTracker() {
 
   // 本地調整暫存狀態 (即時連動)
   const [params, setParams] = useState<FireSettings>(fireSettings);
+  const [chartMode, setChartMode] = useState<'PROJECTION' | 'MONTE_CARLO'>('PROJECTION');
 
   const symbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
 
@@ -343,27 +345,66 @@ export function FireTracker() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* 左側欄位 (7 欄寬) */}
         <div className="space-y-6 lg:col-span-7">
-          {/* 30 年財富增長與達標交叉點圖表 */}
+          {/* 30 年財富增長與達標交叉點圖表 / 蒙地卡羅情境壓力測試 */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-base font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-emerald-500" />
-                  30 年複利財富累積與 FIRE 門檻交叉線
+                  {chartMode === 'PROJECTION'
+                    ? '30 年複利財富累積與 FIRE 門檻交叉線'
+                    : '蒙地卡羅情境壓力測試與動態提領模擬'}
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  {params.useInflationAdjusted
-                    ? '已啟用實質抗通膨調整 (淨年化實質報酬率推算)'
-                    : '名目報酬率模擬 (未扣除通膨)'}
+                  {chartMode === 'PROJECTION'
+                    ? params.useInflationAdjusted
+                      ? '已啟用實質抗通膨調整 (淨年化實質報酬率推算)'
+                      : '名目報酬率模擬 (未扣除通膨)'
+                    : '2,000 次隨機過程模擬、破產率精算與報酬順序風險 (SRR) 診斷'}
                 </p>
               </div>
 
-              <div className="text-xs text-slate-500 dark:text-zinc-400">
-                每月投入：<strong>NT$ {formatNumber(params.monthlyInvestment)}</strong>
+              {/* Mode switch pills */}
+              <div className="inline-flex rounded-xl border border-black/10 bg-black/[0.03] p-1 dark:border-white/10 dark:bg-white/5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setChartMode('PROJECTION')}
+                  className={cn(
+                    'rounded-lg px-3 py-1 font-semibold transition',
+                    chartMode === 'PROJECTION'
+                      ? 'bg-brand text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
+                  )}
+                >
+                  📈 定額複利路徑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartMode('MONTE_CARLO')}
+                  className={cn(
+                    'rounded-lg px-3 py-1 font-semibold transition flex items-center gap-1.5',
+                    chartMode === 'MONTE_CARLO'
+                      ? 'bg-brand text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
+                  )}
+                >
+                  <Sparkles className="h-3 w-3" />
+                  🎲 蒙地卡羅壓力測試
+                </button>
               </div>
             </div>
 
-            <FireProjectionChart data={sim.projections} height={320} />
+            {chartMode === 'PROJECTION' ? (
+              <FireProjectionChart data={sim.projections} height={320} />
+            ) : (
+              <MonteCarloPanel
+                currentNetWorth={sim.currentNetWorth}
+                annualExpense={sim.targets.activeTarget * (params.swr / 100)}
+                annualInvestment={params.monthlyInvestment * 12}
+                expectedAnnualReturn={params.expectedAnnualReturn}
+                inflationRate={params.inflationRate}
+              />
+            )}
           </div>
 
           {/* 被動股息生活支出覆蓋階梯 (Milestone Ladder) */}

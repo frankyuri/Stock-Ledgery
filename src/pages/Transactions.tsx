@@ -19,6 +19,7 @@ import {
 import { useStockStore } from '@/store/useStockStore';
 import { SymbolSearchInput } from '@/components/ui/SymbolSearchInput';
 import { QuickTradeModal } from '@/components/modals/QuickTradeModal';
+import { SmartImportModal } from '@/components/modals/SmartImportModal';
 import { fetchQuote } from '@/services/stocks';
 import { cn } from '@/lib/cn';
 import { changeColor, formatNumber, formatShares } from '@/lib/format';
@@ -50,6 +51,7 @@ export function Transactions() {
   const [searchSymbol, setSearchSymbol] = useState('');
   const [editingTxn, setEditingTxn] = useState<Transaction | null>(null);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
+  const [smartImportOpen, setSmartImportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSelect(r: SearchResult) {
@@ -285,6 +287,15 @@ export function Transactions() {
 
         {/* Import / Export actions */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSmartImportOpen(true)}
+            className="btn text-xs py-2 px-3 flex items-center gap-1.5 border-sky-500/40 bg-sky-500/10 text-sky-500 dark:text-sky-400 hover:bg-sky-500/20 font-semibold shadow-xs"
+            title="智慧解析台美各大券商對帳單與自動去重"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>智慧匯入對帳單</span>
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -296,10 +307,10 @@ export function Transactions() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="btn text-xs py-2 px-3 flex items-center gap-1.5"
-            title="從 CSV 匯入歷史交易"
+            title="從標準 CSV 快速匯入歷史交易"
           >
             <Upload className="h-3.5 w-3.5" />
-            <span>匯入 CSV</span>
+            <span>簡易 CSV</span>
           </button>
           <button
             type="button"
@@ -729,6 +740,14 @@ export function Transactions() {
             setEditingTxn(null);
           }}
           editTransaction={editingTxn}
+        />
+      )}
+
+      {/* Smart Broker CSV Import Modal */}
+      {smartImportOpen && (
+        <SmartImportModal
+          isOpen={smartImportOpen}
+          onClose={() => setSmartImportOpen(false)}
         />
       )}
     </div>
