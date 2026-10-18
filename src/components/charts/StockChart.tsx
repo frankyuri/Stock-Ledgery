@@ -107,6 +107,7 @@ export function StockChart({
   const isDark = theme === 'dark';
 
   const barsPerMonth = BARS_PER_MONTH[resolution];
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -213,6 +214,57 @@ export function StockChart({
 
   const activeRsi = hover?.rsi ?? (activeCandle ? rsiMap.get(activeCandle.time) : undefined);
 
+  // Toggle true Native Fullscreen + CSS Fullscreen
+  const toggleFullscreen = async (forceState?: boolean) => {
+    const nextState = forceState !== undefined ? forceState : !isFullscreen;
+    if (nextState) {
+      setIsFullscreen(true);
+      try {
+        const el = wrapperRef.current || document.documentElement;
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if ((el as any).webkitRequestFullscreen) {
+          await (el as any).webkitRequestFullscreen();
+        }
+      } catch {
+        // Fallback: CSS fixed inset-0 handles viewport expansion
+      }
+    } else {
+      setIsFullscreen(false);
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (
+          (document as any).webkitFullscreenElement &&
+          (document as any).webkitExitFullscreen
+        ) {
+          await (document as any).webkitExitFullscreen();
+        }
+      } catch {
+        // Fallback
+      }
+    }
+  };
+
+  // Sync state if user exits via browser native key (Esc, F11)
+  useEffect(() => {
+    const handleFsChange = () => {
+      const isNative = Boolean(
+        document.fullscreenElement || (document as any).webkitFullscreenElement,
+      );
+      if (!isNative && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
+  }, [isFullscreen]);
+
   // Initialize Chart once on mount
   useEffect(() => {
     const el = containerRef.current;
@@ -230,7 +282,10 @@ export function StockChart({
         vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
         horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
       },
-      rightPriceScale: { borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)' },
+      rightPriceScale: {
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+        scaleMargins: { top: 0.1, bottom: 0.2 },
+      },
       timeScale: {
         borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
         timeVisible: true,
@@ -385,9 +440,31 @@ export function StockChart({
     }
   }, [height, isFullscreen]);
 
-  // Handle resize and fit content on fullscreen toggle
+  // Adjust margins and fitContent when toggling fullscreen
   useEffect(() => {
     if (!chartRef.current) return;
+
+    if (isFullscreen) {
+      // In fullscreen, give candles massive vertical space (5% top, 12% bottom)
+      chartRef.current.applyOptions({
+        rightPriceScale: {
+          scaleMargins: { top: 0.05, bottom: 0.12 },
+        },
+      });
+      volumeRef.current?.priceScale().applyOptions({
+        scaleMargins: { top: 0.88, bottom: 0 },
+      });
+    } else {
+      chartRef.current.applyOptions({
+        rightPriceScale: {
+          scaleMargins: { top: 0.1, bottom: 0.2 },
+        },
+      });
+      volumeRef.current?.priceScale().applyOptions({
+        scaleMargins: { top: 0.82, bottom: 0 },
+      });
+    }
+
     const timer = setTimeout(() => {
       if (containerRef.current) {
         const { clientWidth, clientHeight } = containerRef.current;
@@ -415,7 +492,7 @@ export function StockChart({
 
       if (e.key === 'Escape') {
         e.preventDefault();
-        setIsFullscreen(false);
+        toggleFullscreen(false);
       } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         chartRef.current?.timeScale().fitContent();
@@ -638,326 +715,218 @@ export function StockChart({
 
   return (
     <div
+      ref={wrapperRef}
       className={cn(
         'relative transition-all',
         isFullscreen
-          ? 'fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950 text-ink dark:text-zinc-100 select-none overflow-hidden'
+          ? 'fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950 text-ink dark:text-zinc-100 select-none overflow-hidden h-screen w-screen'
           : 'w-full',
       )}
     >
-      {/* ── FULLSCREEN TOP HEADER & CONTROLS ── */}
+      {/* ── FULLSCREEN TOP PRO BAR (Ultra-compact 44px) ── */}
       {isFullscreen ? (
-        <>
-          {/* Top Header Bar */}
-          <header className="h-14 sm:h-16 px-4 sm:px-6 border-b border-black/10 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
-            {/* Left: Stock Identity & Real-time Quote */}
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="font-mono text-xl sm:text-2xl font-black tracking-tight text-ink dark:text-zinc-100">
-                  {symbol || 'MARKET'}
+        <header className="h-11 sm:h-12 px-3 sm:px-4 border-b border-black/10 dark:border-white/10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md flex items-center justify-between gap-2 shrink-0">
+          {/* Left: Stock Identity & Real-time Quote */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span className="font-mono text-lg sm:text-xl font-black tracking-tight text-ink dark:text-zinc-100">
+                {symbol || 'MARKET'}
+              </span>
+              {(name || quote?.name) && (
+                <span className="hidden md:inline-block text-xs font-medium text-ink-mute dark:text-zinc-400 max-w-[120px] lg:max-w-[180px] truncate">
+                  {name || quote?.name}
                 </span>
-                {(name || quote?.name) && (
-                  <span className="hidden sm:inline-block text-sm font-medium text-ink-mute dark:text-zinc-400 max-w-[160px] md:max-w-[220px] truncate">
-                    {name || quote?.name}
-                  </span>
-                )}
-                <span className="chip text-[11px] font-mono shrink-0">
-                  {quote?.exchangeName || 'TWSE'} · {quote?.currency || 'TWD'}
-                </span>
-              </div>
-
-              {quote && (
-                <div className="flex items-baseline gap-2 pl-3 border-l border-black/10 dark:border-white/10">
-                  <span className="font-mono text-xl sm:text-2xl font-black text-ink dark:text-zinc-100 num">
-                    {formatNumber(quote.price)}
-                  </span>
-                  <span
-                    className={cn(
-                      'flex items-center gap-1 font-mono text-xs sm:text-sm font-bold num px-2 py-0.5 rounded-lg',
-                      quote.change > 0
-                        ? 'bg-emerald-500/10 text-up dark:bg-emerald-500/20'
-                        : quote.change < 0
-                        ? 'bg-rose-500/10 text-down dark:bg-rose-500/20'
-                        : 'bg-black/5 text-ink-mute dark:bg-white/10 dark:text-zinc-400',
-                    )}
-                  >
-                    {quote.change > 0 ? (
-                      <TrendingUp className="h-3.5 w-3.5" />
-                    ) : quote.change < 0 ? (
-                      <TrendingDown className="h-3.5 w-3.5" />
-                    ) : null}
-                    {quote.change > 0 ? '+' : ''}
-                    {formatNumber(quote.change)} ({formatPercent(quote.changePercent)})
-                  </span>
-                </div>
               )}
-
-              {(fiftyTwoWeekHigh || quote?.fiftyTwoWeekHigh) && (
-                <div className="hidden 2xl:flex items-center gap-3 text-xs font-mono text-ink-mute dark:text-zinc-400 pl-3 border-l border-black/10 dark:border-white/10">
-                  <span>
-                    52W高{' '}
-                    <span className="font-semibold text-up">
-                      {formatNumber(fiftyTwoWeekHigh ?? quote?.fiftyTwoWeekHigh ?? 0)}
-                    </span>
-                  </span>
-                  <span>
-                    52W低{' '}
-                    <span className="font-semibold text-down">
-                      {formatNumber(fiftyTwoWeekLow ?? quote?.fiftyTwoWeekLow ?? 0)}
-                    </span>
-                  </span>
-                </div>
-              )}
+              <span className="chip text-[10px] font-mono shrink-0 py-0.5">
+                {quote?.exchangeName || 'TWSE'} · {quote?.currency || 'TWD'}
+              </span>
             </div>
 
-            {/* Right: Quick Switchers, Indicators, Timeframes, Actions */}
-            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-1">
-              {/* Quick Watchlist switch chips */}
-              {watchlist && watchlist.length > 0 && onSelectSymbol && (
-                <div className="hidden lg:flex items-center gap-1 pl-2 border-l border-black/10 dark:border-white/10">
-                  {watchlist.slice(0, 8).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => onSelectSymbol(s)}
-                      className={cn(
-                        'rounded-lg px-2.5 py-1 text-xs font-mono font-semibold transition shrink-0',
-                        symbol === s
-                          ? 'bg-brand text-white shadow-xs'
-                          : 'border border-black/10 bg-white/70 text-ink-soft hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800',
-                      )}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Resolution Picker (1D / 1W / 1M) */}
-              {onResolutionChange && (
-                <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
-                  {(['1D', '1W', '1M'] as const).map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => onResolutionChange(r)}
-                      className={cn(
-                        'rounded-md px-2.5 py-1 font-medium transition',
-                        resolution === r
-                          ? 'bg-brand text-white shadow-xs font-semibold'
-                          : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-                      )}
-                      title={`切換至 ${r === '1D' ? '日K (快捷鍵 1)' : r === '1W' ? '週K (快捷鍵 2)' : '月K (快捷鍵 3)'}`}
-                    >
-                      {r === '1D' ? '日K' : r === '1W' ? '週K' : '月K'}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Chart Type Toggle */}
-              <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
-                <button
-                  type="button"
-                  onClick={() => setChartType('candle')}
-                  className={cn(
-                    'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
-                    chartType === 'candle'
-                      ? 'bg-brand text-white shadow-xs'
-                      : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-                  )}
-                  title="K 線圖 (Candlestick)"
-                >
-                  <CandlestickChart className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">K 線</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartType('area')}
-                  className={cn(
-                    'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
-                    chartType === 'area'
-                      ? 'bg-brand text-white shadow-xs'
-                      : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-                  )}
-                  title="折線走勢圖 (Area)"
-                >
-                  <LineChartIcon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">走勢</span>
-                </button>
-              </div>
-
-              {/* Indicators */}
-              <div className="hidden sm:flex items-center gap-1.5">
-                {MA_OPTIONS.map((m) => (
-                  <button
-                    key={m.key}
-                    type="button"
-                    onClick={() => setEnabledMA((s) => ({ ...s, [m.key]: !s[m.key] }))}
-                    className={cn(
-                      'chip cursor-pointer text-xs font-semibold transition',
-                      enabledMA[m.key] ? 'text-white' : 'hover:bg-black/[0.04] dark:hover:bg-white/5',
-                    )}
-                    style={
-                      enabledMA[m.key]
-                        ? { backgroundColor: m.color, borderColor: m.color }
-                        : { color: m.color }
-                    }
-                  >
-                    {m.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setEnabledBB((v) => !v)}
-                  className={cn(
-                    'chip cursor-pointer text-xs font-semibold transition',
-                    enabledBB
-                      ? 'bg-sky-500 text-white border-sky-500'
-                      : 'text-sky-600 hover:bg-black/[0.04] dark:text-sky-400 dark:hover:bg-white/5',
-                  )}
-                  title="布林通道 (20, 2σ)"
-                >
-                  BB
-                </button>
-              </div>
-
-              {/* Time Range Selector */}
-              <div className="hidden md:inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs dark:border-white/10 dark:bg-zinc-800/70">
-                {TIME_RANGES.map((x) => {
-                  const bars = x.months === 'all' ? 'all' : x.months * barsPerMonth;
-                  return (
-                    <button
-                      key={x.label}
-                      type="button"
-                      onClick={() => setRangeBars(bars)}
-                      className="px-2.5 py-1.5 font-medium text-ink-soft transition hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5"
-                    >
-                      {x.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Fit Content Action */}
-              <button
-                type="button"
-                onClick={() => chartRef.current?.timeScale().fitContent()}
-                className="flex items-center gap-1.5 rounded-lg border border-black/10 bg-white/70 px-2.5 py-1.5 text-xs font-medium text-ink-soft shadow-xs transition hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                title="最適縮放 (快捷鍵 F)"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span className="hidden xl:inline">最適化</span>
-                <kbd className="hidden xl:inline rounded bg-black/5 px-1 py-0.5 text-[10px] text-ink-mute dark:bg-white/10 dark:text-zinc-400">
-                  F
-                </kbd>
-              </button>
-
-              {/* Exit Fullscreen Action */}
-              <button
-                type="button"
-                onClick={() => setIsFullscreen(false)}
-                className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 px-3 py-1.5 text-xs font-bold transition shadow-xs"
-                title="退出全螢幕 (快捷鍵 Esc)"
-              >
-                <Minimize2 className="h-4 w-4" />
-                <span className="hidden sm:inline">退出</span>
-                <kbd className="rounded bg-rose-600/10 dark:bg-rose-400/20 px-1 py-0.5 text-[10px]">
-                  Esc
-                </kbd>
-              </button>
-            </div>
-          </header>
-
-          {/* TradingView / Bloomberg Style Real-time Cursor OHLC HUD Bar */}
-          <div className="px-4 sm:px-6 py-2 bg-slate-100/90 dark:bg-zinc-900/80 border-b border-black/5 dark:border-white/5 flex flex-wrap items-center justify-between gap-y-1 gap-x-4 text-xs font-mono shrink-0 select-none">
-            {/* Live OHLC & Indicators info */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <div className="flex items-center gap-1.5 text-ink dark:text-zinc-100 font-semibold">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{activeCandle ? activeCandle.time : '—'}</span>
-              </div>
-
-              {activeCandle && (
-                <>
-                  <span>
-                    開 <span className="font-semibold text-ink dark:text-zinc-100">{formatNumber(activeCandle.open)}</span>
-                  </span>
-                  <span>
-                    高 <span className="font-semibold text-up">{formatNumber(activeCandle.high)}</span>
-                  </span>
-                  <span>
-                    低 <span className="font-semibold text-down">{formatNumber(activeCandle.low)}</span>
-                  </span>
-                  <span>
-                    收{' '}
-                    <span className={cn('font-semibold', candleChange >= 0 ? 'text-up' : 'text-down')}>
-                      {formatNumber(activeCandle.close)}
-                    </span>
-                  </span>
-                  <span className={cn('font-semibold', candleChange >= 0 ? 'text-up' : 'text-down')}>
-                    {candleChange >= 0 ? '+' : ''}
-                    {formatNumber(candleChange)} ({candleChangePercent >= 0 ? '+' : ''}
-                    {candleChangePercent.toFixed(2)}%)
-                  </span>
-                  <span className="text-ink-mute dark:text-zinc-400">
-                    量 <span className="font-semibold text-ink dark:text-zinc-200">{formatVolume(activeCandle.volume)}</span>
-                  </span>
-                </>
-              )}
-
-              {/* Indicator HUD values */}
-              {MA_OPTIONS.map((m) =>
-                enabledMA[m.key] && activeMa[m.key] != null ? (
-                  <span key={m.key} style={{ color: m.color }} className="font-semibold">
-                    {m.label}: {formatNumber(activeMa[m.key]!)}
-                  </span>
-                ) : null,
-              )}
-
-              {enabledBB && activeBb && (
-                <span className="text-sky-500 dark:text-sky-400 font-semibold">
-                  BB: {formatNumber(activeBb.lower)} ~ {formatNumber(activeBb.upper)}
+            {quote && (
+              <div className="flex items-baseline gap-1.5 pl-2 sm:pl-3 border-l border-black/10 dark:border-white/10">
+                <span className="font-mono text-base sm:text-lg font-black text-ink dark:text-zinc-100 num">
+                  {formatNumber(quote.price)}
                 </span>
-              )}
-
-              {activeRsi != null && (
                 <span
                   className={cn(
-                    'rounded px-1.5 py-0.5 text-[11px] font-semibold',
-                    activeRsi >= 70
-                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                      : activeRsi <= 30
-                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    'flex items-center gap-0.5 font-mono text-xs font-bold num px-1.5 py-0.5 rounded-md',
+                    quote.change > 0
+                      ? 'bg-emerald-500/10 text-up dark:bg-emerald-500/20'
+                      : quote.change < 0
+                      ? 'bg-rose-500/10 text-down dark:bg-rose-500/20'
                       : 'bg-black/5 text-ink-mute dark:bg-white/10 dark:text-zinc-400',
                   )}
                 >
-                  RSI(14): {activeRsi.toFixed(1)}
+                  {quote.change > 0 ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : quote.change < 0 ? (
+                    <TrendingDown className="h-3 w-3" />
+                  ) : null}
+                  {quote.change > 0 ? '+' : ''}
+                  {formatNumber(quote.change)} ({formatPercent(quote.changePercent)})
                 </span>
-              )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Quick Switchers, Indicators, Timeframes, Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5">
+            {/* Quick Watchlist switch chips */}
+            {watchlist && watchlist.length > 0 && onSelectSymbol && (
+              <div className="hidden lg:flex items-center gap-1 pl-2 border-l border-black/10 dark:border-white/10 max-w-[240px] xl:max-w-[340px] overflow-x-auto scrollbar-none">
+                {watchlist.slice(0, 8).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => onSelectSymbol(s)}
+                    className={cn(
+                      'rounded-md px-2 py-0.5 text-xs font-mono font-semibold transition shrink-0',
+                      symbol === s
+                        ? 'bg-brand text-white shadow-xs'
+                        : 'border border-black/10 bg-white/70 text-ink-soft hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800',
+                    )}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Resolution Picker (1D / 1W / 1M) */}
+            {onResolutionChange && (
+              <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
+                {(['1D', '1W', '1M'] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => onResolutionChange(r)}
+                    className={cn(
+                      'rounded-md px-2 py-0.5 font-medium transition',
+                      resolution === r
+                        ? 'bg-brand text-white shadow-xs font-semibold'
+                        : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
+                    )}
+                    title={`切換至 ${r === '1D' ? '日K (按鍵 1)' : r === '1W' ? '週K (按鍵 2)' : '月K (按鍵 3)'}`}
+                  >
+                    {r === '1D' ? '日K' : r === '1W' ? '週K' : '月K'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Chart Type Toggle */}
+            <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
+              <button
+                type="button"
+                onClick={() => setChartType('candle')}
+                className={cn(
+                  'flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition',
+                  chartType === 'candle'
+                    ? 'bg-brand text-white shadow-xs'
+                    : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
+                )}
+                title="K 線圖 (Candlestick)"
+              >
+                <CandlestickChart className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">K 線</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartType('area')}
+                className={cn(
+                  'flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition',
+                  chartType === 'area'
+                    ? 'bg-brand text-white shadow-xs'
+                    : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
+                )}
+                title="折線走勢圖 (Area)"
+              >
+                <LineChartIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">走勢</span>
+              </button>
             </div>
 
-            {/* Pro hotkey helper strip */}
-            <div className="hidden md:flex items-center gap-3 text-[11px] text-ink-mute dark:text-zinc-400 font-sans">
-              <span className="flex items-center gap-1">
-                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">Esc</kbd> 退出全螢幕
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">F</kbd> 最適縮放
-              </span>
-              {onResolutionChange && (
-                <span className="flex items-center gap-1">
-                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">1 / 2 / 3</kbd> 週期
-                </span>
-              )}
-              {watchlist && watchlist.length > 1 && onSelectSymbol && (
-                <span className="flex items-center gap-1">
-                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">← / →</kbd> 切換標的
-                </span>
-              )}
+            {/* Indicators */}
+            <div className="hidden sm:flex items-center gap-1">
+              {MA_OPTIONS.map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setEnabledMA((s) => ({ ...s, [m.key]: !s[m.key] }))}
+                  className={cn(
+                    'chip cursor-pointer text-xs font-semibold py-0.5 transition',
+                    enabledMA[m.key] ? 'text-white' : 'hover:bg-black/[0.04] dark:hover:bg-white/5',
+                  )}
+                  style={
+                    enabledMA[m.key]
+                      ? { backgroundColor: m.color, borderColor: m.color }
+                      : { color: m.color }
+                  }
+                >
+                  {m.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setEnabledBB((v) => !v)}
+                className={cn(
+                  'chip cursor-pointer text-xs font-semibold py-0.5 transition',
+                  enabledBB
+                    ? 'bg-sky-500 text-white border-sky-500'
+                    : 'text-sky-600 hover:bg-black/[0.04] dark:text-sky-400 dark:hover:bg-white/5',
+                )}
+                title="布林通道 (20, 2σ)"
+              >
+                BB
+              </button>
             </div>
+
+            {/* Time Range Selector */}
+            <div className="hidden md:inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs dark:border-white/10 dark:bg-zinc-800/70">
+              {TIME_RANGES.map((x) => {
+                const bars = x.months === 'all' ? 'all' : x.months * barsPerMonth;
+                return (
+                  <button
+                    key={x.label}
+                    type="button"
+                    onClick={() => setRangeBars(bars)}
+                    className="px-2 py-1 font-medium text-ink-soft transition hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5"
+                  >
+                    {x.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Fit Content Action */}
+            <button
+              type="button"
+              onClick={() => chartRef.current?.timeScale().fitContent()}
+              className="flex items-center gap-1 rounded-lg border border-black/10 bg-white/70 px-2 py-1 text-xs font-medium text-ink-soft shadow-xs transition hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              title="最適縮放 (快捷鍵 F)"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span className="hidden xl:inline">最適化</span>
+              <kbd className="hidden xl:inline rounded bg-black/5 px-1 py-0.2 text-[10px] text-ink-mute dark:bg-white/10 dark:text-zinc-400">
+                F
+              </kbd>
+            </button>
+
+            {/* Exit Fullscreen Action */}
+            <button
+              type="button"
+              onClick={() => toggleFullscreen(false)}
+              className="flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 px-2.5 py-1 text-xs font-bold transition shadow-xs"
+              title="退出全螢幕 (快捷鍵 Esc)"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">退出</span>
+              <kbd className="rounded bg-rose-600/10 dark:bg-rose-400/20 px-1 py-0.2 text-[10px]">
+                Esc
+              </kbd>
+            </button>
           </div>
-        </>
+        </header>
       ) : (
         /* ── STANDARD MODE TOOLBAR ── */
         <div className="mb-3 sm:mb-4 flex flex-wrap items-center justify-between gap-3 shrink-0">
@@ -1052,7 +1021,7 @@ export function StockChart({
 
             <button
               type="button"
-              onClick={() => setIsFullscreen(true)}
+              onClick={() => toggleFullscreen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-white/70 text-ink-soft shadow-xs transition hover:bg-white hover:text-brand dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-brand"
               title="全螢幕檢視 (TradingView 模式)"
               aria-label="全螢幕檢視"
@@ -1064,12 +1033,107 @@ export function StockChart({
       )}
 
       {/* ── CHART CANVAS AREA ── */}
-      <div className={cn('relative w-full', isFullscreen ? 'flex-1 min-h-0' : '')}>
+      <div
+        className={cn(
+          'relative w-full',
+          isFullscreen ? 'flex-1 min-h-0 h-full overflow-hidden' : '',
+        )}
+      >
         <div
           ref={containerRef}
-          className="w-full transition-all"
+          className="w-full h-full transition-all"
           style={{ height: isFullscreen ? '100%' : `${height}px` }}
         />
+
+        {/* ── TRADINGVIEW-STYLE INLINE FLOATING LEGEND (Zero vertical space wasted) ── */}
+        {isFullscreen && (
+          <>
+            <div className="pointer-events-none absolute left-3 top-2.5 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-ink/80 dark:text-zinc-300 select-none backdrop-blur-xs px-2 py-1 rounded-md bg-white/40 dark:bg-zinc-900/40">
+              <span className="font-semibold text-ink dark:text-zinc-100 flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                {activeCandle ? activeCandle.time : '—'}
+              </span>
+
+              {activeCandle && (
+                <>
+                  <span>
+                    開 <span className="font-semibold text-ink dark:text-zinc-100">{formatNumber(activeCandle.open)}</span>
+                  </span>
+                  <span>
+                    高 <span className="font-semibold text-up">{formatNumber(activeCandle.high)}</span>
+                  </span>
+                  <span>
+                    低 <span className="font-semibold text-down">{formatNumber(activeCandle.low)}</span>
+                  </span>
+                  <span>
+                    收{' '}
+                    <span className={cn('font-semibold', candleChange >= 0 ? 'text-up' : 'text-down')}>
+                      {formatNumber(activeCandle.close)}
+                    </span>
+                  </span>
+                  <span className={cn('font-semibold', candleChange >= 0 ? 'text-up' : 'text-down')}>
+                    {candleChange >= 0 ? '+' : ''}
+                    {formatNumber(candleChange)} ({candleChangePercent >= 0 ? '+' : ''}
+                    {candleChangePercent.toFixed(2)}%)
+                  </span>
+                  <span className="text-ink-mute dark:text-zinc-400">
+                    量 <span className="font-semibold text-ink dark:text-zinc-200">{formatVolume(activeCandle.volume)}</span>
+                  </span>
+                </>
+              )}
+
+              {/* Indicator values */}
+              {MA_OPTIONS.map((m) =>
+                enabledMA[m.key] && activeMa[m.key] != null ? (
+                  <span key={m.key} style={{ color: m.color }} className="font-semibold">
+                    {m.label} {formatNumber(activeMa[m.key]!)}
+                  </span>
+                ) : null,
+              )}
+
+              {enabledBB && activeBb && (
+                <span className="text-sky-500 dark:text-sky-400 font-semibold">
+                  BB {formatNumber(activeBb.lower)}~{formatNumber(activeBb.upper)}
+                </span>
+              )}
+
+              {activeRsi != null && (
+                <span
+                  className={cn(
+                    'rounded px-1.5 py-0.2 text-[11px] font-semibold',
+                    activeRsi >= 70
+                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                      : activeRsi <= 30
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-black/5 text-ink-mute dark:bg-white/10 dark:text-zinc-400',
+                  )}
+                >
+                  RSI(14) {activeRsi.toFixed(1)}
+                </span>
+              )}
+            </div>
+
+            {/* Top-Right keyboard helper pill */}
+            <div className="pointer-events-none absolute right-3 top-2.5 z-10 hidden xl:flex items-center gap-2.5 text-[11px] text-ink-mute dark:text-zinc-400 font-sans select-none backdrop-blur-xs px-2 py-1 rounded-md bg-white/40 dark:bg-zinc-900/40">
+              <span className="flex items-center gap-1">
+                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">Esc</kbd> 退出
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">F</kbd> 最適縮放
+              </span>
+              {onResolutionChange && (
+                <span className="flex items-center gap-1">
+                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">1/2/3</kbd> 週期
+                </span>
+              )}
+              {watchlist && watchlist.length > 1 && onSelectSymbol && (
+                <span className="flex items-center gap-1">
+                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">←/→</kbd> 切換標的
+                </span>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Hover Info Tooltip (Rendered only in Standard Mode) */}
         {!isFullscreen && hover && (
