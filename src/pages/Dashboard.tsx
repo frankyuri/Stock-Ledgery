@@ -264,8 +264,13 @@ export function Dashboard() {
               <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-xl" />}>
                 <StockChart
                   symbol={selected}
+                  name={displayQuote?.name}
+                  quote={displayQuote}
                   data={bundle.data.candles}
                   resolution={resolution}
+                  onResolutionChange={setResolution}
+                  watchlist={watchlist}
+                  onSelectSymbol={setSelected}
                   fiftyTwoWeekHigh={displayQuote?.fiftyTwoWeekHigh}
                   fiftyTwoWeekLow={displayQuote?.fiftyTwoWeekLow}
                 />
