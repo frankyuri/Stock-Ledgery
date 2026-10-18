@@ -9,7 +9,7 @@ import {
   type UTCTimestamp,
 } from 'lightweight-charts';
 import { useTheme } from '@/lib/theme';
-import { formatNumber } from '@/lib/format';
+import { useCurrency } from '@/lib/hooks/useCurrency';
 import type { ProjectionPoint } from '@/lib/fireAnalytics';
 
 interface Props {
@@ -20,6 +20,7 @@ interface Props {
 export function FireProjectionChart({ data, height = 340 }: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { baseCurrency, convertToBase, formatMoney } = useCurrency();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -71,9 +72,15 @@ export function FireProjectionChart({ data, height = 340 }: Props) {
     });
 
     const formatCurrencyShort = (val: number) => {
-      if (val >= 100_000_000) return `${(val / 100_000_000).toFixed(1)}億`;
-      if (val >= 10_000) return `${(val / 10_000).toFixed(0)}萬`;
-      return `${val}`;
+      const converted = convertToBase(val, 'TWD');
+      if (baseCurrency === 'USD') {
+        if (converted >= 1_000_000) return `$${(converted / 1_000_000).toFixed(1)}M`;
+        if (converted >= 1_000) return `$${(converted / 1_000).toFixed(0)}k`;
+        return `$${converted.toFixed(0)}`;
+      }
+      if (converted >= 100_000_000) return `${(converted / 100_000_000).toFixed(1)}億`;
+      if (converted >= 10_000) return `${(converted / 10_000).toFixed(0)}萬`;
+      return `${converted}`;
     };
 
     // 1. 預估累積總資產 (Area)
@@ -157,7 +164,7 @@ export function FireProjectionChart({ data, height = 340 }: Props) {
         borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
       },
     });
-  }, [isDark]);
+  }, [isDark, baseCurrency, convertToBase]);
 
   useEffect(() => {
     if (
@@ -245,16 +252,16 @@ export function FireProjectionChart({ data, height = 340 }: Props) {
             <span>
               總淨值：
               <strong className="text-emerald-600 dark:text-emerald-400">
-                NT$ {formatNumber(activeDisplay.netWorth)}
+                {formatMoney(activeDisplay.netWorth, 'TWD')}
               </strong>
             </span>
             <span className="text-slate-300 dark:text-zinc-600">|</span>
             <span>
-              自備本金：NT$ {formatNumber(activeDisplay.totalContributed)}
+              自備本金：{formatMoney(activeDisplay.totalContributed, 'TWD')}
             </span>
             <span className="text-slate-300 dark:text-zinc-600">|</span>
             <span>
-              每年安全提領：NT$ {formatNumber(activeDisplay.annualSafeWithdrawal)}
+              每年安全提領：{formatMoney(activeDisplay.annualSafeWithdrawal, 'TWD')}
             </span>
           </div>
         )}

@@ -23,11 +23,14 @@ import { SmartImportModal } from '@/components/modals/SmartImportModal';
 import { fetchQuote } from '@/services/stocks';
 import { cn } from '@/lib/cn';
 import { changeColor, formatNumber, formatShares } from '@/lib/format';
+import { useCurrency } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { todayISO } from '@/lib/date';
 import { useToast } from '@/lib/toast';
 import type { Quote, SearchResult, Transaction, TransactionType } from '@/types/stock';
 
 export function Transactions() {
+  const { currencySymbol } = useCurrency();
   const transactions = useStockStore((s) => s.transactions);
   const addTransaction = useStockStore((s) => s.addTransaction);
   const removeTransaction = useStockStore((s) => s.removeTransaction);
@@ -285,8 +288,9 @@ export function Transactions() {
           </p>
         </div>
 
-        {/* Import / Export actions */}
-        <div className="flex items-center gap-2">
+        {/* Import / Export actions & Currency Toggle */}
+        <div className="flex flex-wrap items-center gap-2">
+          <CurrencyToggle />
           <button
             type="button"
             onClick={() => setSmartImportOpen(true)}
@@ -333,12 +337,12 @@ export function Transactions() {
           </span>
           <p
             className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
-            title={`$${formatNumber(summary.totalBuy)}`}
+            title={`${currencySymbol}${formatNumber(summary.totalBuy)}`}
           >
-            ${formatNumber(summary.totalBuy)}
+            {currencySymbol}{formatNumber(summary.totalBuy)}
           </p>
           <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
-            包含手續費總支出：${formatNumber(summary.totalFee)}
+            包含手續費總支出：{currencySymbol}{formatNumber(summary.totalFee)}
           </p>
         </div>
 
@@ -349,9 +353,9 @@ export function Transactions() {
           </span>
           <p
             className="mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"
-            title={`$${formatNumber(summary.totalSell)}`}
+            title={`${currencySymbol}${formatNumber(summary.totalSell)}`}
           >
-            ${formatNumber(summary.totalSell)}
+            {currencySymbol}{formatNumber(summary.totalSell)}
           </p>
           <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
             共結清 {summary.sellCount} 筆賣出交易
@@ -368,10 +372,10 @@ export function Transactions() {
               'mt-2 font-mono text-xl sm:text-2xl font-bold truncate tracking-tight num',
               changeColor(summary.totalRealized),
             )}
-            title={`${summary.totalRealized > 0 ? '+' : ''}$${formatNumber(summary.totalRealized)}`}
+            title={`${summary.totalRealized > 0 ? '+' : ''}${currencySymbol}${formatNumber(summary.totalRealized)}`}
           >
             {summary.totalRealized > 0 ? '+' : ''}
-            ${formatNumber(summary.totalRealized)}
+            {currencySymbol}{formatNumber(summary.totalRealized)}
           </p>
           <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
             賣出時已落袋結算之真實盈虧

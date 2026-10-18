@@ -37,6 +37,8 @@ type PersistedStockState = Pick<
   | 'fireSettings'
   | 'rebalanceSettings'
   | 'isDemo'
+  | 'baseCurrency'
+  | 'fxRate'
 >;
 
 export type AddTransactionResult =
@@ -54,10 +56,14 @@ interface StockState {
   linePrefs: LinePrefs;
   fireSettings: FireSettings;
   rebalanceSettings: RebalanceSettings;
+  baseCurrency: 'TWD' | 'USD';
+  fxRate: number;
   isSyncing?: boolean;
   isDemo?: boolean;
   setSelectedSymbol: (symbol: string) => void;
   setResolution: (resolution: Resolution) => void;
+  setBaseCurrency: (currency: 'TWD' | 'USD') => void;
+  setFxRate: (rate: number) => void;
   addToWatchlist: (symbol: string) => Promise<void>;
   removeFromWatchlist: (symbol: string) => Promise<void>;
   setFireSettings: (patch: Partial<FireSettings>) => void;
@@ -95,6 +101,8 @@ export interface BackupSnapshot {
   linePrefs?: LinePrefs;
   fireSettings?: FireSettings;
   rebalanceSettings?: RebalanceSettings;
+  baseCurrency?: 'TWD' | 'USD';
+  fxRate?: number;
 }
 
 export const DEMO_PORTFOLIO_SNAPSHOT: BackupSnapshot = {
@@ -367,6 +375,8 @@ const DEFAULT_PERSISTED_STATE: PersistedStockState = {
   fireSettings: DEFAULT_FIRE_SETTINGS,
   rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
   isDemo: false,
+  baseCurrency: 'TWD',
+  fxRate: 32.5,
 };
 
 const STORAGE_VERSION = 5;
@@ -410,8 +420,12 @@ export const useStockStore = create<StockState>()(
       fireSettings: DEFAULT_FIRE_SETTINGS,
       rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
       isDemo: false,
+      baseCurrency: 'TWD',
+      fxRate: 32.5,
       setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
       setResolution: (resolution) => set({ resolution }),
+      setBaseCurrency: (baseCurrency) => set({ baseCurrency }),
+      setFxRate: (fxRate) => set({ fxRate }),
       setFireSettings: (patch) =>
         set((s) => ({ fireSettings: { ...s.fireSettings, ...patch } })),
       setRebalanceSettings: (patch) =>
@@ -779,6 +793,8 @@ export const useStockStore = create<StockState>()(
           linePrefs: snapshot.linePrefs ?? s.linePrefs,
           fireSettings: snapshot.fireSettings ?? s.fireSettings,
           rebalanceSettings: snapshot.rebalanceSettings ?? s.rebalanceSettings,
+          baseCurrency: snapshot.baseCurrency ?? s.baseCurrency,
+          fxRate: snapshot.fxRate ?? s.fxRate,
           holdings: reconcileHoldings(snapshot.transactions ?? []),
           isDemo: false,
         })),
@@ -901,6 +917,8 @@ export const useStockStore = create<StockState>()(
         fireSettings: state.fireSettings,
         rebalanceSettings: state.rebalanceSettings,
         isDemo: state.isDemo,
+        baseCurrency: state.baseCurrency,
+        fxRate: state.fxRate,
       }),
       migrate: (persistedState, version): PersistedStockState => {
         const state = (persistedState ?? {}) as Partial<PersistedStockState> & {
@@ -965,5 +983,7 @@ export function buildBackupSnapshot(): BackupSnapshot {
     linePrefs: s.linePrefs,
     fireSettings: s.fireSettings,
     rebalanceSettings: s.rebalanceSettings,
+    baseCurrency: s.baseCurrency,
+    fxRate: s.fxRate,
   };
 }

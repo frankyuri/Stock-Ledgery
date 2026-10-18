@@ -19,6 +19,8 @@ import {
   formatNumber,
   formatPercent,
 } from '@/lib/format';
+import { useCurrency } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { cn } from '@/lib/cn';
 import type { PortfolioHolding } from '@/types/stock';
 
@@ -26,6 +28,7 @@ export function Overview() {
   const holdings = useStockStore((s) => s.holdings);
   const transactions = useStockStore((s) => s.transactions);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
+  const { baseCurrency } = useCurrency();
 
   const { data, isLoading } = useQuery(portfolioQueryOptions(holdings));
 
@@ -34,7 +37,7 @@ export function Overview() {
   const failedSymbols = data?.failed ?? [];
 
   const groups = useMemo(() => groupByCurrency(enriched), [enriched]);
-  const primary = groups[0];
+  const primary = groups.find((g) => g.currency === baseCurrency) || groups[0];
 
   const netFlow = useMemo(() => {
     let v = 0;
@@ -83,14 +86,17 @@ export function Overview() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setTradeModalOpen(true)}
-          className="btn btn-primary text-xs font-semibold py-2 px-3.5 flex items-center gap-1.5 shadow-sm"
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span>快速記帳</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <CurrencyToggle />
+          <button
+            type="button"
+            onClick={() => setTradeModalOpen(true)}
+            className="btn btn-primary text-xs font-semibold py-2 px-3.5 flex items-center gap-1.5 shadow-sm"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>快速記帳</span>
+          </button>
+        </div>
       </div>
 
       {holdings.length === 0 ? (

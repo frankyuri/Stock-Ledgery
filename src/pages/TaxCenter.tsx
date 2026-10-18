@@ -24,6 +24,8 @@ import {
 } from '@/lib/taxAnalytics';
 import { formatNumber, formatShares } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import { useCurrency } from '@/lib/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import type { ChartBundle } from '@/services/yahoo';
 import type { DividendEvent, Quote } from '@/types/stock';
 
@@ -32,6 +34,7 @@ type TaxTab = 'ALL' | 'NHI' | 'TW_INCOME' | 'US_WITHHOLDING' | 'OVERSEAS_AMT';
 export function TaxCenter() {
   const holdings = useStockStore((s) => s.holdings);
   const transactions = useStockStore((s) => s.transactions);
+  const { fxRate } = useCurrency();
   const [activeTab, setActiveTab] = useState<TaxTab>('ALL');
   const [selectedMarginalRate, setSelectedMarginalRate] = useState<number>(0.12); // 預設 12% 級距
 
@@ -95,21 +98,21 @@ export function TaxCenter() {
     if (!dividendOverview) return null;
     const usItems = dividendOverview.items.filter((h) => !isTaiwanStock(h.symbol));
     const totalUSD = usItems.reduce((acc, h) => acc + h.estimatedAnnualIncome, 0);
-    return analyzeUSWithholdingTax(totalUSD, 32.0);
-  }, [dividendOverview]);
+    return analyzeUSWithholdingTax(totalUSD, fxRate);
+  }, [dividendOverview, fxRate]);
 
   // 4. 海外所得最低稅負制 (AMT)
   const amtReport = useMemo(() => {
     let realizedOverseasGain = 0;
     for (const t of transactions) {
       if (!isTaiwanStock(t.symbol) && t.type === 'SELL' && t.realizedGainLoss) {
-        // 假設美元交易折合台幣匯率 32
-        realizedOverseasGain += t.realizedGainLoss * 32.0;
+        // 美元交易折合台幣（依全域即時匯率）
+        realizedOverseasGain += t.realizedGainLoss * fxRate;
       }
     }
     const usDivTWD = usTaxReport ? usTaxReport.grossDividendTWD : 0;
     return analyzeOverseasIncomeAMT(realizedOverseasGain, usDivTWD);
-  }, [transactions, usTaxReport]);
+  }, [transactions, usTaxReport, fxRate]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -130,28 +133,31 @@ export function TaxCenter() {
           </p>
         </div>
 
-        {/* Tab Filters */}
-        <div className="inline-flex rounded-xl border border-black/10 bg-white/70 p-1 dark:border-white/10 dark:bg-zinc-800/70 text-xs">
-          {[
-            { id: 'ALL', label: '全景面板' },
-            { id: 'NHI', label: '二代健保 (2.11%)' },
-            { id: 'TW_INCOME', label: '台股股利報稅' },
-            { id: 'US_WITHHOLDING', label: '美股預扣與UCITS' },
-            { id: 'OVERSEAS_AMT', label: '海外所得 750萬' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TaxTab)}
-              className={cn(
-                'rounded-lg px-3 py-1.5 font-medium transition',
-                activeTab === tab.id
-                  ? 'bg-brand text-white shadow-xs'
-                  : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Tab Filters & Currency Toggle */}
+        <div className="flex flex-wrap items-center gap-2">
+          <CurrencyToggle />
+          <div className="inline-flex rounded-xl border border-black/10 bg-white/70 p-1 dark:border-white/10 dark:bg-zinc-800/70 text-xs">
+            {[
+              { id: 'ALL', label: '全景面板' },
+              { id: 'NHI', label: '二代健保 (2.11%)' },
+              { id: 'TW_INCOME', label: '台股股利報稅' },
+              { id: 'US_WITHHOLDING', label: '美股預扣與UCITS' },
+              { id: 'OVERSEAS_AMT', label: '海外所得 750萬' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TaxTab)}
+                className={cn(
+                  'rounded-lg px-3 py-1.5 font-medium transition',
+                  activeTab === tab.id
+                    ? 'bg-brand text-white shadow-xs'
+                    : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -458,7 +464,7 @@ export function TaxCenter() {
                 'rounded-2xl border p-5 transition relative',
                 twTaxReport.recommendedStrategy === 'CONSOLIDATED'
                   ? 'border-brand ring-2 ring-brand/20 bg-brand/[0.02]'
-                  : 'border-slate-800 bg-slate-900/40',
+                  : 'border-slate-200 bg-slate-50/70 dark:border-zinc-800 dark:bg-zinc-900/40',
               )}
             >
               {twTaxReport.recommendedStrategy === 'CONSOLIDATED' && (
@@ -510,7 +516,7 @@ export function TaxCenter() {
                 'rounded-2xl border p-5 transition relative',
                 twTaxReport.recommendedStrategy === 'SEPARATED'
                   ? 'border-brand ring-2 ring-brand/20 bg-brand/[0.02]'
-                  : 'border-slate-800 bg-slate-900/40',
+                  : 'border-slate-200 bg-slate-50/70 dark:border-zinc-800 dark:bg-zinc-900/40',
               )}
             >
               {twTaxReport.recommendedStrategy === 'SEPARATED' && (
@@ -586,8 +592,8 @@ export function TaxCenter() {
             </div>
 
             {/* UCITS Comparison Box */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-sky-400">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+              <div className="flex items-center gap-2 text-xs font-bold text-sky-500 dark:text-sky-400">
                 <Lightbulb className="h-4 w-4" />
                 UCITS ETF (如 VWRA / VUAA) 複利省稅試算
               </div>
@@ -595,15 +601,15 @@ export function TaxCenter() {
                 若將同類指數標的改持愛爾蘭註冊 UCITS ETF，每年可少被扣 15% 股息：
               </p>
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="rounded-lg bg-black/20 p-2.5">
+                <div className="rounded-lg bg-black/[0.04] p-2.5 dark:bg-black/30">
                   <div className="text-[11px] text-ink-mute">10 年複利增加資產</div>
-                  <div className="text-sm font-bold font-mono text-emerald-400 mt-1">
+                  <div className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
                     +NT$ {formatNumber(usTaxReport?.tenYearCompoundSavingsTWD ?? 0)}
                   </div>
                 </div>
-                <div className="rounded-lg bg-black/20 p-2.5">
+                <div className="rounded-lg bg-black/[0.04] p-2.5 dark:bg-black/30">
                   <div className="text-[11px] text-ink-mute">20 年複利增加資產</div>
-                  <div className="text-sm font-bold font-mono text-emerald-400 mt-1">
+                  <div className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
                     +NT$ {formatNumber(usTaxReport?.twentyYearCompoundSavingsTWD ?? 0)}
                   </div>
                 </div>
@@ -668,10 +674,10 @@ export function TaxCenter() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3.5 text-xs text-ink-soft dark:text-zinc-300 flex items-start gap-2.5">
-              <Info className="h-4 w-4 shrink-0 text-sky-400 mt-0.5" />
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs text-ink-soft dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300 flex items-start gap-2.5">
+              <Info className="h-4 w-4 shrink-0 text-sky-500 dark:text-sky-400 mt-0.5" />
               <div>
-                <span className="font-bold text-slate-200">法定門檻診斷：</span>
+                <span className="font-bold text-slate-900 dark:text-zinc-100">法定門檻診斷：</span>
                 {amtReport.statusLabel}
                 {amtReport.amtTaxDue > 0 && (
                   <div className="mt-1 font-bold text-rose-400">

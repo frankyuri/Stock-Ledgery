@@ -16,8 +16,8 @@ import {
   type WithdrawalStrategy,
   type MonteCarloSimulationResult,
 } from '@/lib/monteCarlo';
-import { formatNumber } from '@/lib/format';
 import { useTheme } from '@/lib/theme';
+import { useCurrency } from '@/lib/hooks/useCurrency';
 import { cn } from '@/lib/cn';
 
 interface MonteCarloPanelProps {
@@ -37,6 +37,7 @@ export function MonteCarloPanel({
 }: MonteCarloPanelProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { baseCurrency, convertToBase, formatMoney } = useCurrency();
 
   const [strategy, setStrategy] = useState<WithdrawalStrategy>('FIXED_INFLATION_ADJUSTED');
   const [volatility, setVolatility] = useState<number>(0.16); // 16% 年化波動度
@@ -106,6 +107,18 @@ export function MonteCarloPanel({
 
     const currentYear = new Date().getFullYear();
 
+    const formatCurrencyShort = (val: number) => {
+      const converted = convertToBase(val, 'TWD');
+      if (baseCurrency === 'USD') {
+        if (converted >= 1_000_000) return `$${(converted / 1_000_000).toFixed(1)}M`;
+        if (converted >= 1_000) return `$${(converted / 1_000).toFixed(0)}k`;
+        return `$${converted.toFixed(0)}`;
+      }
+      if (converted >= 100_000_000) return `${(converted / 100_000_000).toFixed(1)}億`;
+      if (converted >= 10_000) return `${(converted / 10_000).toFixed(0)}萬`;
+      return `${converted}`;
+    };
+
     const makeData = (selector: (p: (typeof result.fanChart)[0]) => number) => {
       return result.fanChart.map((p) => {
         const time = (Math.floor(
@@ -120,6 +133,7 @@ export function MonteCarloPanel({
       color: '#38bdf8',
       lineWidth: 2,
       title: '90th 牛市',
+      priceFormat: { type: 'custom', formatter: formatCurrencyShort },
     });
     sP90.setData(makeData((p) => p.p90));
 
@@ -129,6 +143,7 @@ export function MonteCarloPanel({
       lineWidth: 1,
       lineStyle: LineStyle.Dotted,
       title: '75th 樂觀',
+      priceFormat: { type: 'custom', formatter: formatCurrencyShort },
     });
     sP75.setData(makeData((p) => p.p75));
 
@@ -137,6 +152,7 @@ export function MonteCarloPanel({
       color: '#10b981',
       lineWidth: 3,
       title: '50th 中位數',
+      priceFormat: { type: 'custom', formatter: formatCurrencyShort },
     });
     sP50.setData(makeData((p) => p.p50));
 
@@ -146,6 +162,7 @@ export function MonteCarloPanel({
       lineWidth: 1,
       lineStyle: LineStyle.Dotted,
       title: '25th 保守',
+      priceFormat: { type: 'custom', formatter: formatCurrencyShort },
     });
     sP25.setData(makeData((p) => p.p25));
 
@@ -155,6 +172,7 @@ export function MonteCarloPanel({
       lineWidth: 2,
       lineStyle: LineStyle.Dashed,
       title: '10th 悲觀',
+      priceFormat: { type: 'custom', formatter: formatCurrencyShort },
     });
     sP10.setData(makeData((p) => p.p10));
 
@@ -164,7 +182,7 @@ export function MonteCarloPanel({
       chart.remove();
       chartRef.current = null;
     };
-  }, [result, isDark]);
+  }, [result, isDark, baseCurrency, convertToBase]);
 
   return (
     <div className="space-y-6">
@@ -207,7 +225,7 @@ export function MonteCarloPanel({
             期末資產中位數 (50th)
           </span>
           <p className="mt-3 font-mono text-2xl font-bold text-emerald-500 num">
-            NT$ {formatNumber(result.medianEndingNetWorth)}
+            {formatMoney(result.medianEndingNetWorth, 'TWD')}
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
             第 {years} 年資產中位數 (穩健行情)
@@ -225,7 +243,7 @@ export function MonteCarloPanel({
               result.worstEndingNetWorth > 0 ? 'text-slate-900 dark:text-zinc-100' : 'text-rose-500',
             )}
           >
-            NT$ {formatNumber(result.worstEndingNetWorth)}
+            {formatMoney(result.worstEndingNetWorth, 'TWD')}
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
             連續熊市與停滯性通膨等極端市況
@@ -238,7 +256,7 @@ export function MonteCarloPanel({
             牛市爆發情境 (90th)
           </span>
           <p className="mt-3 font-mono text-2xl font-bold text-sky-500 num">
-            NT$ {formatNumber(result.bestEndingNetWorth)}
+            {formatMoney(result.bestEndingNetWorth, 'TWD')}
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
             大牛市與高複利倍增情境
@@ -295,7 +313,7 @@ export function MonteCarloPanel({
               onChange={(e) => setVolatility(Number(e.target.value))}
               className="mt-2 w-full accent-brand"
             />
-            <span className="text-[11px] text-slate-400">大盤約 15~18%，科技成長約 22~28%</span>
+            <span className="text-[11px] text-slate-500 dark:text-zinc-400">大盤約 15~18%，科技成長約 22~28%</span>
           </div>
 
           <div>
@@ -312,7 +330,7 @@ export function MonteCarloPanel({
               onChange={(e) => setSimCount(Number(e.target.value))}
               className="mt-2 w-full accent-brand"
             />
-            <span className="text-[11px] text-slate-400">次數愈高，極端風險評估愈精準</span>
+            <span className="text-[11px] text-slate-500 dark:text-zinc-400">次數愈高，極端風險評估愈精準</span>
           </div>
 
           <div>
@@ -329,7 +347,7 @@ export function MonteCarloPanel({
               onChange={(e) => setYears(Number(e.target.value))}
               className="mt-2 w-full accent-brand"
             />
-            <span className="text-[11px] text-slate-400">退休後持續提領之規劃年期</span>
+            <span className="text-[11px] text-slate-500 dark:text-zinc-400">退休後持續提領之規劃年期</span>
           </div>
 
           <div>
@@ -348,8 +366,8 @@ export function MonteCarloPanel({
               onChange={(e) => setRetirementOffset(Number(e.target.value))}
               className="mt-2 w-full accent-brand"
             />
-            <span className="text-[11px] text-slate-400">
-              前 N 年維持每月 NT$ {formatNumber(annualInvestment / 12)} 投入
+            <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+              前 N 年維持每月 {formatMoney(annualInvestment / 12, 'TWD')} 投入
             </span>
           </div>
         </div>

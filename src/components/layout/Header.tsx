@@ -24,6 +24,7 @@ import { useToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
 import { getTaiwanMarketStatus, getUSMarketStatus } from '@/lib/marketStatus';
 import { QuickTradeModal } from '@/components/modals/QuickTradeModal';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -247,6 +248,9 @@ export function Header({ onMenuClick }: HeaderProps) {
             <Plus className="h-3.5 w-3.5" />
             <span>記帳</span>
           </button>
+
+          {/* Currency Toggle (TWD / USD) */}
+          <CurrencyToggle />
 
           {/* Theme Toggle */}
           <button
