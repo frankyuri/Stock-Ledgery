@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Scale,
   Sliders,
@@ -15,7 +14,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
-import { fetchChartBundle } from '@/services/stocks';
+import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
 import {
   calculatePortfolioDrift,
   calculateCashInRebalance,
@@ -33,7 +32,6 @@ import { useCurrency } from '@/lib/hooks/useCurrency';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/lib/toast';
-import type { ChartBundle } from '@/services/yahoo';
 import type { TransactionType } from '@/types/stock';
 
 export function Rebalance() {
@@ -63,25 +61,7 @@ export function Rebalance() {
     return Array.from(set).filter((s) => s !== 'CASH');
   }, [holdings, targetSymbols]);
 
-  const { data: chartBundles } = useQuery({
-    queryKey: ['rebalance-bundles', allSymbolsToFetch.sort().join(',')],
-    queryFn: async () => {
-      if (allSymbolsToFetch.length === 0) return {};
-      const results = await Promise.allSettled(
-        allSymbolsToFetch.map((sym) => fetchChartBundle(sym, '1D')),
-      );
-
-      const map: Record<string, ChartBundle> = {};
-      results.forEach((res, i) => {
-        if (res.status === 'fulfilled') {
-          map[allSymbolsToFetch[i]] = res.value;
-        }
-      });
-      return map;
-    },
-    enabled: allSymbolsToFetch.length > 0,
-    staleTime: 60_000,
-  });
+  const { bundles: chartBundles } = usePortfolioBundles(allSymbolsToFetch);
 
   // 彙整現有持股部位與報價
   const holdingPositions: HoldingPosition[] = useMemo(() => {

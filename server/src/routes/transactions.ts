@@ -107,52 +107,37 @@ export async function transactionRoutes(
       }
     }
 
-    // 撈取該標的歷史交易以檢驗與結算
-    const history = await prisma.transaction.findMany({
-      where: { userId, symbol: input.symbol },
-      orderBy: { tradedAt: 'asc' },
-    });
+    // 在 DB 交易中原子執行：檢查超賣、寫入交易、重新結算損益
+    const result = await prisma.$transaction(async (tx) => {
+      // 撈取該標的歷史交易以檢驗與結算
+      const history = await tx.transaction.findMany({
+        where: { userId, symbol: input.symbol },
+        orderBy: { tradedAt: 'asc' },
+      });
 
-    const serializedHistory = history.map(serializeTxn);
+      const serializedHistory = history.map(serializeTxn);
 
-    // 若為賣出，檢查是否超賣
-    if (input.type === 'SELL') {
-      const currentHoldings = reconcileHoldings(serializedHistory);
-      const curHolding = currentHoldings.find((h) => h.symbol === input.symbol);
-      const availableShares = curHolding ? curHolding.shares : 0;
+      // 若為賣出，檢查是否超賣
+      if (input.type === 'SELL') {
+        const currentHoldings = reconcileHoldings(serializedHistory);
+        const curHolding = currentHoldings.find((h) => h.symbol === input.symbol);
+        const availableShares = curHolding ? curHolding.shares : 0;
 
-      if (availableShares < input.shares - 1e-6) {
-        return reply.status(422).send({
-          success: false,
-          error: {
-            code: 'SELL_EXCEEDS_HOLDING',
-            message: `賣出股數（${input.shares}）超過目前持有股數（${availableShares}）`,
-            details: { symbol: input.symbol, available: availableShares, requested: input.shares },
-          },
-        });
+        if (availableShares < input.shares - 1e-6) {
+          throw new Error(
+            JSON.stringify({
+              code: 'SELL_EXCEEDS_HOLDING',
+              message: `賣出股數（${input.shares}）超過目前持有股數（${availableShares}）`,
+              details: { symbol: input.symbol, available: availableShares, requested: input.shares },
+            })
+          );
+        }
       }
-    }
 
-    // 新增此筆交易並重算損益鏈
-    const tempId = 'temp_' + Date.now();
-    const newTxnData: TransactionData = {
-      id: tempId,
-      symbol: input.symbol,
-      type: input.type,
-      shares: input.shares,
-      price: input.price,
-      fee: input.fee,
-      tax: input.tax,
-      tradedAt: input.tradedAt,
-      note: input.note,
-    };
-
-    const recalculated = recalculateAllRealizedGains([...serializedHistory, newTxnData]);
-    const targetCalculated = recalculated.find((t) => t.id === tempId);
-
-    const created = await prisma.transaction.create({
-      data: {
-        userId,
+      // 新增此筆交易並重算損益鏈
+      const tempId = 'temp_' + Date.now();
+      const newTxnData: TransactionData = {
+        id: tempId,
         symbol: input.symbol,
         type: input.type,
         shares: input.shares,
@@ -161,30 +146,64 @@ export async function transactionRoutes(
         tax: input.tax,
         tradedAt: input.tradedAt,
         note: input.note,
-        clientId: input.clientId,
-        realizedGainLoss: targetCalculated?.realizedGainLoss,
-      },
+      };
+
+      const recalculated = recalculateAllRealizedGains([...serializedHistory, newTxnData]);
+      const targetCalculated = recalculated.find((t) => t.id === tempId);
+
+      const created = await tx.transaction.create({
+        data: {
+          userId,
+          symbol: input.symbol,
+          type: input.type,
+          shares: input.shares,
+          price: input.price,
+          fee: input.fee,
+          tax: input.tax,
+          tradedAt: input.tradedAt,
+          note: input.note,
+          clientId: input.clientId,
+          realizedGainLoss: targetCalculated?.realizedGainLoss,
+        },
+      });
+
+      // 若為插單（交易日期早於某些既有交易），同步更新後續所有交易之損益
+      for (const item of recalculated) {
+        if (item.id !== tempId) {
+          await tx.transaction.update({
+            where: { id: item.id },
+            data: { realizedGainLoss: item.realizedGainLoss },
+          });
+        }
+      }
+
+      const allTxns = await tx.transaction.findMany({ where: { userId } });
+      const holdings = reconcileHoldings(allTxns.map(serializeTxn));
+
+      return {
+        transaction: serializeTxn(created),
+        holdings,
+      };
+    }).catch((err) => {
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.code === 'SELL_EXCEEDS_HOLDING') {
+          return { errorStatus: 422, errorData: parsed };
+        }
+      } catch {}
+      throw err;
     });
 
-    // 若為插單（交易日期早於某些既有交易），同步更新後續所有交易之損益
-    for (const item of recalculated) {
-      if (item.id !== tempId) {
-        await prisma.transaction.update({
-          where: { id: item.id },
-          data: { realizedGainLoss: item.realizedGainLoss },
-        });
-      }
+    if ('errorStatus' in result) {
+      return reply.status(result.errorStatus).send({
+        success: false,
+        error: result.errorData,
+      });
     }
-
-    const allTxns = await prisma.transaction.findMany({ where: { userId } });
-    const holdings = reconcileHoldings(allTxns.map(serializeTxn));
 
     return reply.status(201).send({
       success: true,
-      data: {
-        transaction: serializeTxn(created),
-        holdings,
-      },
+      data: result,
     });
   });
 
@@ -201,54 +220,61 @@ export async function transactionRoutes(
       });
     }
 
-    const existing = await prisma.transaction.findFirst({ where: { id, userId } });
-    if (!existing) {
+    const updatedResult = await prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({ where: { id, userId } });
+      if (!existing) {
+        return null;
+      }
+
+      const updatedSymbol = parsed.data.symbol ?? existing.symbol;
+
+      await tx.transaction.update({
+        where: { id },
+        data: {
+          symbol: updatedSymbol,
+          type: parsed.data.type ?? existing.type,
+          shares: parsed.data.shares ?? existing.shares,
+          price: parsed.data.price ?? existing.price,
+          fee: parsed.data.fee ?? existing.fee,
+          tax: parsed.data.tax ?? existing.tax,
+          tradedAt: parsed.data.tradedAt ?? existing.tradedAt,
+          note: parsed.data.note !== undefined ? parsed.data.note : existing.note,
+        },
+      });
+
+      // 重新結算該標的所有歷史交易
+      const symbolHistory = await tx.transaction.findMany({
+        where: { userId, symbol: updatedSymbol },
+      });
+
+      const recalculated = recalculateAllRealizedGains(symbolHistory.map(serializeTxn));
+      for (const item of recalculated) {
+        await tx.transaction.update({
+          where: { id: item.id },
+          data: { realizedGainLoss: item.realizedGainLoss },
+        });
+      }
+
+      const allTxns = await tx.transaction.findMany({ where: { userId } });
+      const holdings = reconcileHoldings(allTxns.map(serializeTxn));
+      const finalUpdated = await tx.transaction.findUnique({ where: { id } });
+
+      return {
+        transaction: serializeTxn(finalUpdated),
+        holdings,
+      };
+    });
+
+    if (!updatedResult) {
       return reply.status(404).send({
         success: false,
         error: { code: 'TRANSACTION_NOT_FOUND', message: '找不到指定之交易紀錄' },
       });
     }
 
-    const updatedSymbol = parsed.data.symbol ?? existing.symbol;
-
-    await prisma.transaction.update({
-      where: { id },
-      data: {
-        symbol: updatedSymbol,
-        type: parsed.data.type ?? existing.type,
-        shares: parsed.data.shares ?? existing.shares,
-        price: parsed.data.price ?? existing.price,
-        fee: parsed.data.fee ?? existing.fee,
-        tax: parsed.data.tax ?? existing.tax,
-        tradedAt: parsed.data.tradedAt ?? existing.tradedAt,
-        note: parsed.data.note !== undefined ? parsed.data.note : existing.note,
-      },
-    });
-
-    // 重新結算該標的所有歷史交易
-    const symbolHistory = await prisma.transaction.findMany({
-      where: { userId, symbol: updatedSymbol },
-    });
-
-    const recalculated = recalculateAllRealizedGains(symbolHistory.map(serializeTxn));
-    for (const item of recalculated) {
-      await prisma.transaction.update({
-        where: { id: item.id },
-        data: { realizedGainLoss: item.realizedGainLoss },
-      });
-    }
-
-    const allTxns = await prisma.transaction.findMany({ where: { userId } });
-    const holdings = reconcileHoldings(allTxns.map(serializeTxn));
-
-    const finalUpdated = await prisma.transaction.findUnique({ where: { id } });
-
     return reply.send({
       success: true,
-      data: {
-        transaction: serializeTxn(finalUpdated),
-        holdings,
-      },
+      data: updatedResult,
     });
   });
 
@@ -257,35 +283,43 @@ export async function transactionRoutes(
     const userId = request.user!.userId;
     const { id } = request.params as { id: string };
 
-    const existing = await prisma.transaction.findFirst({ where: { id, userId } });
-    if (!existing) {
+    const deleteResult = await prisma.$transaction(async (tx) => {
+      const existing = await tx.transaction.findFirst({ where: { id, userId } });
+      if (!existing) {
+        return null;
+      }
+
+      const symbol = existing.symbol;
+      await tx.transaction.delete({ where: { id } });
+
+      // 重新結算該標的剩餘歷史交易
+      const remainingSymbolTxns = await tx.transaction.findMany({
+        where: { userId, symbol },
+      });
+      const recalculated = recalculateAllRealizedGains(remainingSymbolTxns.map(serializeTxn));
+      for (const item of recalculated) {
+        await tx.transaction.update({
+          where: { id: item.id },
+          data: { realizedGainLoss: item.realizedGainLoss },
+        });
+      }
+
+      const allTxns = await tx.transaction.findMany({ where: { userId } });
+      const holdings = reconcileHoldings(allTxns.map(serializeTxn));
+
+      return { holdings };
+    });
+
+    if (!deleteResult) {
       return reply.status(404).send({
         success: false,
         error: { code: 'TRANSACTION_NOT_FOUND', message: '找不到欲刪除的交易紀錄' },
       });
     }
 
-    const symbol = existing.symbol;
-    await prisma.transaction.delete({ where: { id } });
-
-    // 重新結算該標的剩餘歷史交易
-    const remainingSymbolTxns = await prisma.transaction.findMany({
-      where: { userId, symbol },
-    });
-    const recalculated = recalculateAllRealizedGains(remainingSymbolTxns.map(serializeTxn));
-    for (const item of recalculated) {
-      await prisma.transaction.update({
-        where: { id: item.id },
-        data: { realizedGainLoss: item.realizedGainLoss },
-      });
-    }
-
-    const allTxns = await prisma.transaction.findMany({ where: { userId } });
-    const holdings = reconcileHoldings(allTxns.map(serializeTxn));
-
     return reply.send({
       success: true,
-      data: { holdings },
+      data: deleteResult,
     });
   });
 
@@ -352,47 +386,51 @@ export async function transactionRoutes(
       });
     }
 
-    // 寫入資料庫
-    for (const item of items) {
-      await prisma.transaction.create({
-        data: {
-          userId,
-          symbol: String(item.symbol).toUpperCase(),
-          type: item.type === 'SELL' ? 'SELL' : 'BUY',
-          shares: Number(item.shares),
-          price: Number(item.price),
-          fee: Number(item.fee || 0),
-          tax: Number(item.tax || 0),
-          tradedAt: String(item.tradedAt),
-          note: item.note || null,
-        },
-      });
-    }
-
-    // 依標的分組重新結算所有已實現損益
-    const allUserTxns = await prisma.transaction.findMany({ where: { userId } });
-    const symbols = Array.from(new Set(allUserTxns.map((t) => t.symbol)));
-
-    for (const sym of symbols) {
-      const symTxns = allUserTxns.filter((t) => t.symbol === sym);
-      const recalculated = recalculateAllRealizedGains(symTxns.map(serializeTxn));
-      for (const item of recalculated) {
-        await prisma.transaction.update({
-          where: { id: item.id },
-          data: { realizedGainLoss: item.realizedGainLoss },
+    // 寫入資料庫並重新結算損益（原子事務）
+    const batchResult = await prisma.$transaction(async (tx) => {
+      for (const item of items) {
+        await tx.transaction.create({
+          data: {
+            userId,
+            symbol: String(item.symbol).toUpperCase(),
+            type: item.type === 'SELL' ? 'SELL' : 'BUY',
+            shares: Number(item.shares),
+            price: Number(item.price),
+            fee: Number(item.fee || 0),
+            tax: Number(item.tax || 0),
+            tradedAt: String(item.tradedAt),
+            note: item.note || null,
+          },
         });
       }
-    }
 
-    const finalTxns = await prisma.transaction.findMany({ where: { userId } });
-    const holdings = reconcileHoldings(finalTxns.map(serializeTxn));
+      // 依標的分組重新結算所有已實現損益
+      const allUserTxns = await tx.transaction.findMany({ where: { userId } });
+      const symbols = Array.from(new Set(allUserTxns.map((t) => t.symbol)));
+
+      for (const sym of symbols) {
+        const symTxns = allUserTxns.filter((t) => t.symbol === sym);
+        const recalculated = recalculateAllRealizedGains(symTxns.map(serializeTxn));
+        for (const item of recalculated) {
+          await tx.transaction.update({
+            where: { id: item.id },
+            data: { realizedGainLoss: item.realizedGainLoss },
+          });
+        }
+      }
+
+      const finalTxns = await tx.transaction.findMany({ where: { userId } });
+      const holdings = reconcileHoldings(finalTxns.map(serializeTxn));
+
+      return {
+        importedCount: items.length,
+        holdings,
+      };
+    });
 
     return reply.send({
       success: true,
-      data: {
-        importedCount: items.length,
-        holdings,
-      },
+      data: batchResult,
     });
   });
 }

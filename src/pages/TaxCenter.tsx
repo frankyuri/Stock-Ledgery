@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -12,7 +11,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
-import { fetchChartBundle } from '@/services/stocks';
+import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
 import { calculatePortfolioDividends } from '@/lib/dividendForecast';
 import {
   analyzeSecondGenNHI,
@@ -26,7 +25,6 @@ import { formatNumber, formatShares } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useCurrency } from '@/lib/hooks/useCurrency';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
-import type { ChartBundle } from '@/services/yahoo';
 import type { DividendEvent, Quote } from '@/types/stock';
 
 type TaxTab = 'ALL' | 'NHI' | 'TW_INCOME' | 'US_WITHHOLDING' | 'OVERSEAS_AMT';
@@ -41,25 +39,7 @@ export function TaxCenter() {
   // 抓取各持股的完整行情與配息資訊
   const symbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
 
-  const { data: chartBundles } = useQuery({
-    queryKey: ['portfolio-tax-bundles', symbols.sort().join(',')],
-    queryFn: async () => {
-      if (symbols.length === 0) return {};
-      const results = await Promise.allSettled(
-        symbols.map((sym) => fetchChartBundle(sym, '1D')),
-      );
-
-      const map: Record<string, ChartBundle> = {};
-      results.forEach((res, i) => {
-        if (res.status === 'fulfilled') {
-          map[symbols[i]] = res.value;
-        }
-      });
-      return map;
-    },
-    enabled: symbols.length > 0,
-    staleTime: 60_000,
-  });
+  const { bundles: chartBundles } = usePortfolioBundles(symbols);
 
   // 計算整體股息概況
   const dividendOverview = useMemo(() => {

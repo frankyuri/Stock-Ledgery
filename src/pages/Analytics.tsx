@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   ShieldAlert,
@@ -13,13 +12,12 @@ import {
   Zap,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
-import { fetchChartBundle } from '@/services/stocks';
+import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
 import { calculateRiskMetrics } from '@/lib/riskAnalytics';
 import { ComparisonChart } from '@/components/charts/ComparisonChart';
 import { UnderwaterChart } from '@/components/charts/UnderwaterChart';
 import { cn } from '@/lib/cn';
 import type { Candle } from '@/types/stock';
-import type { ChartBundle } from '@/services/yahoo';
 
 const BENCHMARK_OPTIONS = [
   { symbol: '^GSPC', label: '標普 500 指數 (S&P 500)' },
@@ -39,25 +37,7 @@ export function Analytics() {
     [symbols, selectedBenchmark],
   );
 
-  const { data: bundles, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['risk-analytics-bundles', allSymbolsToFetch.sort().join(',')],
-    queryFn: async () => {
-      if (allSymbolsToFetch.length === 0) return {};
-      const results = await Promise.allSettled(
-        allSymbolsToFetch.map((sym) => fetchChartBundle(sym, '1D')),
-      );
-
-      const map: Record<string, ChartBundle> = {};
-      results.forEach((res, i) => {
-        if (res.status === 'fulfilled') {
-          map[allSymbolsToFetch[i]] = res.value;
-        }
-      });
-      return map;
-    },
-    enabled: allSymbolsToFetch.length > 0,
-    staleTime: 60_000,
-  });
+  const { bundles, isLoading, isRefetching, refetch } = usePortfolioBundles(allSymbolsToFetch);
 
   // 計算權重與量化指標
   const { metrics, holdingWeights, benchmarkLabel } = useMemo(() => {

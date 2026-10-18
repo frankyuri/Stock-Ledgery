@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Flame,
   TrendingUp,
@@ -15,7 +14,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
-import { fetchChartBundle } from '@/services/stocks';
+import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
 import { calculatePortfolioDividends } from '@/lib/dividendForecast';
 import {
   simulateFire,
@@ -30,7 +29,6 @@ import { cn } from '@/lib/cn';
 import { useToast } from '@/lib/toast';
 import { useCurrency } from '@/lib/hooks/useCurrency';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
-import type { ChartBundle } from '@/services/yahoo';
 import type { DividendEvent, Quote } from '@/types/stock';
 
 export function FireTracker() {
@@ -49,25 +47,7 @@ export function FireTracker() {
   const symbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
 
   // 抓取持股即時報價與股息資料
-  const { data: chartBundles } = useQuery({
-    queryKey: ['fire-dividend-bundles', symbols.sort().join(',')],
-    queryFn: async () => {
-      if (symbols.length === 0) return {};
-      const results = await Promise.allSettled(
-        symbols.map((sym) => fetchChartBundle(sym, '1D')),
-      );
-
-      const map: Record<string, ChartBundle> = {};
-      results.forEach((res, i) => {
-        if (res.status === 'fulfilled') {
-          map[symbols[i]] = res.value;
-        }
-      });
-      return map;
-    },
-    enabled: symbols.length > 0,
-    staleTime: 60_000,
-  });
+  const { bundles: chartBundles } = usePortfolioBundles(symbols);
 
   // 計算現有持股市值
   const portfolioMarketValue = useMemo(() => {
