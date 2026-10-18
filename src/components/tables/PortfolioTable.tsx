@@ -204,7 +204,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
               <button
                 type="button"
                 onClick={() => setTradeTarget({ symbol: sym, type: 'BUY' })}
-                className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-up dark:hover:bg-white/10"
+                className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-up dark:hover:bg-white/10"
                 title="加碼買進"
               >
                 <PlusCircle className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
               <button
                 type="button"
                 onClick={() => setTradeTarget({ symbol: sym, type: 'SELL' })}
-                className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
+                className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
                 title="賣出獲利 / 停損"
               >
                 <MinusCircle className="h-4 w-4" />
@@ -220,7 +220,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
               <button
                 type="button"
                 onClick={() => navigate(`/stock/${encodeURIComponent(sym)}`)}
-                className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
+                className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
                 title="個股詳細研究"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -229,7 +229,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
                 <button
                   type="button"
                   onClick={() => onRemove(sym)}
-                  className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
+                  className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
                   title="從持股中移除"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -277,7 +277,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
 
             {/* Filter Search Input */}
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint dark:text-zinc-500" />
               <input
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}

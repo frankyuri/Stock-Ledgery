@@ -399,7 +399,7 @@ export function QuickTradeModal({
                   className="input font-mono pr-10"
                 />
                 {loadingQuote && (
-                  <RefreshCw className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-ink-faint" />
+                  <RefreshCw className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-ink-faint dark:text-zinc-500" />
                 )}
               </div>
             </div>
@@ -445,7 +445,7 @@ export function QuickTradeModal({
 
           {/* Impact & Calculation Preview Card */}
           {parsedShares > 0 && parsedPrice > 0 && (
-            <div className="rounded-xl border border-black/5 bg-surface-muted/50 p-3.5 text-xs text-ink-soft dark:border-white/5 dark:bg-zinc-800/50">
+            <div className="rounded-xl border border-black/5 bg-surface-muted/50 p-3.5 text-xs text-ink-soft dark:border-white/5 dark:bg-zinc-800/50 dark:text-zinc-300">
               <div className="flex items-center justify-between font-medium">
                 <span className="flex items-center gap-1.5 text-ink-mute dark:text-zinc-400">
                   <Calculator className="h-3.5 w-3.5" />

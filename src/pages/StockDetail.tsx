@@ -203,7 +203,7 @@ export function StockDetail() {
                   />
                 </Suspense>
               ) : (
-                <p className="py-16 text-center text-ink-mute">暫無歷史線圖資料</p>
+                <p className="py-16 text-center text-ink-mute dark:text-zinc-400">暫無歷史線圖資料</p>
               )}
             </div>
           </section>
@@ -329,7 +329,7 @@ function TickerHeader({
               </span>
             </div>
           ) : (
-            <p className="mt-2 text-sm text-ink-mute">讀取即時報價中…</p>
+            <p className="mt-2 text-sm text-ink-mute dark:text-zinc-400">讀取即時報價中…</p>
           )}
         </div>
 
@@ -522,7 +522,7 @@ function HoldingCard({
       <div className="card p-5">
         <div className="flex items-center justify-between">
           <p className="label-caps">我的持倉部位</p>
-          <Wallet className="h-4 w-4 text-ink-faint" />
+          <Wallet className="h-4 w-4 text-ink-faint dark:text-zinc-500" />
         </div>
         <p className="mt-3 text-sm text-ink-mute dark:text-zinc-400">
           目前尚未持有 {symbol}。點選下方按鈕可快速記帳，即時建立成本與損益追蹤。
@@ -557,7 +557,7 @@ function HoldingCard({
           <Wallet className="h-3.5 w-3.5 text-brand" />
           我的持倉部位
         </p>
-        <span className="text-xs text-ink-faint font-semibold">{quote.currency}</span>
+        <span className="text-xs text-ink-faint dark:text-zinc-400 font-semibold">{quote.currency}</span>
       </div>
 
       <div className="mt-4 space-y-2.5 text-sm">
@@ -581,7 +581,7 @@ function HoldingCard({
           </span>
         </div>
         <div className="mt-1 flex items-baseline justify-between">
-          <span className="text-xs text-ink-faint">報酬率</span>
+          <span className="text-xs text-ink-faint dark:text-zinc-400">報酬率</span>
           <span
             className={cn('font-mono text-xs font-semibold num', changeColor(gainLoss))}
           >
@@ -597,7 +597,7 @@ function HoldingCard({
             <div className="flex items-baseline justify-between">
               <span className="text-xs text-ink-mute dark:text-zinc-400">
                 累計領取股息
-                <span className="ml-1 text-[11px] text-ink-faint">
+                <span className="ml-1 text-[11px] text-ink-faint dark:text-zinc-400">
                   · {stats!.paidEventCount} 次
                 </span>
               </span>
@@ -608,11 +608,11 @@ function HoldingCard({
           )}
           {showForwardYield && (
             <div className={cn('flex items-baseline justify-between', showDividend && 'mt-1.5')}>
-              <span className="text-xs text-ink-faint">預估年股息 (TTM)</span>
+              <span className="text-xs text-ink-faint dark:text-zinc-400">預估年股息 (TTM)</span>
               <span className="font-mono text-xs font-semibold text-ink-soft num dark:text-zinc-300">
                 {formatNumber(annualIncome)}
                 {yieldOnCost > 0 && (
-                  <span className="ml-1 text-ink-faint">
+                  <span className="ml-1 text-ink-faint dark:text-zinc-400">
                     ({yieldOnCost.toFixed(2)}%)
                   </span>
                 )}
@@ -793,7 +793,7 @@ function TradesCard({
                       <td className="px-5 py-3 text-right font-mono num">
                         {formatNumber(t.price)}
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-ink-mute num">
+                      <td className="px-5 py-3 text-right font-mono text-ink-mute dark:text-zinc-400 num">
                         {formatNumber(t.fee)}
                       </td>
                       <td className="px-5 py-3 text-right font-mono font-semibold num">
@@ -803,7 +803,7 @@ function TradesCard({
                         <button
                           type="button"
                           onClick={() => onEditTrade(t)}
-                          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
+                          className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
                           title="編輯此筆交易"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -861,7 +861,7 @@ function EventsCard({
         <div className="p-5">
           <p className="label-caps mb-3">最近配息歷程</p>
           {recentDivs.length === 0 ? (
-            <p className="text-sm text-ink-mute">無歷史配息紀錄</p>
+            <p className="text-sm text-ink-mute dark:text-zinc-400">無歷史配息紀錄</p>
           ) : (
             <ul className="space-y-2.5 text-sm">
               {recentDivs.map((d) => {
@@ -897,7 +897,7 @@ function EventsCard({
         <div className="p-5">
           <p className="label-caps mb-3">股票分割 (拆股)</p>
           {recentSplits.length === 0 ? (
-            <p className="text-sm text-ink-mute">近期無拆股紀錄</p>
+            <p className="text-sm text-ink-mute dark:text-zinc-400">近期無拆股紀錄</p>
           ) : (
             <ul className="space-y-2.5 text-sm">
               {recentSplits.map((s) => (

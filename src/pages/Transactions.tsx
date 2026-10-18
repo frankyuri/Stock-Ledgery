@@ -478,7 +478,7 @@ export function Transactions() {
                   className={cn("input num font-mono", loadingQuote && "pr-9")}
                 />
                 {loadingQuote && (
-                  <RefreshCw className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-ink-faint" />
+                  <RefreshCw className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-ink-faint dark:text-zinc-500" />
                 )}
               </div>
             </div>
@@ -559,7 +559,7 @@ export function Transactions() {
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Search by Symbol */}
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint dark:text-zinc-500" />
               <input
                 value={searchSymbol}
                 onChange={(e) => setSearchSymbol(e.target.value)}
@@ -657,7 +657,7 @@ export function Transactions() {
                     <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono num text-ink-soft dark:text-zinc-300">
                       ${formatNumber(t.price)}
                     </td>
-                    <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono text-xs text-ink-mute num">
+                    <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono text-xs text-ink-mute dark:text-zinc-400 num">
                       ${formatNumber(t.fee)}
                     </td>
                     <td className="whitespace-nowrap px-5 py-3.5 text-right font-mono font-bold num text-ink dark:text-zinc-100">
@@ -670,7 +670,7 @@ export function Transactions() {
                           ${formatNumber(t.realizedGainLoss)}
                         </span>
                       ) : (
-                        <span className="text-ink-faint text-xs">—</span>
+                        <span className="text-ink-faint dark:text-zinc-500 text-xs">—</span>
                       )}
                     </td>
                     <td className="px-5 py-3.5 text-xs text-ink-mute dark:text-zinc-400 max-w-[180px] truncate">
@@ -684,7 +684,7 @@ export function Transactions() {
                             setEditingTxn(t);
                             setTradeModalOpen(true);
                           }}
-                          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
+                          className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
                           title="編輯交易資料"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -695,7 +695,7 @@ export function Transactions() {
                             await removeTransaction(t.id);
                             toast.info(`已刪除 ${t.symbol} 交易紀錄`);
                           }}
-                          className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
+                          className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
                           title="刪除此筆交易"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

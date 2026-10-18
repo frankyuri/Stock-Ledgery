@@ -394,7 +394,7 @@ export function TaxCenter() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-xs text-ink-mute">
+                    <td colSpan={8} className="py-8 text-center text-xs text-ink-mute dark:text-zinc-400">
                       目前未持有台股標的或無預估配息資料
                     </td>
                   </tr>
@@ -474,7 +474,7 @@ export function TaxCenter() {
               )}
               <h4 className="text-base font-bold text-ink dark:text-zinc-100 flex items-center justify-between">
                 <span>方案甲：股利合併計稅</span>
-                <span className="text-xs font-mono font-normal text-ink-mute">
+                <span className="text-xs font-mono font-normal text-ink-mute dark:text-zinc-400">
                   實質稅率：{twTaxReport.consolidated.effectiveRate}%
                 </span>
               </h4>
@@ -526,7 +526,7 @@ export function TaxCenter() {
               )}
               <h4 className="text-base font-bold text-ink dark:text-zinc-100 flex items-center justify-between">
                 <span>方案乙：股利分開計稅 (28%)</span>
-                <span className="text-xs font-mono font-normal text-ink-mute">
+                <span className="text-xs font-mono font-normal text-ink-mute dark:text-zinc-400">
                   單一固定稅率：28.0%
                 </span>
               </h4>
@@ -543,7 +543,7 @@ export function TaxCenter() {
                   <span>固定稅率 28%</span>
                   <span>28%</span>
                 </div>
-                <div className="flex justify-between text-ink-faint">
+                <div className="flex justify-between text-ink-faint dark:text-zinc-400">
                   <span>8.5% 可抵減稅額</span>
                   <span>不適用 (0)</span>
                 </div>
@@ -602,13 +602,13 @@ export function TaxCenter() {
               </p>
               <div className="grid grid-cols-2 gap-3 text-center">
                 <div className="rounded-lg bg-black/[0.04] p-2.5 dark:bg-black/30">
-                  <div className="text-[11px] text-ink-mute">10 年複利增加資產</div>
+                  <div className="text-[11px] text-ink-mute dark:text-zinc-400">10 年複利增加資產</div>
                   <div className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
                     +NT$ {formatNumber(usTaxReport?.tenYearCompoundSavingsTWD ?? 0)}
                   </div>
                 </div>
                 <div className="rounded-lg bg-black/[0.04] p-2.5 dark:bg-black/30">
-                  <div className="text-[11px] text-ink-mute">20 年複利增加資產</div>
+                  <div className="text-[11px] text-ink-mute dark:text-zinc-400">20 年複利增加資產</div>
                   <div className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
                     +NT$ {formatNumber(usTaxReport?.twentyYearCompoundSavingsTWD ?? 0)}
                   </div>

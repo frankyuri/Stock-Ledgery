@@ -49,9 +49,9 @@ export function DemoNoticeBanner() {
         <button
           type="button"
           onClick={handleReset}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-850 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 hover:text-rose-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:hover:text-rose-400"
         >
-          <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+          <Trash2 className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" />
           <span>清空示範數據</span>
         </button>
       </div>

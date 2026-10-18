@@ -411,7 +411,7 @@ function Stat({
     <div className="card p-5 min-w-0">
       <div className="flex items-center justify-between gap-1">
         <p className="label-caps truncate">{label}</p>
-        <Icon className="h-4 w-4 text-ink-faint shrink-0" />
+        <Icon className="h-4 w-4 text-ink-faint dark:text-zinc-500 shrink-0" />
       </div>
       <p
         className="mt-2 font-mono text-2xl font-bold truncate tracking-tight text-ink dark:text-zinc-100 num"

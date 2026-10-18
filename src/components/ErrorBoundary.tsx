@@ -36,11 +36,11 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="card w-full max-w-md p-8 text-center">
           <p className="label-caps text-down">發生未預期錯誤</p>
-          <h2 className="mt-3 text-xl font-semibold text-ink">畫面暫時無法顯示</h2>
-          <p className="mt-3 text-sm text-ink-mute">
+          <h2 className="mt-3 text-xl font-semibold text-ink dark:text-zinc-100">畫面暫時無法顯示</h2>
+          <p className="mt-3 text-sm text-ink-mute dark:text-zinc-400">
             可以點下方按鈕重試；若持續發生請重新整理瀏覽器。
           </p>
-          <pre className="mt-4 max-h-32 overflow-auto rounded-lg bg-black/[0.04] p-3 text-left font-mono text-xs text-ink-soft dark:bg-white/5">
+          <pre className="mt-4 max-h-32 overflow-auto rounded-lg bg-black/[0.04] p-3 text-left font-mono text-xs text-ink-soft dark:bg-white/5 dark:text-zinc-300">
             {error.message}
           </pre>
           <div className="mt-5 flex justify-center gap-2">

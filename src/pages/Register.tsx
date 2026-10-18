@@ -52,7 +52,7 @@ export function Register() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">
+          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute dark:text-zinc-400">
             名稱
           </label>
           <input
@@ -65,7 +65,7 @@ export function Register() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">
+          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute dark:text-zinc-400">
             Email
           </label>
           <input
@@ -80,7 +80,7 @@ export function Register() {
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">
+            <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute dark:text-zinc-400">
               密碼
             </label>
             <input
@@ -94,7 +94,7 @@ export function Register() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">
+            <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute dark:text-zinc-400">
               再次輸入
             </label>
             <input
@@ -118,7 +118,7 @@ export function Register() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-ink-mute">
+      <p className="mt-6 text-center text-sm text-ink-mute dark:text-zinc-400">
         已經有帳號？
         <Link to="/login" className="ml-1.5 font-medium text-brand hover:underline">
           直接登入

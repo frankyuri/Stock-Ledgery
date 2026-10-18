@@ -570,7 +570,7 @@ export function FireTracker() {
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="text-base font-bold text-slate-900 dark:text-zinc-100 mb-3 flex items-center justify-between">
               <span>FIRE 生活型態對比</span>
-              <span className="text-xs font-normal text-slate-400">
+              <span className="text-xs font-normal text-slate-400 dark:text-zinc-500">
                 點選卡片切換目標
               </span>
             </h2>
@@ -655,7 +655,7 @@ export function FireTracker() {
                     目標每月生活開銷
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-slate-500 font-semibold">{currencySymbol}</span>
+                    <span className="text-slate-500 dark:text-zinc-400 font-semibold">{currencySymbol}</span>
                     <input
                       type="number"
                       step={5000}
@@ -678,7 +678,7 @@ export function FireTracker() {
                   onChange={(e) => updateParam('monthlyExpense', Number(e.target.value))}
                   className="w-full accent-amber-500 cursor-pointer"
                 />
-                <div className="flex justify-between text-[11px] text-slate-400 mt-0.5">
+                <div className="flex justify-between text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
                   <span>{formatMoney(10000, 'TWD')}</span>
                   <span>
                     年支出 {formatMoney(params.monthlyExpense * 12, 'TWD')}
@@ -694,7 +694,7 @@ export function FireTracker() {
                     每月定期定額投入
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="text-slate-500 font-semibold">{currencySymbol}</span>
+                    <span className="text-slate-500 dark:text-zinc-400 font-semibold">{currencySymbol}</span>
                     <input
                       type="number"
                       step={2000}
@@ -719,7 +719,7 @@ export function FireTracker() {
                   }
                   className="w-full accent-blue-500 cursor-pointer"
                 />
-                <div className="flex justify-between text-[11px] text-slate-400 mt-0.5">
+                <div className="flex justify-between text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
                   <span>{formatMoney(0, 'TWD')}</span>
                   <span>年投入 {formatMoney(params.monthlyInvestment * 12, 'TWD')}</span>
                   <span>{formatMoney(150000, 'TWD')}</span>
@@ -744,7 +744,7 @@ export function FireTracker() {
                       }
                       className="w-16 rounded-md border border-slate-300 px-2 py-0.5 text-right font-bold text-slate-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                     />
-                    <span className="text-slate-500">%</span>
+                    <span className="text-slate-500 dark:text-zinc-400">%</span>
                   </div>
                 </div>
                 <input
@@ -758,7 +758,7 @@ export function FireTracker() {
                   }
                   className="w-full accent-emerald-500 cursor-pointer"
                 />
-                <div className="flex justify-between text-[11px] text-slate-400 mt-0.5">
+                <div className="flex justify-between text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
                   <span>3.0% (保守債券)</span>
                   <span>7.0% (標普500長期)</span>
                   <span>15.0% (成長)</span>

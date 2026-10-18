@@ -235,7 +235,7 @@ function SummaryCards({
         <div className="flex items-baseline justify-between gap-1">
           <p className="label-caps truncate">總部位市值</p>
           {groups.length > 1 && (
-            <span className="text-[11px] text-ink-faint shrink-0">
+            <span className="text-[11px] text-ink-faint dark:text-zinc-400 shrink-0">
               主要幣別 · 共 {groups.length} 種
             </span>
           )}
@@ -403,7 +403,7 @@ function MultiCurrencyCard({ groups }: { groups: GroupEntry[] }) {
         {groups.map((g) => (
           <div
             key={g.currency}
-            className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-850 min-w-0"
+            className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 min-w-0"
           >
             <div className="flex items-center justify-between gap-1">
               <span className="text-base font-bold text-ink dark:text-zinc-100">{g.currency}</span>

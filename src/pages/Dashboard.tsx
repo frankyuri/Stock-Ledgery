@@ -170,7 +170,7 @@ export function Dashboard() {
                 {selected}
                 <Link
                   to={`/stock/${encodeURIComponent(selected)}`}
-                  className="rounded-lg p-1 text-ink-mute transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
+                  className="rounded-lg p-1 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10 dark:hover:text-brand"
                   title="前往個股深入研究"
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -271,7 +271,7 @@ export function Dashboard() {
                 />
               </Suspense>
             ) : (
-              <p className="py-16 text-center text-ink-mute">無法載入圖表資料</p>
+              <p className="py-16 text-center text-ink-mute dark:text-zinc-400">無法載入圖表資料</p>
             )}
           </div>
         </div>
@@ -399,12 +399,12 @@ function IndexCard({
             {formatPercent(quote.changePercent)}
           </span>
         ) : (
-          <span className="text-[11px] text-ink-mute">載入中…</span>
+          <span className="text-[11px] text-ink-mute dark:text-zinc-400">載入中…</span>
         )}
 
         <ArrowUpRight
           className={cn(
-            'h-3.5 w-3.5 text-ink-faint transition group-hover:text-brand group-hover:translate-x-0.5 group-hover:-translate-y-0.5',
+            'h-3.5 w-3.5 text-ink-faint dark:text-zinc-500 transition group-hover:text-brand group-hover:translate-x-0.5 group-hover:-translate-y-0.5',
             isSelected && 'text-brand',
           )}
         />

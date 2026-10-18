@@ -351,7 +351,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
                   >
-                    <Settings className="h-3.5 w-3.5 text-slate-400" />
+                    <Settings className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
                     LINE 綁定與推播設定
                   </Link>
                   <button
@@ -361,7 +361,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                       setMenuOpen(false);
                       navigate('/login');
                     }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-xs text-rose-600 hover:bg-slate-50 dark:hover:bg-zinc-800 border-t border-slate-100 dark:border-zinc-800"
+                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-xs text-rose-600 hover:bg-slate-50 dark:text-rose-400 dark:hover:bg-zinc-800 border-t border-slate-100 dark:border-zinc-800"
                   >
                     <LogOut className="h-3.5 w-3.5" />
                     登出帳號

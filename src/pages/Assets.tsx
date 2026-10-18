@@ -256,7 +256,7 @@ export function Assets() {
                       type="button"
                       onClick={() => removeRow(r.id)}
                       disabled={rows.length === 1}
-                      className="btn p-2.5 text-ink-mute hover:text-down disabled:opacity-30"
+                      className="btn p-2.5 text-ink-mute dark:text-zinc-400 hover:text-down disabled:opacity-30"
                       title="移除此幣別列"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -336,7 +336,7 @@ export function Assets() {
               <p className="mt-1 text-xs text-ink-mute dark:text-zinc-400 truncate">
                 {first?.date} → {latest?.date}
                 {spanDays > 0 && (
-                  <span className="ml-1.5 text-ink-faint">· 跨越 {spanDays} 天</span>
+                  <span className="ml-1.5 text-ink-faint dark:text-zinc-500">· 跨越 {spanDays} 天</span>
                 )}
               </p>
             </div>
@@ -467,7 +467,7 @@ export function Assets() {
                                 await removeAssetSnapshot(a.id);
                                 toast.info('已刪除快照紀錄');
                               }}
-                              className="rounded-lg p-1 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
+                              className="rounded-lg p-1 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
                               title="刪除此快照"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
