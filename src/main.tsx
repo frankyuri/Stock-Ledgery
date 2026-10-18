@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider } from '@/lib/theme';
+import { DisplayScaleProvider } from '@/lib/displayScale';
 import { ToastProvider } from '@/lib/toast';
 import './index.css';
 
@@ -22,13 +23,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <BrowserRouter basename={import.meta.env.BASE_URL}>
-              <App />
-            </BrowserRouter>
-          </ToastProvider>
-        </QueryClientProvider>
+        <DisplayScaleProvider>
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>
+              <BrowserRouter basename={import.meta.env.BASE_URL}>
+                <App />
+              </BrowserRouter>
+            </ToastProvider>
+          </QueryClientProvider>
+        </DisplayScaleProvider>
       </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>,

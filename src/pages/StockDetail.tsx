@@ -190,10 +190,11 @@ export function StockDetail() {
             </div>
             <div className="card-body">
               {bundle.isLoading ? (
-                <Skeleton className="h-[440px] w-full rounded-xl" />
+                <Skeleton className="h-[480px] w-full rounded-xl" />
               ) : bundle.data ? (
-                <Suspense fallback={<Skeleton className="h-[440px] w-full rounded-xl" />}>
+                <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-xl" />}>
                   <StockChart
+                    symbol={symbol}
                     data={bundle.data.candles}
                     resolution={resolution}
                     fiftyTwoWeekHigh={displayQuote?.fiftyTwoWeekHigh}

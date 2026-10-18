@@ -4,7 +4,13 @@
 
 :root {
   color-scheme: light;
-  --font-size-base: 14px;
+  --font-size-base: 21px; /* 150% harmonious scale */
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --font-size-base: 16px; /* Optimized scale for tablets and mobile */
+  }
 }
 
 html.dark {

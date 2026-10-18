@@ -34,6 +34,7 @@ export interface ChartMarker {
 
 interface StockChartProps {
   data: Candle[];
+  symbol?: string;
   height?: number;
   /** 目前 K 線 resolution，影響 range 按鈕的「1M / 3M…」對應幾根 */
   resolution?: '1D' | '1W' | '1M';
@@ -70,7 +71,8 @@ interface HoverInfo {
 
 export function StockChart({
   data,
-  height = 420,
+  symbol,
+  height = 460,
   resolution = '1D',
   fiftyTwoWeekHigh,
   fiftyTwoWeekLow,
@@ -98,6 +100,7 @@ export function StockChart({
   dataRef.current = data;
   const fittedSeriesKeyRef = useRef<string | null>(null);
 
+  const [chartReady, setChartReady] = useState(false);
   const [chartType, setChartType] = useState<'candle' | 'area'>('candle');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [enabledMA, setEnabledMA] = useState<Record<MaKey, boolean>>({
@@ -131,13 +134,17 @@ export function StockChart({
     return computeRSIMap(data, 14);
   }, [data]);
 
-  // Initialize Chart
+  const bbMapRef = useRef(bbMap);
+  bbMapRef.current = bbMap;
+  const rsiMapRef = useRef(rsiMap);
+  rsiMapRef.current = rsiMap;
+
+  // Initialize Chart once on mount
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const chart = createChart(el, {
-      height: isFullscreen ? 560 : height,
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
@@ -250,8 +257,8 @@ export function StockChart({
         if (v) maVals[key] = v.value;
       }
 
-      const bb = bbMap.get(src.time);
-      const rsiVal = rsiMap.get(src.time);
+      const bb = bbMapRef.current.get(src.time);
+      const rsiVal = rsiMapRef.current.get(src.time);
 
       setHover({
         candle: src,
@@ -261,6 +268,8 @@ export function StockChart({
         rsi: rsiVal,
       });
     });
+
+    setChartReady(true);
 
     return () => {
       chart.remove();
@@ -273,8 +282,48 @@ export function StockChart({
       bbLowerSeriesRef.current = null;
       priceLinesRef.current = [];
       fittedSeriesKeyRef.current = null;
+      setChartReady(false);
     };
+  }, []);
+
+  // Update height when changed in normal mode
+  useEffect(() => {
+    if (!isFullscreen && containerRef.current) {
+      containerRef.current.style.height = `${height}px`;
+    }
   }, [height, isFullscreen]);
+
+  // Handle resize and fit content on fullscreen toggle
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const timer = setTimeout(() => {
+      chartRef.current?.timeScale().fitContent();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [isFullscreen]);
+
+  // Handle ESC key to exit fullscreen
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
+  // Lock body scroll in fullscreen mode
+  useEffect(() => {
+    if (isFullscreen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isFullscreen]);
 
   // React to Theme Changes
   useEffect(() => {
@@ -302,7 +351,7 @@ export function StockChart({
 
   // Update Data and Indicators
   useEffect(() => {
-    if (!candleRef.current || !areaRef.current || !volumeRef.current) return;
+    if (!chartReady || !candleRef.current || !areaRef.current || !volumeRef.current) return;
 
     const candleSeries = candleRef.current;
     const areaSeries = areaRef.current;
@@ -405,6 +454,7 @@ export function StockChart({
       }
     }
   }, [
+    chartReady,
     data,
     chartType,
     enabledMA,
@@ -432,188 +482,217 @@ export function StockChart({
   }
 
   return (
-    <div className={cn('relative transition-all', isFullscreen && 'fixed inset-4 z-50 rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-black/10 dark:border-white/10 overflow-hidden')}>
-      {/* Chart Top Toolbar */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Chart Type Toggle */}
-          <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
-            <button
-              type="button"
-              onClick={() => setChartType('candle')}
-              className={cn(
-                'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
-                chartType === 'candle'
-                  ? 'bg-brand text-white shadow-xs'
-                  : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-              )}
-              title="K 線圖 (Candlestick)"
-            >
-              <CandlestickChart className="h-3.5 w-3.5" />
-              <span>K 線</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setChartType('area')}
-              className={cn(
-                'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
-                chartType === 'area'
-                  ? 'bg-brand text-white shadow-xs'
-                  : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-              )}
-              title="折線走勢圖 (Area)"
-            >
-              <LineChartIcon className="h-3.5 w-3.5" />
-              <span>走勢</span>
-            </button>
-          </div>
+    <>
+      {/* Fullscreen Backdrop Overlay */}
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs transition-opacity"
+          onClick={() => setIsFullscreen(false)}
+        />
+      )}
 
-          <div className="h-4 w-px bg-black/10 dark:bg-white/10" />
+      <div
+        className={cn(
+          'relative transition-all',
+          isFullscreen &&
+            'fixed inset-2 sm:inset-4 md:inset-6 z-50 flex flex-col rounded-2xl border border-black/10 bg-white p-4 sm:p-6 shadow-2xl dark:border-white/10 dark:bg-zinc-900 overflow-hidden',
+        )}
+      >
+        {/* Chart Top Toolbar */}
+        <div className="mb-3 sm:mb-4 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {isFullscreen && symbol && (
+              <div className="mr-1 flex items-center gap-2">
+                <span className="font-mono text-base font-bold text-ink dark:text-zinc-100">
+                  {symbol}
+                </span>
+                <span className="chip font-mono text-xs font-semibold">{resolution}</span>
+                <div className="h-4 w-px bg-black/10 dark:bg-white/10" />
+              </div>
+            )}
 
-          {/* Technical Indicator Chips */}
-          {MA_OPTIONS.map((m) => (
+            {/* Chart Type Toggle */}
+            <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
+              <button
+                type="button"
+                onClick={() => setChartType('candle')}
+                className={cn(
+                  'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
+                  chartType === 'candle'
+                    ? 'bg-brand text-white shadow-xs'
+                    : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
+                )}
+                title="K 線圖 (Candlestick)"
+              >
+                <CandlestickChart className="h-3.5 w-3.5" />
+                <span>K 線</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartType('area')}
+                className={cn(
+                  'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
+                  chartType === 'area'
+                    ? 'bg-brand text-white shadow-xs'
+                    : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
+                )}
+                title="折線走勢圖 (Area)"
+              >
+                <LineChartIcon className="h-3.5 w-3.5" />
+                <span>走勢</span>
+              </button>
+            </div>
+
+            <div className="h-4 w-px bg-black/10 dark:bg-white/10" />
+
+            {/* Technical Indicator Chips */}
+            {MA_OPTIONS.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setEnabledMA((s) => ({ ...s, [m.key]: !s[m.key] }))}
+                className={cn(
+                  'chip cursor-pointer text-xs font-semibold transition',
+                  enabledMA[m.key] ? 'text-white' : 'hover:bg-black/[0.04] dark:hover:bg-white/5',
+                )}
+                style={
+                  enabledMA[m.key]
+                    ? { backgroundColor: m.color, borderColor: m.color }
+                    : { color: m.color }
+                }
+              >
+                {m.label}
+              </button>
+            ))}
+
+            {/* Bollinger Bands Toggle */}
             <button
-              key={m.key}
               type="button"
-              onClick={() => setEnabledMA((s) => ({ ...s, [m.key]: !s[m.key] }))}
+              onClick={() => setEnabledBB((v) => !v)}
               className={cn(
                 'chip cursor-pointer text-xs font-semibold transition',
-                enabledMA[m.key] ? 'text-white' : 'hover:bg-black/[0.04] dark:hover:bg-white/5',
+                enabledBB
+                  ? 'bg-sky-500 text-white border-sky-500'
+                  : 'text-sky-600 hover:bg-black/[0.04] dark:text-sky-400 dark:hover:bg-white/5',
               )}
-              style={
-                enabledMA[m.key]
-                  ? { backgroundColor: m.color, borderColor: m.color }
-                  : { color: m.color }
-              }
+              title="布林通道 (20, 2σ)"
             >
-              {m.label}
+              BB (20,2)
             </button>
-          ))}
-
-          {/* Bollinger Bands Toggle */}
-          <button
-            type="button"
-            onClick={() => setEnabledBB((v) => !v)}
-            className={cn(
-              'chip cursor-pointer text-xs font-semibold transition',
-              enabledBB
-                ? 'bg-sky-500 text-white border-sky-500'
-                : 'text-sky-600 hover:bg-black/[0.04] dark:text-sky-400 dark:hover:bg-white/5',
-            )}
-            title="布林通道 (20, 2σ)"
-          >
-            BB (20,2)
-          </button>
-        </div>
-
-        {/* Time Range Selector & Fullscreen Toggle */}
-        <div className="flex items-center gap-2">
-          <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs dark:border-white/10 dark:bg-zinc-800/70">
-            {(
-              [
-                { label: '1M', months: 1 },
-                { label: '3M', months: 3 },
-                { label: '6M', months: 6 },
-                { label: '1Y', months: 12 },
-                { label: '3Y', months: 36 },
-                { label: 'ALL', months: 'all' as const },
-              ] as const
-            ).map((x) => {
-              const bars = x.months === 'all' ? 'all' : x.months * barsPerMonth;
-              return (
-                <button
-                  key={x.label}
-                  type="button"
-                  onClick={() => setRangeBars(bars)}
-                  className="px-3 py-1.5 font-medium text-ink-soft transition hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5"
-                >
-                  {x.label}
-                </button>
-              );
-            })}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsFullscreen((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-white/70 text-ink-soft shadow-xs transition hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            title={isFullscreen ? '還原檢視' : '全螢幕檢視'}
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
+          {/* Time Range Selector & Fullscreen Toggle */}
+          <div className="flex items-center gap-2">
+            <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs dark:border-white/10 dark:bg-zinc-800/70">
+              {(
+                [
+                  { label: '1M', months: 1 },
+                  { label: '3M', months: 3 },
+                  { label: '6M', months: 6 },
+                  { label: '1Y', months: 12 },
+                  { label: '3Y', months: 36 },
+                  { label: 'ALL', months: 'all' as const },
+                ] as const
+              ).map((x) => {
+                const bars = x.months === 'all' ? 'all' : x.months * barsPerMonth;
+                return (
+                  <button
+                    key={x.label}
+                    type="button"
+                    onClick={() => setRangeBars(bars)}
+                    className="px-3 py-1.5 font-medium text-ink-soft transition hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5"
+                  >
+                    {x.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsFullscreen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-white/70 text-ink-soft shadow-xs transition hover:bg-white dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              title={isFullscreen ? '還原檢視 (Esc)' : '全螢幕檢視'}
+              aria-label={isFullscreen ? '還原檢視' : '全螢幕檢視'}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Chart Canvas Area */}
+        <div className={cn('relative w-full', isFullscreen ? 'flex-1 min-h-0' : '')}>
+          <div
+            ref={containerRef}
+            className="w-full transition-all"
+            style={{ height: isFullscreen ? '100%' : `${height}px` }}
+          />
+
+          {/* Hover Info Tooltip */}
+          {hover && (
+            <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-xl border border-black/10 bg-white/95 px-4 py-3 text-[13px] text-ink-soft shadow-pop backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-300">
+              <div className="mb-1.5 font-mono text-sm font-semibold text-ink dark:text-zinc-100 flex items-center justify-between gap-4">
+                <span>{hover.candle.time}</span>
+                {hover.rsi != null && (
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5 text-xs font-semibold',
+                      hover.rsi >= 70
+                        ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                        : hover.rsi <= 30
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-black/5 text-ink-mute dark:bg-white/10 dark:text-zinc-400',
+                    )}
+                  >
+                    RSI(14): {hover.rsi.toFixed(1)}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs">
+                <span>
+                  開盤 <span className="ml-1 font-semibold text-ink dark:text-zinc-100">{hover.candle.open.toFixed(2)}</span>
+                </span>
+                <span>
+                  最高 <span className="ml-1 font-semibold text-up">{hover.candle.high.toFixed(2)}</span>
+                </span>
+                <span>
+                  收盤{' '}
+                  <span
+                    className={cn(
+                      'ml-1 font-semibold',
+                      hover.candle.close >= hover.candle.open ? 'text-up' : 'text-down',
+                    )}
+                  >
+                    {hover.candle.close.toFixed(2)}
+                  </span>
+                </span>
+                <span>
+                  最低 <span className="ml-1 font-semibold text-down">{hover.candle.low.toFixed(2)}</span>
+                </span>
+                <span className="col-span-2">
+                  成交量{' '}
+                  <span className="ml-1 font-semibold text-ink dark:text-zinc-100">
+                    {formatVolume(hover.candle.volume)}
+                  </span>
+                </span>
+                {MA_OPTIONS.map((m) =>
+                  enabledMA[m.key] && hover.ma[m.key] != null ? (
+                    <span key={m.key} style={{ color: m.color }} className="font-semibold">
+                      {m.label} {hover.ma[m.key]!.toFixed(2)}
+                    </span>
+                  ) : null,
+                )}
+                {enabledBB && hover.bbUpper != null && hover.bbLower != null && (
+                  <span className="col-span-2 text-sky-500 dark:text-sky-400 font-semibold">
+                    BB軌: {hover.bbLower.toFixed(2)} ~ {hover.bbUpper.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Chart Canvas */}
-      <div
-        ref={containerRef}
-        className="w-full transition-all"
-        style={{ height: isFullscreen ? 560 : height }}
-      />
-
-      {/* Hover Info Tooltip */}
-      {hover && (
-        <div className="pointer-events-none absolute left-3 top-14 rounded-xl border border-black/10 bg-white/95 px-4 py-3 text-[13px] text-ink-soft shadow-pop backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/95 dark:text-zinc-300">
-          <div className="mb-1.5 font-mono text-sm font-semibold text-ink dark:text-zinc-100 flex items-center justify-between gap-4">
-            <span>{hover.candle.time}</span>
-            {hover.rsi != null && (
-              <span
-                className={cn(
-                  'rounded px-1.5 py-0.5 text-xs font-semibold',
-                  hover.rsi >= 70
-                    ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                    : hover.rsi <= 30
-                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-black/5 text-ink-mute dark:bg-white/10 dark:text-zinc-400',
-                )}
-              >
-                RSI(14): {hover.rsi.toFixed(1)}
-              </span>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs">
-            <span>
-              開盤 <span className="ml-1 font-semibold text-ink dark:text-zinc-100">{hover.candle.open.toFixed(2)}</span>
-            </span>
-            <span>
-              最高 <span className="ml-1 font-semibold text-up">{hover.candle.high.toFixed(2)}</span>
-            </span>
-            <span>
-              收盤{' '}
-              <span
-                className={cn(
-                  'ml-1 font-semibold',
-                  hover.candle.close >= hover.candle.open ? 'text-up' : 'text-down',
-                )}
-              >
-                {hover.candle.close.toFixed(2)}
-              </span>
-            </span>
-            <span>
-              最低 <span className="ml-1 font-semibold text-down">{hover.candle.low.toFixed(2)}</span>
-            </span>
-            <span className="col-span-2">
-              成交量{' '}
-              <span className="ml-1 font-semibold text-ink dark:text-zinc-100">
-                {formatVolume(hover.candle.volume)}
-              </span>
-            </span>
-            {MA_OPTIONS.map((m) =>
-              enabledMA[m.key] && hover.ma[m.key] != null ? (
-                <span key={m.key} style={{ color: m.color }} className="font-semibold">
-                  {m.label} {hover.ma[m.key]!.toFixed(2)}
-                </span>
-              ) : null,
-            )}
-            {enabledBB && hover.bbUpper != null && hover.bbLower != null && (
-              <span className="col-span-2 text-sky-500 dark:text-sky-400 font-semibold">
-                BB軌: {hover.bbLower.toFixed(2)} ~ {hover.bbUpper.toFixed(2)}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
