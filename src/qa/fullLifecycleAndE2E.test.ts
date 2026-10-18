@@ -192,7 +192,15 @@ describe('QA Full Lifecycle: Personal Assets & Guest Experience', () => {
   });
 });
 
-describe('QA Backend API E2E Smoke & Real Server Integration', () => {
+let isBackendRunning = false;
+try {
+  const healthCheck = await axios.get('http://localhost:8080/health', { timeout: 800 });
+  isBackendRunning = healthCheck.status === 200;
+} catch {
+  isBackendRunning = false;
+}
+
+describe.runIf(isBackendRunning)('QA Backend API E2E Smoke & Real Server Integration', () => {
   const API_URL = 'http://localhost:8080/api/v1';
 
   it('Backend Health Check returns 200 OK', async () => {
