@@ -9,6 +9,7 @@ import {
   Wallet,
   DollarSign,
   PieChart,
+  Sparkles,
 } from 'lucide-react';
 import { PortfolioTable } from '@/components/tables/PortfolioTable';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -195,7 +196,7 @@ export function Portfolio() {
           <p className="mt-1.5 text-sm text-ink-mute dark:text-zinc-400 max-w-md mx-auto">
             前往新增一筆買入交易，系統會自動為你即時計算平均持股成本與市值損益。
           </p>
-          <div className="mt-6 flex justify-center gap-3">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={() => setTradeModalOpen(true)}
@@ -203,6 +204,14 @@ export function Portfolio() {
             >
               <PlusCircle className="h-4 w-4" />
               <span>立即記帳買進</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => useStockStore.getState().loadDemoData()}
+              className="btn text-sm py-2 px-4 flex items-center gap-1.5 border border-brand/40 text-brand bg-brand/5 hover:bg-brand/10 dark:bg-brand/10"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>體驗示範帳本 (Demo)</span>
             </button>
             <Link to="/transactions" className="btn text-sm py-2 px-4">
               前往交易紀錄頁

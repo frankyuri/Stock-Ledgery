@@ -106,81 +106,65 @@ export default function App() {
         <Route
           path="overview"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Overview />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Overview />
+            </LazyPage>
           }
         />
         <Route
           path="portfolio"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Portfolio />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Portfolio />
+            </LazyPage>
           }
         />
         <Route
           path="dividends"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Dividends />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Dividends />
+            </LazyPage>
           }
         />
         <Route
           path="analytics"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Analytics />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Analytics />
+            </LazyPage>
           }
         />
         <Route
           path="fire"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <FireTracker />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <FireTracker />
+            </LazyPage>
           }
         />
         <Route
           path="rebalance"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Rebalance />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Rebalance />
+            </LazyPage>
           }
         />
         <Route
           path="transactions"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Transactions />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Transactions />
+            </LazyPage>
           }
         />
         <Route
           path="assets"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <Assets />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <Assets />
+            </LazyPage>
           }
         />
         <Route
@@ -196,11 +180,9 @@ export default function App() {
         <Route
           path="settings/data"
           element={
-            <RequireAuth>
-              <LazyPage>
-                <DataSettings />
-              </LazyPage>
-            </RequireAuth>
+            <LazyPage>
+              <DataSettings />
+            </LazyPage>
           }
         />
 

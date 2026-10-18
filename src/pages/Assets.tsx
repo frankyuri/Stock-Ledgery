@@ -7,6 +7,7 @@ import {
   Wallet,
   TrendingUp,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
 import { useToast } from '@/lib/toast';
@@ -482,7 +483,20 @@ export function Assets() {
         </>
       ) : (
         <div className="card card-body py-14 text-center text-sm text-ink-mute dark:text-zinc-500">
-          尚未記錄任何資產快照。填入今天的現金與證券市值即可開始追蹤淨值成長曲線。
+          <p>尚未記錄任何資產快照。填入今天的現金與證券市值即可開始追蹤淨值成長曲線。</p>
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                useStockStore.getState().loadDemoData();
+                toast.success('已載入示範淨值快照與持倉！');
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/10 dark:bg-brand/10"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>載入示範快照數據 (Demo)</span>
+            </button>
+          </div>
         </div>
       )}
     </div>

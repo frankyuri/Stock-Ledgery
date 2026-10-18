@@ -36,6 +36,7 @@ type PersistedStockState = Pick<
   | 'linePrefs'
   | 'fireSettings'
   | 'rebalanceSettings'
+  | 'isDemo'
 >;
 
 export type AddTransactionResult =
@@ -54,6 +55,7 @@ interface StockState {
   fireSettings: FireSettings;
   rebalanceSettings: RebalanceSettings;
   isSyncing?: boolean;
+  isDemo?: boolean;
   setSelectedSymbol: (symbol: string) => void;
   setResolution: (resolution: Resolution) => void;
   addToWatchlist: (symbol: string) => Promise<void>;
@@ -75,6 +77,10 @@ interface StockState {
   importBackup: (snapshot: BackupSnapshot) => void;
   /** 從雲端 PostgreSQL 拉取最新資料 */
   syncFromCloud: () => Promise<boolean>;
+  /** 一鍵載入示範數據 (Demo Portfolio) */
+  loadDemoData: () => void;
+  /** 一鍵清空所有帳本資料 (重置) */
+  clearAllData: () => void;
 }
 
 export interface BackupSnapshot {
@@ -87,6 +93,147 @@ export interface BackupSnapshot {
   fireSettings?: FireSettings;
   rebalanceSettings?: RebalanceSettings;
 }
+
+export const DEMO_PORTFOLIO_SNAPSHOT: BackupSnapshot = {
+  version: 5,
+  exportedAt: '2026-10-18T00:00:00.000Z',
+  watchlist: ['AAPL', 'NVDA', 'MSFT', '2330.TW', '0050.TW'],
+  transactions: [
+    {
+      id: 'demo-tx-1',
+      symbol: 'AAPL',
+      type: 'BUY',
+      shares: 40,
+      price: 175.5,
+      fee: 2,
+      tradedAt: '2024-02-15',
+      note: '建立蘋果基本部位',
+    },
+    {
+      id: 'demo-tx-2',
+      symbol: 'NVDA',
+      type: 'BUY',
+      shares: 30,
+      price: 112.0,
+      fee: 2,
+      tradedAt: '2024-03-20',
+      note: 'AI 算力龍頭加碼',
+    },
+    {
+      id: 'demo-tx-3',
+      symbol: 'MSFT',
+      type: 'BUY',
+      shares: 15,
+      price: 395.0,
+      fee: 2,
+      tradedAt: '2024-04-10',
+      note: '微軟雲端與 AI 布局',
+    },
+    {
+      id: 'demo-tx-4',
+      symbol: '2330.TW',
+      type: 'BUY',
+      shares: 1000,
+      price: 880.0,
+      fee: 20,
+      tradedAt: '2024-05-18',
+      note: '台積電半導體核心',
+    },
+    {
+      id: 'demo-tx-5',
+      symbol: '0050.TW',
+      type: 'BUY',
+      shares: 2000,
+      price: 165.0,
+      fee: 15,
+      tradedAt: '2024-06-05',
+      note: '元大台灣50 大盤核心部位',
+    },
+    {
+      id: 'demo-tx-6',
+      symbol: 'AAPL',
+      type: 'BUY',
+      shares: 10,
+      price: 210.0,
+      fee: 2,
+      tradedAt: '2024-07-22',
+      note: 'Apple Intelligence 發表加碼',
+    },
+    {
+      id: 'demo-tx-7',
+      symbol: 'AAPL',
+      type: 'SELL',
+      shares: 10,
+      price: 232.0,
+      fee: 2,
+      tradedAt: '2024-09-18',
+      note: '波段獲利了結部分部位',
+      realizedGainLoss: 494.6,
+    },
+  ],
+  assets: [
+    {
+      id: 'demo-asset-1',
+      date: '2024-01-01',
+      currency: 'TWD',
+      cash: 300000,
+      securities: 800000,
+      other: 200000,
+      note: '年初資產快照',
+    },
+    {
+      id: 'demo-asset-2',
+      date: '2024-04-01',
+      currency: 'TWD',
+      cash: 250000,
+      securities: 1450000,
+      other: 200000,
+      note: '第一季結算',
+    },
+    {
+      id: 'demo-asset-3',
+      date: '2024-07-01',
+      currency: 'TWD',
+      cash: 200000,
+      securities: 2200000,
+      other: 200000,
+      note: '第二季結算',
+    },
+    {
+      id: 'demo-asset-4',
+      date: '2024-10-01',
+      currency: 'TWD',
+      cash: 280000,
+      securities: 2850000,
+      other: 200000,
+      note: '第三季結算',
+    },
+  ],
+  fireSettings: {
+    monthlyExpense: 50_000,
+    monthlyInvestment: 35_000,
+    expectedAnnualReturn: 8.0,
+    inflationRate: 2.0,
+    swr: 4.0,
+    currentAge: 30,
+    targetRetirementAge: 50,
+    useInflationAdjusted: true,
+    targetFireType: 'STANDARD',
+  },
+  rebalanceSettings: {
+    mode: 'CASH_IN_ONLY',
+    driftThreshold: 3.0,
+    newCashAmount: 100_000,
+    shareLotSize: 'FRACTIONAL_OR_ODD',
+    allocations: [
+      { symbol: 'AAPL', name: 'Apple Inc.', targetWeight: 20 },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.', targetWeight: 25 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', targetWeight: 20 },
+      { symbol: '2330.TW', name: '台積電', targetWeight: 20 },
+      { symbol: '0050.TW', name: '元大台灣50', targetWeight: 15 },
+    ],
+  },
+};
 
 function genId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -216,6 +363,7 @@ const DEFAULT_PERSISTED_STATE: PersistedStockState = {
   linePrefs: DEFAULT_LINE_PREFS,
   fireSettings: DEFAULT_FIRE_SETTINGS,
   rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
+  isDemo: false,
 };
 
 const STORAGE_VERSION = 5;
@@ -258,6 +406,7 @@ export const useStockStore = create<StockState>()(
       linePrefs: DEFAULT_LINE_PREFS,
       fireSettings: DEFAULT_FIRE_SETTINGS,
       rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
+      isDemo: false,
       setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
       setResolution: (resolution) => set({ resolution }),
       setFireSettings: (patch) =>
@@ -556,7 +705,31 @@ export const useStockStore = create<StockState>()(
           fireSettings: snapshot.fireSettings ?? s.fireSettings,
           rebalanceSettings: snapshot.rebalanceSettings ?? s.rebalanceSettings,
           holdings: reconcileHoldings(snapshot.transactions ?? []),
+          isDemo: false,
         })),
+      loadDemoData: () => {
+        const demo = DEMO_PORTFOLIO_SNAPSHOT;
+        set({
+          watchlist: demo.watchlist,
+          transactions: demo.transactions,
+          assets: demo.assets,
+          fireSettings: demo.fireSettings ?? DEFAULT_FIRE_SETTINGS,
+          rebalanceSettings: demo.rebalanceSettings ?? DEFAULT_REBALANCE_SETTINGS,
+          holdings: reconcileHoldings(demo.transactions),
+          isDemo: true,
+        });
+      },
+      clearAllData: () => {
+        set({
+          watchlist: DEFAULT_WATCHLIST,
+          transactions: [],
+          assets: [],
+          fireSettings: DEFAULT_FIRE_SETTINGS,
+          rebalanceSettings: DEFAULT_REBALANCE_SETTINGS,
+          holdings: [],
+          isDemo: false,
+        });
+      },
       syncFromCloud: async () => {
         const token = useAuthStore.getState().token;
         if (!token || token.startsWith('mock-')) return false;
@@ -608,6 +781,7 @@ export const useStockStore = create<StockState>()(
                   ? { watchlist: data.watchlist }
                   : {}),
                 ...(data.linePrefs ? { linePrefs: data.linePrefs } : {}),
+                isDemo: false,
               });
               return true;
             } else {
@@ -651,6 +825,7 @@ export const useStockStore = create<StockState>()(
         linePrefs: state.linePrefs,
         fireSettings: state.fireSettings,
         rebalanceSettings: state.rebalanceSettings,
+        isDemo: state.isDemo,
       }),
       migrate: (persistedState, version): PersistedStockState => {
         const state = (persistedState ?? {}) as Partial<PersistedStockState> & {

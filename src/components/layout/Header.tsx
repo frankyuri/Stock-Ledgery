@@ -12,6 +12,8 @@ import {
   X,
   Command,
   ZoomIn,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { useTickerSearch } from '@/lib/hooks/useTickerSearch';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -47,6 +49,9 @@ export function Header({ onMenuClick }: HeaderProps) {
   const logout = useAuthStore((s) => s.logout);
   const watchlist = useStockStore((s) => s.watchlist);
   const addToWatchlist = useStockStore((s) => s.addToWatchlist);
+  const isDemo = useStockStore((s) => s.isDemo);
+  const loadDemoData = useStockStore((s) => s.loadDemoData);
+  const transactions = useStockStore((s) => s.transactions);
 
   const { data: results = [] } = useTickerSearch(query);
 
@@ -362,6 +367,27 @@ export function Header({ onMenuClick }: HeaderProps) {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
+              {!isDemo && transactions.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    loadDemoData();
+                    toast.success('已成功載入示範帳本數據！包含台美股多元投資組合。');
+                  }}
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand/20 transition"
+                  title="一鍵體驗台美股投資組合與完整資產功能"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>體驗示範帳本</span>
+                </button>
+              )}
+              <span
+                className="hidden lg:inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-zinc-400"
+                title="所有個人資產均安全儲存於您的瀏覽器本機，無需登入即可享有全部分析功能"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                本地隱私
+              </span>
               <Link to="/login" className="btn text-xs py-1.5 px-3">
                 登入
               </Link>
