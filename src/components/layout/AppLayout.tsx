@@ -18,7 +18,7 @@ export function AppLayout() {
       <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenuClick={() => setDrawerOpen(true)} />
-        <main className="mx-auto w-full max-w-[1280px] flex-1 p-5 md:p-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 p-5 md:p-8">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

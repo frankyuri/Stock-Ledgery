@@ -11,11 +11,13 @@ import {
   Settings,
   X,
   Command,
+  ZoomIn,
 } from 'lucide-react';
 import { useTickerSearch } from '@/lib/hooks/useTickerSearch';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStockStore } from '@/store/useStockStore';
 import { useTheme } from '@/lib/theme';
+import { useDisplayScale } from '@/lib/displayScale';
 import { useToast } from '@/lib/toast';
 import { cn } from '@/lib/cn';
 import { getTaiwanMarketStatus, getUSMarketStatus } from '@/lib/marketStatus';
@@ -29,14 +31,17 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scaleMenuOpen, setScaleMenuOpen] = useState(false);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const scaleMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const toast = useToast();
   const { theme, toggle } = useTheme();
+  const { scale, setScale, scaleOptions } = useDisplayScale();
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -53,6 +58,7 @@ export function Header({ onMenuClick }: HeaderProps) {
     function onClick(e: MouseEvent) {
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+      if (!scaleMenuRef.current?.contains(e.target as Node)) setScaleMenuOpen(false);
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -247,6 +253,59 @@ export function Header({ onMenuClick }: HeaderProps) {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-600" />}
           </button>
+
+          {/* Display Scale Dropdown */}
+          <div ref={scaleMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setScaleMenuOpen((v) => !v)}
+              className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-zinc-700/80 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              title="介面顯示縮放比例"
+              aria-label="介面顯示縮放比例"
+            >
+              <ZoomIn className="h-3.5 w-3.5 text-slate-500 dark:text-zinc-400" />
+              <span className="font-mono">{scale}</span>
+            </button>
+
+            {scaleMenuOpen && (
+              <div className="absolute right-0 top-full z-30 mt-1.5 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800">
+                  介面顯示比例
+                </div>
+                <div className="py-1">
+                  {scaleOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setScale(opt.value);
+                        setScaleMenuOpen(false);
+                        toast.info(`已切換介面比例為 ${opt.value}（${opt.desc}）`);
+                      }}
+                      className={cn(
+                        'flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition',
+                        scale === opt.value
+                          ? 'bg-blue-50 font-bold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400'
+                          : 'text-slate-700 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800',
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        {scale === opt.value ? (
+                          <Check className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        ) : (
+                          <div className="w-3.5" />
+                        )}
+                        <span>{opt.label}</span>
+                      </div>
+                      <span className="text-[11px] font-normal text-slate-400 dark:text-zinc-500">
+                        {opt.desc}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User Account / Login */}
           {user ? (

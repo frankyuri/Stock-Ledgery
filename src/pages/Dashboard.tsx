@@ -259,10 +259,11 @@ export function Dashboard() {
         <div className="card">
           <div className="card-body">
             {bundle.isLoading ? (
-              <Skeleton className="h-[420px] w-full rounded-xl" />
+              <Skeleton className="h-[480px] w-full rounded-xl" />
             ) : bundle.data?.candles ? (
-              <Suspense fallback={<Skeleton className="h-[420px] w-full rounded-xl" />}>
+              <Suspense fallback={<Skeleton className="h-[480px] w-full rounded-xl" />}>
                 <StockChart
+                  symbol={selected}
                   data={bundle.data.candles}
                   resolution={resolution}
                   fiftyTwoWeekHigh={displayQuote?.fiftyTwoWeekHigh}

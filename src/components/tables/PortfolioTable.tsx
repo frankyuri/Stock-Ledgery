@@ -90,7 +90,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
         cell: (ctx) => (
           <div className="flex flex-col">
             <span className="font-bold text-ink dark:text-zinc-100">{ctx.row.original.symbol}</span>
-            <span className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[140px]">
+            <span className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[200px]">
               {ctx.row.original.name}
             </span>
           </div>

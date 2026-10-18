@@ -61,7 +61,7 @@ export function WatchlistTable({
                 <span className={cn("font-bold text-ink dark:text-zinc-100", isSelected && "text-brand")}>
                   {ctx.row.original.symbol}
                 </span>
-                <span className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[160px]">
+                <span className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[220px]">
                   {ctx.row.original.name}
                 </span>
               </div>
