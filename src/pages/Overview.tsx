@@ -7,10 +7,12 @@ import {
   ArrowUpRight,
   ShieldAlert,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import { AllocationPie, type PieSlice } from '@/components/charts/AllocationPie';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { QuickTradeModal } from '@/components/modals/QuickTradeModal';
+import { MonthlyReportModal } from '@/components/modals/MonthlyReportModal';
 import { portfolioQueryOptions } from '@/lib/queries/portfolio';
 import { useStockStore } from '@/store/useStockStore';
 import {
@@ -28,6 +30,7 @@ export function Overview() {
   const holdings = useStockStore((s) => s.holdings);
   const transactions = useStockStore((s) => s.transactions);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
   const { baseCurrency } = useCurrency();
 
   const { data, isLoading } = useQuery(portfolioQueryOptions(holdings));
@@ -88,6 +91,17 @@ export function Overview() {
 
         <div className="flex items-center gap-2">
           <CurrencyToggle />
+          {holdings.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setReportModalOpen(true)}
+              className="btn text-xs font-semibold py-2 px-3 flex items-center gap-1.5 border-brand/40 bg-brand/10 text-brand hover:bg-brand/20 shadow-xs"
+              title="生成並匯出投資月報簡報"
+            >
+              <FileText className="h-4 w-4" />
+              <span>月度簡報</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setTradeModalOpen(true)}
@@ -170,6 +184,18 @@ export function Overview() {
       <QuickTradeModal
         isOpen={tradeModalOpen}
         onClose={() => setTradeModalOpen(false)}
+      />
+
+      {/* Monthly Report Export Modal */}
+      <MonthlyReportModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        holdings={enriched}
+        transactions={transactions}
+        totalMarketValue={primary?.marketValue ?? 0}
+        totalCost={primary?.cost ?? 0}
+        totalGainLoss={primary?.gainLoss ?? 0}
+        dayChange={primary?.dayChange ?? 0}
       />
     </div>
   );

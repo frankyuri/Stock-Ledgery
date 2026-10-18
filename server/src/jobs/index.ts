@@ -134,6 +134,17 @@ export async function sendDailySummaries() {
     },
   });
 
+  // 1. 先計算每位目標用戶的持股
+  interface UserSummaryTask {
+    user: (typeof usersWithPrefs)[number];
+    lineUserId?: string | null;
+    webhookUrl?: string | null;
+    holdings: ReturnType<typeof reconcileHoldings>;
+  }
+
+  const tasks: UserSummaryTask[] = [];
+  const allNeededSymbols = new Set<string>();
+
   for (const user of usersWithPrefs) {
     const lineUserId = user.lineBinding?.lineUserId;
     const webhookUrl = user.linePrefs?.webhookUrl;
@@ -153,8 +164,19 @@ export async function sendDailySummaries() {
 
     if (holdings.length === 0) continue;
 
-    const { quotes } = await fetchQuotes(holdings.map((h) => h.symbol));
-    const quoteMap = new Map(quotes.map((q) => [q.symbol, q]));
+    tasks.push({ user, lineUserId, webhookUrl, holdings });
+    holdings.forEach((h) => allNeededSymbols.add(h.symbol));
+  }
+
+  if (tasks.length === 0) return;
+
+  // 2. 批次一次性抓取所有持股行情，共用快取
+  const { quotes } = await fetchQuotes(Array.from(allNeededSymbols));
+  const quoteMap = new Map(quotes.map((q) => [q.symbol, q]));
+
+  // 3. 依序產生並派送各使用者日報
+  for (const task of tasks) {
+    const { user, lineUserId, webhookUrl, holdings } = task;
 
     let totalMarketValue = 0;
     let totalCost = 0;

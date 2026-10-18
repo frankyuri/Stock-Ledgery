@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import {
   Coins,
   TrendingUp,
@@ -10,13 +9,14 @@ import {
   ArrowRight,
   Sparkles,
   Clock,
+  ShieldAlert,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
-import { fetchChartBundle } from '@/services/stocks';
+import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
 import { calculatePortfolioDividends } from '@/lib/dividendForecast';
+import { analyzeSecondGenNHI, type SecondGenNHIReport } from '@/lib/taxAnalytics';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import type { ChartBundle } from '@/services/yahoo';
 import type { DividendEvent, Quote } from '@/types/stock';
 
 export function Dividends() {
@@ -27,25 +27,7 @@ export function Dividends() {
   // 抓取各持股的完整行情與配息資訊
   const symbols = useMemo(() => holdings.map((h) => h.symbol), [holdings]);
 
-  const { data: chartBundles, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['portfolio-dividend-bundles', symbols.sort().join(',')],
-    queryFn: async () => {
-      if (symbols.length === 0) return {};
-      const results = await Promise.allSettled(
-        symbols.map((sym) => fetchChartBundle(sym, '1D')),
-      );
-
-      const map: Record<string, ChartBundle> = {};
-      results.forEach((res, i) => {
-        if (res.status === 'fulfilled') {
-          map[symbols[i]] = res.value;
-        }
-      });
-      return map;
-    },
-    enabled: symbols.length > 0,
-    staleTime: 60_000,
-  });
+  const { bundles: chartBundles, isLoading, isRefetching, refetch } = usePortfolioBundles(symbols);
 
   // 計算股息統計與預測
   const overview = useMemo(() => {
@@ -68,6 +50,12 @@ export function Dividends() {
       dividendsMap,
     );
   }, [holdings, transactions, chartBundles]);
+
+  // 試算二代健保補充保費觸發門檻 (單筆 NT$20,000)
+  const nhiReport: SecondGenNHIReport | null = useMemo(() => {
+    if (!overview || overview.items.length === 0) return null;
+    return analyzeSecondGenNHI(overview.items);
+  }, [overview]);
 
   // 最大月現金流，用作長條圖比例尺
   const maxMonthlyIncome = useMemo(() => {
@@ -276,6 +264,39 @@ export function Dividends() {
         </div>
       </div>
 
+      {/* 二代健保補充保費 (單筆 NT$20,000) 門檻預警條 */}
+      {nhiReport && (nhiReport.triggeredCount > 0 || nhiReport.nearLimitCount > 0) && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 sm:p-5 text-amber-900 dark:text-amber-200 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-amber-500/20 p-2 text-amber-600 dark:text-amber-400 shrink-0">
+                <ShieldAlert className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold">二代健保補充保費門檻提示</h3>
+                  <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                    單筆給付滿 NT$20,000 扣 2.11%
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
+                  目前持股中有{' '}
+                  <span className="font-bold underline">{nhiReport.triggeredCount} 檔</span> 標的預計觸發 2.11% 補充保費（全年預計扣除 NT${formatNumber(nhiReport.totalAnnualTax)}）
+                  {nhiReport.nearLimitCount > 0 && `，另有 ${nhiReport.nearLimitCount} 檔在安全邊界 (NT$16,000~19,999)`}。
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/tax"
+              className="inline-flex items-center gap-1 self-start sm:self-center shrink-0 rounded-xl bg-amber-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-amber-700 transition"
+            >
+              <span>前往稅務中心看調節試算</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* 未來 12 個月現金流預測長條圖 */}
       <section className="card p-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -425,13 +446,39 @@ export function Dividends() {
                   className="transition hover:bg-slate-50/60 dark:hover:bg-zinc-800/40"
                 >
                   <td className="px-5 py-3.5">
-                    <Link
-                      to={`/stock/${item.symbol}`}
-                      className="font-bold text-slate-900 hover:text-brand dark:text-zinc-100"
-                    >
-                      {item.symbol}
-                    </Link>
-                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 truncate max-w-[120px]">
+                    <div className="flex items-center gap-1.5">
+                      <Link
+                        to={`/stock/${item.symbol}`}
+                        className="font-bold text-slate-900 hover:text-brand dark:text-zinc-100"
+                      >
+                        {item.symbol}
+                      </Link>
+                      {(() => {
+                        const nhiItem = nhiReport?.items.find((n) => n.symbol === item.symbol);
+                        if (nhiItem?.isTriggered) {
+                          return (
+                            <span
+                              className="rounded px-1.5 py-0.2 text-[9px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                              title={`單筆預估 NT$${formatNumber(nhiItem.dividendPerPayout)}，觸發 2.11% 健保補充保費（扣 NT$${formatNumber(nhiItem.nhiTaxPerPayout)}/次）`}
+                            >
+                              健保扣繳
+                            </span>
+                          );
+                        }
+                        if (nhiItem?.isNearLimit) {
+                          return (
+                            <span
+                              className="rounded px-1.5 py-0.2 text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              title={`單筆預估 NT$${formatNumber(nhiItem.dividendPerPayout)}，接近 NT$20,000 扣繳門檻`}
+                            >
+                              接近門檻
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 truncate max-w-[140px]">
                       {item.name}
                     </p>
                   </td>

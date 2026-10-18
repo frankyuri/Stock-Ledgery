@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   ShieldAlert,
@@ -11,15 +10,29 @@ import {
   AlertTriangle,
   Compass,
   Zap,
+  Gauge,
+  Layers,
+  Flame,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
-import { fetchChartBundle } from '@/services/stocks';
+import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
 import { calculateRiskMetrics } from '@/lib/riskAnalytics';
+import {
+  HISTORICAL_SCENARIOS,
+  evaluateStressScenario,
+  type ScenarioResult,
+} from '@/lib/stressTesting';
+import {
+  calculatePortfolioUnderlyingExposures,
+  calculateEtfOverlap,
+  type UnderlyingExposure,
+  type EtfOverlapAnalysis,
+} from '@/lib/etfExposure';
 import { ComparisonChart } from '@/components/charts/ComparisonChart';
 import { UnderwaterChart } from '@/components/charts/UnderwaterChart';
+import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { Candle } from '@/types/stock';
-import type { ChartBundle } from '@/services/yahoo';
 
 const BENCHMARK_OPTIONS = [
   { symbol: '^GSPC', label: '標普 500 指數 (S&P 500)' },
@@ -39,25 +52,7 @@ export function Analytics() {
     [symbols, selectedBenchmark],
   );
 
-  const { data: bundles, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['risk-analytics-bundles', allSymbolsToFetch.sort().join(',')],
-    queryFn: async () => {
-      if (allSymbolsToFetch.length === 0) return {};
-      const results = await Promise.allSettled(
-        allSymbolsToFetch.map((sym) => fetchChartBundle(sym, '1D')),
-      );
-
-      const map: Record<string, ChartBundle> = {};
-      results.forEach((res, i) => {
-        if (res.status === 'fulfilled') {
-          map[allSymbolsToFetch[i]] = res.value;
-        }
-      });
-      return map;
-    },
-    enabled: allSymbolsToFetch.length > 0,
-    staleTime: 60_000,
-  });
+  const { bundles, isLoading, isRefetching, refetch } = usePortfolioBundles(allSymbolsToFetch);
 
   // 計算權重與量化指標
   const { metrics, holdingWeights, benchmarkLabel } = useMemo(() => {
@@ -202,6 +197,43 @@ export function Analytics() {
   // 集中度警示：最大單一持股是否超過 25%
   const highestWeightHolding = holdingWeights[0];
   const isConcentrated = highestWeightHolding && highestWeightHolding.weight > 25;
+
+  // 壓力測試狀態
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>('GFC_2008');
+  const selectedScenario = useMemo(
+    () => HISTORICAL_SCENARIOS.find((s) => s.id === selectedScenarioId) || HISTORICAL_SCENARIOS[0],
+    [selectedScenarioId],
+  );
+
+  // 壓力測試評估
+  const stressTestResult: ScenarioResult | null = useMemo(() => {
+    if (holdingWeights.length === 0) return null;
+    const inputHoldings = holdingWeights.map((h) => ({
+      symbol: h.symbol,
+      name: h.name,
+      marketValue: h.marketValue,
+      beta: metrics?.beta,
+    }));
+    return evaluateStressScenario(selectedScenario, inputHoldings);
+  }, [selectedScenario, holdingWeights, metrics]);
+
+  // ETF 穿透與真實曝險計算
+  const underlyingExposures: UnderlyingExposure[] = useMemo(() => {
+    if (holdingWeights.length === 0) return [];
+    const inputHoldings = holdingWeights.map((h) => ({
+      symbol: h.symbol,
+      name: h.name,
+      marketValue: h.marketValue,
+    }));
+    return calculatePortfolioUnderlyingExposures(inputHoldings);
+  }, [holdingWeights]);
+
+  // 雙 ETF 重疊度比較器選取狀態
+  const [etf1, setEtf1] = useState('0050.TW');
+  const [etf2, setEtf2] = useState('006208.TW');
+  const etfOverlapAnalysis: EtfOverlapAnalysis | null = useMemo(() => {
+    return calculateEtfOverlap(etf1, etf2);
+  }, [etf1, etf2]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -493,6 +525,289 @@ export function Analytics() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 歷史極端情境壓力測試 (Stress Testing) */}
+      <section className="card p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-4 dark:border-zinc-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg bg-rose-500/10 p-1.5 text-rose-600 dark:text-rose-400">
+                <Flame className="h-4 w-4" />
+              </span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                歷史黑天鵝極端情境壓力測試 (Stress Testing)
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+              模擬歷史重大危機對目前持股部位的下檔衝擊，檢驗抗跌韌性與潛在最大回撤
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedScenarioId}
+              onChange={(e) => setSelectedScenarioId(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+            >
+              {HISTORICAL_SCENARIOS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {stressTestResult && (
+          <div className="mt-5 space-y-5">
+            {/* 情境敘述與評級卡片 */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-800/30 lg:col-span-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+                    危機歷史背景與時程
+                  </span>
+                  <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                    {selectedScenario.period}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-slate-600 dark:text-zinc-300 leading-relaxed">
+                  {selectedScenario.description}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500 dark:text-zinc-400">
+                  <span className="rounded-lg bg-white px-2 py-1 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700">
+                    美股大盤衝擊：<strong className="text-down">{selectedScenario.marketImpact.usMarket}%</strong>
+                  </span>
+                  <span className="rounded-lg bg-white px-2 py-1 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700">
+                    台股大盤衝擊：<strong className="text-down">{selectedScenario.marketImpact.twMarket}%</strong>
+                  </span>
+                  <span className="rounded-lg bg-white px-2 py-1 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700">
+                    科技族群衝擊：<strong className="text-down">{selectedScenario.marketImpact.techSector}%</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* 韌性評級 */}
+              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4 dark:border-rose-500/30 dark:bg-rose-950/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                      投組抗跌韌性評級
+                    </span>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500 font-mono text-sm font-black text-white shadow-xs">
+                      {stressTestResult.resilienceRating}
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <span className="font-mono text-2xl font-black text-down">
+                      {stressTestResult.portfolioLossPct}%
+                    </span>
+                    <span className="ml-2 text-xs text-slate-400 dark:text-zinc-500">
+                      (預估虧損 NT${formatNumber(Math.abs(stressTestResult.portfolioLossAmount))})
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
+                  {stressTestResult.resilienceDesc}
+                </p>
+              </div>
+            </div>
+
+            {/* 個股受衝擊明細清單 */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold text-slate-500 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-400">
+                    <th className="px-4 py-2.5">標的代號</th>
+                    <th className="px-4 py-2.5 text-right">投組佔比</th>
+                    <th className="px-4 py-2.5 text-right">部位估計 Beta</th>
+                    <th className="px-4 py-2.5 text-right">情境預估跌幅</th>
+                    <th className="px-4 py-2.5 text-right">預估資產減損金額</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
+                  {stressTestResult.items.map((item) => (
+                    <tr key={item.symbol} className="transition hover:bg-slate-50/50 dark:hover:bg-zinc-800/30">
+                      <td className="px-4 py-2.5 font-bold text-slate-900 dark:text-zinc-100">
+                        {item.symbol}
+                        <span className="ml-1.5 text-[10px] font-normal text-slate-400">{item.name}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-medium text-slate-600 dark:text-zinc-300">
+                        {item.weight}%
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono text-slate-500 dark:text-zinc-400">
+                        {item.beta}
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-down">
+                        {item.estimatedReturnPct}%
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-800 dark:text-zinc-200">
+                        -NT${formatNumber(Math.abs(item.estimatedLossAmount))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ETF 底層持股穿透與重疊度分析 (ETF Look-Through Exposure) */}
+      <section className="card p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-4 dark:border-zinc-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg bg-sky-500/10 p-1.5 text-sky-600 dark:text-sky-400">
+                <Layers className="h-4 w-4" />
+              </span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                ETF 底層持股穿透與真實曝險分析 (Look-Through Exposure)
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+              拆解持股中 ETF 之成分股，聚合個股直接持有與 ETF 間接持有之真實總曝險
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* 穿透後前十大底層曝險公司 */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+              投組真實總曝險排行 (前 8 大底層企業)
+            </h3>
+            {underlyingExposures.length > 0 ? (
+              <div className="space-y-2.5">
+                {underlyingExposures.slice(0, 8).map((exp) => (
+                  <div
+                    key={exp.symbol}
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-800/30"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 dark:text-zinc-100">
+                          {exp.symbol}
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                          {exp.name}
+                        </span>
+                        <span className="rounded-md bg-slate-200/70 px-1.5 py-0.2 text-[9px] font-medium text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                          {exp.sector}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-mono text-sm font-bold text-brand">
+                          {exp.totalEffectiveWeight}%
+                        </span>
+                        <span className="text-[10px] text-slate-400">真實總曝險</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400">
+                      <span>
+                        個股直接持有：<strong>{exp.directWeight}%</strong>
+                      </span>
+                      <span>
+                        透過 ETF 穿透：<strong>{exp.etfIndirectWeight}%</strong>
+                        {exp.heldViaEtfs.length > 0 &&
+                          ` (${exp.heldViaEtfs.map((e) => `${e.etfSymbol}`).join('、')})`}
+                      </span>
+                    </div>
+
+                    {/* 曝險橫條 */}
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-700">
+                      <div
+                        style={{ width: `${Math.min(exp.totalEffectiveWeight, 100)}%` }}
+                        className="h-full rounded-full bg-brand"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-zinc-800">
+                暫無 ETF 或個股數據
+              </div>
+            )}
+          </div>
+
+          {/* 雙 ETF 重疊度對比小工具 */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/60 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <Gauge className="h-4 w-4 text-sky-500" />
+                <h3 className="text-xs font-bold text-slate-900 dark:text-zinc-100">
+                  ETF 重疊度比較器 (Overlap Tool)
+                </h3>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
+                檢驗兩檔 ETF 之成分股重疊比例，避免重複支付管理費用
+              </p>
+
+              <div className="mt-3.5 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-400">標的 A</label>
+                  <select
+                    value={etf1}
+                    onChange={(e) => setEtf1(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800"
+                  >
+                    <option value="0050.TW">0050 (台灣50)</option>
+                    <option value="006208.TW">006208 (富邦台50)</option>
+                    <option value="0056.TW">0056 (元大高股息)</option>
+                    <option value="00878.TW">00878 (國泰永續)</option>
+                    <option value="00919.TW">00919 (群益精選)</option>
+                    <option value="VOO">VOO (S&P 500)</option>
+                    <option value="SPY">SPY (S&P 500)</option>
+                    <option value="QQQ">QQQ (Nasdaq 100)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-400">標的 B</label>
+                  <select
+                    value={etf2}
+                    onChange={(e) => setEtf2(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800"
+                  >
+                    <option value="006208.TW">006208 (富邦台50)</option>
+                    <option value="0050.TW">0050 (台灣50)</option>
+                    <option value="0056.TW">0056 (元大高股息)</option>
+                    <option value="00878.TW">00878 (國泰永續)</option>
+                    <option value="00919.TW">00919 (群益精選)</option>
+                    <option value="VOO">VOO (S&P 500)</option>
+                    <option value="SPY">SPY (S&P 500)</option>
+                    <option value="QQQ">QQQ (Nasdaq 100)</option>
+                  </select>
+                </div>
+              </div>
+
+              {etfOverlapAnalysis && (
+                <div className="mt-4 rounded-xl bg-slate-50 p-3 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-600 dark:text-zinc-300">
+                      持股權重重疊率
+                    </span>
+                    <span className={cn(
+                      'font-mono text-base font-black',
+                      etfOverlapAnalysis.overlapPercentage > 60 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+                    )}>
+                      {etfOverlapAnalysis.overlapPercentage}%
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    {etfOverlapAnalysis.overlapPercentage > 80
+                      ? '⚠️ 高度重疊！兩檔幾乎持有一模一樣之成分股，建議二擇一即可。'
+                      : etfOverlapAnalysis.overlapPercentage > 40
+                        ? 'ℹ️ 中度重疊，部分核心權值股重合，具一定程度重複性。'
+                        : '✅ 低重疊度，適合搭配作為資產互補配置。'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
     </div>
