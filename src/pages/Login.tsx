@@ -40,7 +40,7 @@ export function Login() {
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">
+          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute dark:text-zinc-400">
             Email
           </label>
           <input
@@ -54,7 +54,7 @@ export function Login() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute">
+          <label className="block text-xs font-medium uppercase tracking-[0.14em] text-ink-mute dark:text-zinc-400">
             密碼
           </label>
           <input
@@ -77,7 +77,7 @@ export function Login() {
         </button>
       </form>
 
-      <div className="my-5 flex items-center gap-3 text-xs text-ink-faint">
+      <div className="my-5 flex items-center gap-3 text-xs text-ink-faint dark:text-zinc-400">
         <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
         <span>或</span>
         <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
@@ -91,7 +91,7 @@ export function Login() {
         使用 LINE 帳號登入 / 綁定
       </a>
 
-      <p className="mt-6 text-center text-sm text-ink-mute">
+      <p className="mt-6 text-center text-sm text-ink-mute dark:text-zinc-400">
         還沒有帳號？
         <Link
           to="/register"

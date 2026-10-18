@@ -279,8 +279,8 @@ export function LineSettings() {
       </div>
 
       {!user && (
-        <div className="card card-body flex items-center justify-between gap-3 border-amber-300/60 bg-amber-50/60">
-          <p className="text-sm text-ink-soft">
+        <div className="card card-body flex items-center justify-between gap-3 border-amber-300/60 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-950/30">
+          <p className="text-sm text-ink-soft dark:text-amber-200">
             登入帳號後方可儲存雲端推播設定與啟用自動巡檢。
           </p>
           <a href="/login" className="btn btn-primary text-xs py-1.5 px-3">

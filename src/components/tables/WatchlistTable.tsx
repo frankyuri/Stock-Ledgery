@@ -125,12 +125,12 @@ export function WatchlistTable({
         cell: (ctx) => {
           const { dayLow, dayHigh, price } = ctx.row.original;
           if (dayLow == null || dayHigh == null || dayHigh === dayLow) {
-            return <span className="text-xs text-ink-mute">—</span>;
+            return <span className="text-xs text-ink-mute dark:text-zinc-400">—</span>;
           }
           const pct = Math.max(0, Math.min(100, ((price - dayLow) / (dayHigh - dayLow)) * 100));
           return (
             <div className="flex flex-col gap-1 w-28 sm:w-36">
-              <div className="flex justify-between text-[10px] text-ink-mute font-mono">
+              <div className="flex justify-between text-[10px] text-ink-mute dark:text-zinc-400 font-mono">
                 <span>{formatNumber(dayLow)}</span>
                 <span>{formatNumber(dayHigh)}</span>
               </div>
@@ -155,7 +155,7 @@ export function WatchlistTable({
                 <button
                   type="button"
                   onClick={() => onSelectSymbol(sym)}
-                  className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
+                  className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10"
                   title="在上方圖表檢視"
                 >
                   <LineChart className="h-4 w-4" />
@@ -164,7 +164,7 @@ export function WatchlistTable({
               <button
                 type="button"
                 onClick={() => setTradeTarget(sym)}
-                className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-up dark:hover:bg-white/10"
+                className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-up dark:hover:bg-white/10"
                 title="快速買賣記帳"
               >
                 <PlusCircle className="h-4 w-4" />
@@ -172,7 +172,7 @@ export function WatchlistTable({
               <button
                 type="button"
                 onClick={() => navigate(`/stock/${encodeURIComponent(sym)}`)}
-                className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-ink dark:hover:bg-white/10"
+                className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-ink dark:hover:bg-white/10 dark:hover:text-zinc-100"
                 title="深入個股研究"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -181,7 +181,7 @@ export function WatchlistTable({
                 <button
                   type="button"
                   onClick={() => onRemove(sym)}
-                  className="rounded-lg p-1.5 text-ink-mute transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
+                  className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10"
                   title="自選股中移除"
                 >
                   <Trash2 className="h-4 w-4" />

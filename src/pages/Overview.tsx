@@ -235,7 +235,7 @@ function SummaryCards({
         <div className="flex items-baseline justify-between gap-1">
           <p className="label-caps truncate">總部位市值</p>
           {groups.length > 1 && (
-            <span className="text-[11px] text-ink-faint shrink-0">
+            <span className="text-[11px] text-ink-faint dark:text-zinc-400 shrink-0">
               主要幣別 · 共 {groups.length} 種
             </span>
           )}
