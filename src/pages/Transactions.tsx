@@ -14,6 +14,7 @@ import {
   Percent,
   AlertCircle,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
 import { SymbolSearchInput } from '@/components/ui/SymbolSearchInput';
@@ -695,7 +696,22 @@ export function Transactions() {
                     colSpan={10}
                     className="px-5 py-12 text-center text-sm text-ink-mute dark:text-zinc-500"
                   >
-                    尚無符合條件的交易紀錄
+                    <p>尚無符合條件的交易紀錄</p>
+                    {transactions.length === 0 && (
+                      <div className="mt-3 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            useStockStore.getState().loadDemoData();
+                            toast.success('已載入示範交易紀錄與持倉！');
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/10 dark:bg-brand/10"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>載入示範交易數據 (Demo)</span>
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}

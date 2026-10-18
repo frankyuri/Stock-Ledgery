@@ -13,6 +13,8 @@ import {
   CloudUpload,
   CloudDownload,
   RefreshCw,
+  Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { useStockStore, buildBackupSnapshot, type BackupSnapshot } from '@/store/useStockStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -56,6 +58,8 @@ export function DataSettings() {
   const assets = useStockStore((s) => s.assets);
   const watchlist = useStockStore((s) => s.watchlist);
   const importBackup = useStockStore((s) => s.importBackup);
+  const loadDemoData = useStockStore((s) => s.loadDemoData);
+  const clearAllData = useStockStore((s) => s.clearAllData);
   const fileRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -264,6 +268,47 @@ export function DataSettings() {
             <span>{previewError}</span>
           </div>
         )}
+      </section>
+
+      {/* 示範數據與重置 */}
+      <section className="card">
+        <div className="card-header flex-wrap gap-3">
+          <div>
+            <h2 className="section-title flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-brand" />
+              示範帳本與本機資料重置
+            </h2>
+            <p className="section-hint">
+              提供完整的範例投資組合以體驗各項圖表與分析，亦可隨時清空所有本機暫存資料
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                loadDemoData();
+                toast.success('已成功載入示範帳本數據！包含台美股多元投資組合與歷史快照。');
+              }}
+              className="btn text-xs font-semibold py-2 px-4 flex items-center gap-1.5 border border-brand/40 text-brand bg-brand/5 hover:bg-brand/10 dark:bg-brand/10"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>一鍵載入示範數據 (Demo)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('確定要清空所有本機交易、持股與快照資料？此動作無法復原！')) {
+                  clearAllData();
+                  toast.info('已成功清空所有本機資料。');
+                }
+              }}
+              className="btn text-xs font-semibold py-2 px-4 flex items-center gap-1.5 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>清空所有資料</span>
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className="card card-body text-xs text-ink-mute dark:text-zinc-400 space-y-2">

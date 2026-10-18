@@ -6,6 +6,7 @@ import {
   PlusCircle,
   ArrowUpRight,
   ShieldAlert,
+  Sparkles,
 } from 'lucide-react';
 import { AllocationPie, type PieSlice } from '@/components/charts/AllocationPie';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -180,7 +181,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <p className="mt-1.5 text-sm text-ink-mute dark:text-zinc-400 max-w-md mx-auto">
         前往交易紀錄新增一筆買入交易，資產配置圓餅圖與損益分佈便會立即在此呈現。
       </p>
-      <div className="mt-6 flex justify-center gap-3">
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
         <button
           type="button"
           onClick={onAdd}
@@ -188,6 +189,14 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         >
           <PlusCircle className="h-4 w-4" />
           <span>新增第一筆交易</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => useStockStore.getState().loadDemoData()}
+          className="btn text-sm py-2 px-4 flex items-center gap-1.5 border border-brand/40 text-brand bg-brand/5 hover:bg-brand/10 dark:bg-brand/10"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>體驗示範帳本 (Demo)</span>
         </button>
         <Link to="/transactions" className="btn text-sm py-2 px-4">
           前往交易紀錄

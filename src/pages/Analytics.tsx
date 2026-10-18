@@ -173,7 +173,7 @@ export function Analytics() {
           <p className="mt-1.5 max-w-sm text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
             建立持股後，系統將自動提取過去一年的歷史價格序列，計算夏普值、波動度、最大回撤並與大盤進行對標！
           </p>
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link
               to="/transactions"
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-hover"
@@ -181,6 +181,14 @@ export function Analytics() {
               前往建立交易
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+            <button
+              type="button"
+              onClick={() => useStockStore.getState().loadDemoData()}
+              className="inline-flex items-center gap-2 rounded-xl border border-brand/40 bg-brand/5 px-4 py-2 text-xs font-semibold text-brand hover:bg-brand/10 dark:bg-brand/10"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-brand" />
+              體驗示範帳本 (Demo)
+            </button>
           </div>
         </div>
       </div>

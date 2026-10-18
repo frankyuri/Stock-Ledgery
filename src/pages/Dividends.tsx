@@ -142,7 +142,7 @@ export function Dividends() {
           <p className="mt-1.5 max-w-sm text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
             您可以在「交易紀錄」或「持股明細」建立第一筆買入股票，系統將自動為您解析除息日程並試算被動收入！
           </p>
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link
               to="/transactions"
               className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-hover"
@@ -150,6 +150,14 @@ export function Dividends() {
               前往建立交易
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+            <button
+              type="button"
+              onClick={() => useStockStore.getState().loadDemoData()}
+              className="inline-flex items-center gap-2 rounded-xl border border-brand/40 bg-brand/5 px-4 py-2 text-xs font-semibold text-brand hover:bg-brand/10 dark:bg-brand/10"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-brand" />
+              體驗示範帳本 (Demo)
+            </button>
           </div>
         </div>
       </div>
