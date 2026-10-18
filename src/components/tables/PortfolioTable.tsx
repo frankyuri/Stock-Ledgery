@@ -299,7 +299,98 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Touch Cards View (sm:hidden) */}
+        <div className="sm:hidden divide-y divide-black/5 dark:divide-white/5">
+          {table.getRowModel().rows.map((row) => {
+            const h = row.original;
+            return (
+              <div
+                key={row.id}
+                onClick={() => navigate(`/stock/${encodeURIComponent(h.symbol)}`)}
+                className="p-3.5 transition active:bg-black/[0.04] dark:active:bg-white/5"
+              >
+                {/* Header row: Symbol, Name, Currency, Quick action */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="font-bold text-base text-ink dark:text-zinc-100">{h.symbol}</span>
+                    <span className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[130px]">{h.name}</span>
+                    <span className="chip text-[10px] shrink-0">{h.currency}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setTradeTarget({ symbol: h.symbol, type: 'BUY' })}
+                      className="flex h-7 items-center gap-1 rounded-md bg-emerald-50 px-2 text-xs font-semibold text-up hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 touch-action-manipulation"
+                      title="快速加碼買進"
+                    >
+                      <PlusCircle className="h-3 w-3" />
+                      <span>買</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTradeTarget({ symbol: h.symbol, type: 'SELL' })}
+                      className="flex h-7 items-center gap-1 rounded-md bg-rose-50 px-2 text-xs font-semibold text-down hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 touch-action-manipulation"
+                      title="快速賣出"
+                    >
+                      <MinusCircle className="h-3 w-3" />
+                      <span>賣</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Middle row: Price, Day Change, Market Value */}
+                <div className="mt-2.5 flex items-baseline justify-between gap-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-mono text-base font-bold text-ink dark:text-zinc-100 num">
+                      {formatNumber(h.price)}
+                    </span>
+                    <span className={cn('font-mono text-xs font-semibold num', changeColor(h.changePercent))}>
+                      {h.changePercent > 0 ? '+' : ''}
+                      {formatPercent(h.changePercent)}
+                    </span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-xs text-ink-mute dark:text-zinc-400">市值 </span>
+                    <span className="font-mono text-sm font-bold text-ink dark:text-zinc-100 num">
+                      {formatCurrency(h.marketValue, h.currency)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bottom row: Shares & Avg Cost, Unrealized Gain/Loss */}
+                <div className="mt-1.5 flex items-center justify-between text-xs text-ink-mute dark:text-zinc-400">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono num font-medium text-ink-soft dark:text-zinc-300">
+                      {formatShares(h.shares)} 股
+                    </span>
+                    <span>·</span>
+                    <span>成本 {formatNumber(h.avgCost)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 font-mono font-semibold num">
+                    <span className={changeColor(h.gainLoss)}>
+                      {h.gainLoss >= 0 ? '+' : ''}{formatNumber(h.gainLoss)}
+                    </span>
+                    <span className={cn('rounded px-1 py-0.2 text-[10px]', h.gainLoss >= 0 ? 'bg-emerald-500/10 text-up' : 'bg-rose-500/10 text-down')}>
+                      {h.gainLossPercent >= 0 ? '+' : ''}{formatPercent(h.gainLossPercent)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {table.getRowModel().rows.length === 0 && (
+            <div className="px-5 py-10 text-center text-sm text-ink-mute dark:text-zinc-500">
+              沒有符合篩選條件的持股
+            </div>
+          )}
+        </div>
+
+        {/* Desktop / Tablet Multi-Column Table View (hidden sm:block) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full divide-y divide-black/5 dark:divide-white/10 text-sm">
             <thead>
               {table.getHeaderGroups().map((group) => (

@@ -329,8 +329,8 @@ export function Transactions() {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card p-5 min-w-0">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="card p-3.5 sm:p-5 min-w-0">
           <span className="label-caps flex items-center gap-1.5 truncate">
             <TrendingUp className="h-3.5 w-3.5 text-up" />
             累計買進總額
@@ -346,7 +346,7 @@ export function Transactions() {
           </p>
         </div>
 
-        <div className="card p-5 min-w-0">
+        <div className="card p-3.5 sm:p-5 min-w-0">
           <span className="label-caps flex items-center gap-1.5 truncate">
             <TrendingDown className="h-3.5 w-3.5 text-down" />
             累計賣出回收金額
@@ -362,7 +362,7 @@ export function Transactions() {
           </p>
         </div>
 
-        <div className="card p-5 min-w-0">
+        <div className="card p-3.5 sm:p-5 min-w-0">
           <span className="label-caps flex items-center gap-1.5 truncate">
             <DollarSign className="h-3.5 w-3.5 text-brand" />
             已實現總損益
@@ -382,7 +382,7 @@ export function Transactions() {
           </p>
         </div>
 
-        <div className="card p-5 min-w-0">
+        <div className="card p-3.5 sm:p-5 min-w-0">
           <span className="label-caps flex items-center gap-1.5 truncate">
             <Percent className="h-3.5 w-3.5 text-brand" />
             已結清交易勝率
@@ -589,7 +589,116 @@ export function Transactions() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Transactions Card View (sm:hidden) */}
+        <div className="sm:hidden divide-y divide-black/5 dark:divide-white/5">
+          {filtered.map((t) => {
+            const subtotal = t.shares * t.price + (t.type === 'BUY' ? t.fee : -t.fee);
+            return (
+              <div key={t.id} className="p-3.5 space-y-2">
+                {/* Top Row: Date, Type, Symbol, and Actions */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={cn(
+                        'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold shrink-0',
+                        t.type === 'BUY'
+                          ? 'bg-emerald-500/10 text-up dark:bg-emerald-500/20'
+                          : 'bg-rose-500/10 text-down dark:bg-rose-500/20',
+                      )}
+                    >
+                      {t.type === 'BUY' ? '買進' : '賣出'}
+                    </span>
+                    <strong className="font-bold text-base text-ink dark:text-zinc-100">{t.symbol}</strong>
+                    <span className="font-mono text-xs text-ink-mute dark:text-zinc-400">{t.tradedAt}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingTxn(t);
+                        setTradeModalOpen(true);
+                      }}
+                      className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-brand dark:hover:bg-white/10 touch-action-manipulation"
+                      title="編輯交易資料"
+                      aria-label="編輯交易資料"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await removeTransaction(t.id);
+                        toast.info(`已刪除 ${t.symbol} 交易紀錄`);
+                      }}
+                      className="rounded-lg p-1.5 text-ink-mute dark:text-zinc-400 transition hover:bg-black/5 hover:text-down dark:hover:bg-white/10 touch-action-manipulation"
+                      title="刪除此筆交易"
+                      aria-label="刪除此筆交易"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Middle Row: Shares @ Price, Settlement Total */}
+                <div className="flex items-baseline justify-between text-xs">
+                  <div className="font-mono text-ink-soft dark:text-zinc-300">
+                    <span className="font-semibold text-sm text-ink dark:text-zinc-100 num">{formatShares(t.shares)}</span> 股
+                    {' @ '}
+                    <span className="num">${formatNumber(t.price)}</span>
+                    {t.fee > 0 && <span className="text-[11px] text-ink-mute dark:text-zinc-400"> (費 ${formatNumber(t.fee)})</span>}
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-ink-mute dark:text-zinc-400">交割 </span>
+                    <span className="font-mono font-bold text-sm text-ink dark:text-zinc-100 num">${formatNumber(subtotal)}</span>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Realized Gain (for SELL) or Note */}
+                {(t.realizedGainLoss != null || t.note) && (
+                  <div className="flex items-center justify-between pt-1 border-t border-black/5 dark:border-white/5 text-xs">
+                    <div className="text-ink-mute dark:text-zinc-400 truncate max-w-[200px]">
+                      {t.note ? `備註：${t.note}` : ''}
+                    </div>
+                    {t.realizedGainLoss != null && (
+                      <div className="font-mono font-bold text-xs num">
+                        <span>已實現：</span>
+                        <span className={changeColor(t.realizedGainLoss)}>
+                          {t.realizedGainLoss >= 0 ? '+' : ''}${formatNumber(t.realizedGainLoss)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <div className="px-5 py-12 text-center text-sm text-ink-mute dark:text-zinc-500">
+              <p>尚無符合條件的交易紀錄</p>
+              {transactions.length === 0 && (
+                <div className="mt-3 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      useStockStore.getState().loadDemoData();
+                      toast.success('已載入示範交易紀錄與持倉！');
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/5 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/10 dark:bg-brand/10"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>載入示範交易數據 (Demo)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop / Tablet Multi-Column Table View (hidden sm:block) */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full divide-y divide-black/5 dark:divide-white/10 text-sm">
             <thead>
               <tr className="bg-black/[0.02] dark:bg-white/[0.02]">

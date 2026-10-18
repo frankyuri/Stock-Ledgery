@@ -430,16 +430,16 @@ function TickerStatsBar({ quote }: { quote?: Quote }) {
   ];
 
   return (
-    <div className="card px-5 py-3.5">
-      <div className="flex flex-wrap gap-x-7 gap-y-3">
+    <div className="card p-3.5 sm:px-5 sm:py-3.5">
+      <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3 sm:gap-x-7 sm:gap-y-3">
         {items.map((it) => (
-          <div key={it.label} className="min-w-[84px]">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-faint dark:text-zinc-500">
+          <div key={it.label} className="min-w-0">
+            <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.08em] sm:tracking-[0.12em] text-ink-faint dark:text-zinc-500 truncate">
               {it.label}
             </p>
             <p
               className={cn(
-                'mt-0.5 font-mono text-sm font-bold text-ink num dark:text-zinc-100',
+                'mt-0.5 font-mono text-xs sm:text-sm font-bold text-ink num dark:text-zinc-100 truncate',
                 it.tone === 'up' && 'text-up',
                 it.tone === 'down' && 'text-down',
               )}

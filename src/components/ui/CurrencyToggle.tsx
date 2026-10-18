@@ -52,25 +52,25 @@ export function CurrencyToggle({ className, variant = 'pill' }: CurrencyTogglePr
         type="button"
         onClick={() => handleSelect('TWD')}
         className={cn(
-          'rounded-md px-2 py-1 text-xs font-bold transition-all',
+          'rounded-md px-1.5 sm:px-2 py-1 text-xs font-bold transition-all',
           baseCurrency === 'TWD'
             ? 'bg-white text-brand shadow-xs dark:bg-zinc-700 dark:text-white'
             : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
         )}
       >
-        NT$ 台幣
+        NT$<span className="hidden sm:inline"> 台幣</span>
       </button>
       <button
         type="button"
         onClick={() => handleSelect('USD')}
         className={cn(
-          'rounded-md px-2 py-1 text-xs font-bold transition-all',
+          'rounded-md px-1.5 sm:px-2 py-1 text-xs font-bold transition-all',
           baseCurrency === 'USD'
             ? 'bg-white text-brand shadow-xs dark:bg-zinc-700 dark:text-white'
             : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
         )}
       >
-        $ 美元
+        $<span className="hidden sm:inline"> 美元</span>
       </button>
     </div>
   );

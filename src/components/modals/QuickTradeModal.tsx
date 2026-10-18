@@ -232,7 +232,7 @@ export function QuickTradeModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -241,13 +241,13 @@ export function QuickTradeModal({
       />
 
       {/* Modal Dialog */}
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-black/10 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-900/95 sm:p-7">
+      <div className="relative z-10 w-full max-w-lg max-h-[92vh] flex flex-col rounded-2xl border border-black/10 bg-white/95 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-900/95 my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-black/5 pb-4 dark:border-white/10">
+        <div className="flex items-center justify-between border-b border-black/5 pb-3.5 shrink-0 dark:border-white/10">
           <div className="flex items-center gap-2.5">
             <div
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-xl font-bold text-white shadow-sm',
+                'flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl font-bold text-white shadow-sm',
                 type === 'BUY'
                   ? 'bg-gradient-to-br from-emerald-500 to-green-600'
                   : 'bg-gradient-to-br from-rose-500 to-red-600',
@@ -256,7 +256,7 @@ export function QuickTradeModal({
               {type === 'BUY' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
             </div>
             <div>
-              <h2 className="text-lg font-bold tracking-tight text-ink dark:text-zinc-100">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-ink dark:text-zinc-100">
                 {editTransaction ? '編輯交易紀錄' : '快速記帳 / 交易'}
               </h2>
               <p className="text-xs text-ink-mute dark:text-zinc-400">
@@ -274,8 +274,8 @@ export function QuickTradeModal({
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        {/* Form Body (Scrollable on short screens) */}
+        <form onSubmit={handleSubmit} className="mt-4 space-y-3.5 overflow-y-auto pr-1">
           {/* Transaction Type Tabs */}
           <div>
             <label className="label-caps mb-1.5 block">交易類別</label>

@@ -140,36 +140,36 @@ export function SmartImportModal({ isOpen, onClose }: SmartImportModalProps) {
     : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-zinc-800">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 text-sky-500 ring-1 ring-sky-500/30">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6 py-3.5 sm:py-4 dark:border-zinc-800 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 text-sky-500 ring-1 ring-sky-500/30 shrink-0">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-                券商對帳單智慧匯入
-                <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-xs font-semibold text-sky-500 dark:text-sky-400 ring-1 ring-inset ring-sky-500/30">
-                  AI 格式自適應
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5 sm:gap-2">
+                <span>券商對帳單智慧匯入</span>
+                <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-sky-500 dark:text-sky-400 ring-1 ring-inset ring-sky-500/30">
+                  AI 自適應
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">
-                自動識別台灣與海外主流券商對帳單，自動去重並重新試算加權平均成本
+              <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-1">
+                自動識別各大券商報表，自動去重並重新試算平均成本
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="rounded-lg p-1.5 sm:p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
           {!parseResult ? (
             <>
               {/* Drop Area */}

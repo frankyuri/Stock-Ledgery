@@ -433,10 +433,12 @@ export function StockChart({
     return () => observer.disconnect();
   }, [chartReady]);
 
-  // Update height when changed in normal mode
+  // Update height when changed in normal mode (responsive on mobile)
   useEffect(() => {
     if (!isFullscreen && containerRef.current) {
-      containerRef.current.style.height = `${height}px`;
+      const isMobile = window.innerWidth < 640;
+      const targetHeight = isMobile ? Math.min(height, 330) : height;
+      containerRef.current.style.height = `${targetHeight}px`;
     }
   }, [height, isFullscreen]);
 
@@ -929,15 +931,15 @@ export function StockChart({
         </header>
       ) : (
         /* ── STANDARD MODE TOOLBAR ── */
-        <div className="mb-3 sm:mb-4 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-2 sm:mb-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3 shrink-0">
+          <div className="flex overflow-x-auto no-scrollbar items-center gap-1.5 sm:gap-2 max-w-full pb-0.5">
             {/* Chart Type Toggle */}
-            <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70">
+            <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70 shrink-0">
               <button
                 type="button"
                 onClick={() => setChartType('candle')}
                 className={cn(
-                  'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
+                  'flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 font-medium transition touch-action-manipulation',
                   chartType === 'candle'
                     ? 'bg-brand text-white shadow-xs'
                     : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
@@ -951,7 +953,7 @@ export function StockChart({
                 type="button"
                 onClick={() => setChartType('area')}
                 className={cn(
-                  'flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition',
+                  'flex items-center gap-1 rounded-md px-2 sm:px-2.5 py-1 font-medium transition touch-action-manipulation',
                   chartType === 'area'
                     ? 'bg-brand text-white shadow-xs'
                     : 'text-ink-soft hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
@@ -963,7 +965,7 @@ export function StockChart({
               </button>
             </div>
 
-            <div className="h-4 w-px bg-black/10 dark:bg-white/10" />
+            <div className="h-4 w-px bg-black/10 dark:bg-white/10 shrink-0" />
 
             {/* Technical Indicator Chips */}
             {MA_OPTIONS.map((m) => (
@@ -972,7 +974,7 @@ export function StockChart({
                 type="button"
                 onClick={() => setEnabledMA((s) => ({ ...s, [m.key]: !s[m.key] }))}
                 className={cn(
-                  'chip cursor-pointer text-xs font-semibold transition',
+                  'chip cursor-pointer text-xs font-semibold transition shrink-0 touch-action-manipulation',
                   enabledMA[m.key] ? 'text-white' : 'hover:bg-black/[0.04] dark:hover:bg-white/5',
                 )}
                 style={
@@ -990,19 +992,19 @@ export function StockChart({
               type="button"
               onClick={() => setEnabledBB((v) => !v)}
               className={cn(
-                'chip cursor-pointer text-xs font-semibold transition',
+                'chip cursor-pointer text-xs font-semibold transition shrink-0 touch-action-manipulation',
                 enabledBB
                   ? 'bg-sky-500 text-white border-sky-500'
                   : 'text-sky-600 hover:bg-black/[0.04] dark:text-sky-400 dark:hover:bg-white/5',
               )}
               title="布林通道 (20, 2σ)"
             >
-              BB (20,2)
+              BB
             </button>
           </div>
 
           {/* Time Range Selector & Fullscreen Toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <div className="inline-flex overflow-hidden rounded-lg border border-black/10 bg-white/70 text-xs dark:border-white/10 dark:bg-zinc-800/70">
               {TIME_RANGES.map((x) => {
                 const bars = x.months === 'all' ? 'all' : x.months * barsPerMonth;
@@ -1011,7 +1013,7 @@ export function StockChart({
                     key={x.label}
                     type="button"
                     onClick={() => setRangeBars(bars)}
-                    className="px-3 py-1.5 font-medium text-ink-soft transition hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 font-medium text-ink-soft transition hover:bg-black/[0.04] dark:text-zinc-300 dark:hover:bg-white/5 touch-action-manipulation"
                   >
                     {x.label}
                   </button>
@@ -1022,11 +1024,11 @@ export function StockChart({
             <button
               type="button"
               onClick={() => toggleFullscreen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 bg-white/70 text-ink-soft shadow-xs transition hover:bg-white hover:text-brand dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-brand"
+              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-black/10 bg-white/70 text-ink-soft shadow-xs transition hover:bg-white hover:text-brand dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-brand touch-action-manipulation"
               title="全螢幕檢視 (TradingView 模式)"
               aria-label="全螢幕檢視"
             >
-              <Maximize2 className="h-4 w-4" />
+              <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           </div>
         </div>

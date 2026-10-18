@@ -256,8 +256,8 @@ function SummaryCards({
   const dayPct = prevValue ? (dayChange / prevValue) * 100 : 0;
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <div className="card p-5 min-w-0">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="card p-3.5 sm:p-5 min-w-0">
         <div className="flex items-baseline justify-between gap-1">
           <p className="label-caps truncate">總部位市值</p>
           {groups.length > 1 && (
@@ -281,7 +281,7 @@ function SummaryCards({
         </p>
       </div>
 
-      <div className="card p-5 min-w-0">
+      <div className="card p-3.5 sm:p-5 min-w-0">
         <p className="label-caps truncate">今日波動</p>
         <p
           className={cn(
@@ -298,7 +298,7 @@ function SummaryCards({
         </p>
       </div>
 
-      <div className="card p-5 min-w-0">
+      <div className="card p-3.5 sm:p-5 min-w-0">
         <p className="label-caps truncate">未實現總損益</p>
         <p
           className={cn(
@@ -315,7 +315,7 @@ function SummaryCards({
         </p>
       </div>
 
-      <div className="card p-5 min-w-0">
+      <div className="card p-3.5 sm:p-5 min-w-0">
         <p className="label-caps truncate">累計已實現損益</p>
         <p
           className={cn(

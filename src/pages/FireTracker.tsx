@@ -184,7 +184,7 @@ export function FireTracker() {
         {/* 快捷 FIRE 模式選擇 Tabs 與 幣別切換 */}
         <div className="flex flex-wrap items-center gap-2">
           <CurrencyToggle />
-          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-x-auto no-scrollbar max-w-full shrink-0">
             {(['STANDARD', 'LEAN', 'FAT', 'BARISTA'] as FireType[]).map((ft) => (
               <button
                 key={ft}

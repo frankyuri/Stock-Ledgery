@@ -116,7 +116,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           )}
 
           {/* Global Search Bar */}
-          <div ref={wrapRef} className="relative max-w-md flex-1 min-w-[180px]">
+          <div ref={wrapRef} className="relative max-w-md flex-1 min-w-0 sm:min-w-[180px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
               ref={searchInputRef}
@@ -130,8 +130,8 @@ export function Header({ onMenuClick }: HeaderProps) {
                 if (e.key === 'Enter' && results[0]) goto(results[0].symbol);
                 if (e.key === 'Escape') setOpen(false);
               }}
-              placeholder="搜尋代號或公司（如：AAPL、2330、NVDA）"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-1.5 pl-9 pr-14 text-xs text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-900"
+              placeholder="搜尋代號或公司（如 AAPL、2330）"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-1.5 pl-8 sm:pl-9 pr-8 sm:pr-14 text-xs text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-900"
             />
 
             {/* Shortcut badge / Clear button */}
@@ -242,7 +242,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <button
             type="button"
             onClick={() => setTradeModalOpen(true)}
-            className="btn btn-primary text-xs font-semibold py-1.5 px-3"
+            className="btn btn-primary text-xs font-semibold py-1.5 px-2.5 sm:px-3 touch-action-manipulation"
             title="快速記帳 (快捷鍵 T)"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -256,15 +256,15 @@ export function Header({ onMenuClick }: HeaderProps) {
           <button
             type="button"
             onClick={toggle}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 dark:border-zinc-700/80 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 dark:border-zinc-700/80 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 touch-action-manipulation shrink-0"
             title={theme === 'dark' ? '切換淺色模式' : '切換深色模式'}
             aria-label="切換主題"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-600" />}
           </button>
 
-          {/* Display Scale Dropdown */}
-          <div ref={scaleMenuRef} className="relative">
+          {/* Display Scale Dropdown (Desktop/Tablet only) */}
+          <div ref={scaleMenuRef} className="relative hidden md:block">
             <button
               type="button"
               onClick={() => setScaleMenuOpen((v) => !v)}
@@ -392,10 +392,10 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
                 本地隱私
               </span>
-              <Link to="/login" className="btn text-xs py-1.5 px-3">
+              <Link to="/login" className="btn text-xs py-1.5 px-2.5 sm:px-3">
                 登入
               </Link>
-              <Link to="/register" className="btn btn-primary text-xs py-1.5 px-3">
+              <Link to="/register" className="btn btn-primary text-xs py-1.5 px-2.5 sm:px-3">
                 註冊
               </Link>
             </div>

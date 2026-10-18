@@ -142,8 +142,8 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Global Market Index Cards Grid */}
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        {/* Global Market Index Cards Grid / Mobile Horizontal Scroll */}
+        <div className="flex overflow-x-auto no-scrollbar gap-2.5 pb-1 -mx-3.5 px-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 sm:gap-3.5 sm:mx-0 sm:px-0 sm:overflow-visible">
           {MAJOR_ASSETS.map((ix) => {
             const q = indexMap.get(ix.symbol);
             const isSelected = selected === ix.symbol;
@@ -372,7 +372,7 @@ function IndexCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative flex flex-col justify-between rounded-xl border p-4 text-left transition shadow-xs active:scale-[0.98] min-w-0',
+        'group relative flex flex-col justify-between rounded-xl border p-3.5 sm:p-4 text-left transition shadow-xs active:scale-[0.98] w-36 shrink-0 sm:w-auto sm:shrink touch-action-manipulation',
         isSelected
           ? 'border-brand bg-brand/[0.04] ring-2 ring-brand/30 dark:bg-brand/10'
           : 'border-slate-200/80 bg-white hover:border-slate-300 dark:border-zinc-800 dark:bg-zinc-900/60 dark:hover:border-zinc-700',

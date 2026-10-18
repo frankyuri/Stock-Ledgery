@@ -107,8 +107,8 @@ export function Portfolio() {
 
       {/* Top Summary Cards */}
       {holdings.length > 0 && !isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="card p-5 min-w-0">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="card p-3.5 sm:p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <Wallet className="h-3.5 w-3.5 text-brand" />
               持股總市值 ({baseCurrency})
@@ -124,7 +124,7 @@ export function Portfolio() {
             </p>
           </div>
 
-          <div className="card p-5 min-w-0">
+          <div className="card p-3.5 sm:p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <TrendingUp className="h-3.5 w-3.5 text-brand" />
               未實現總損益 ({baseCurrency})
@@ -149,7 +149,7 @@ export function Portfolio() {
             </p>
           </div>
 
-          <div className="card p-5 min-w-0">
+          <div className="card p-3.5 sm:p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <DollarSign className="h-3.5 w-3.5 text-brand" />
               今日市值變動 ({baseCurrency})
@@ -174,7 +174,7 @@ export function Portfolio() {
             </p>
           </div>
 
-          <div className="card p-5 min-w-0">
+          <div className="card p-3.5 sm:p-5 min-w-0">
             <span className="label-caps flex items-center gap-1.5 truncate">
               <PieChart className="h-3.5 w-3.5 text-brand" />
               持股部位數量

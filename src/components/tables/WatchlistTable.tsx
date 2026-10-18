@@ -206,7 +206,96 @@ export function WatchlistTable({
 
   return (
     <>
-      <div className="overflow-x-auto">
+      {/* Mobile Watchlist Item List (sm:hidden) */}
+      <div className="sm:hidden divide-y divide-black/5 dark:divide-white/5">
+        {table.getRowModel().rows.map((row) => {
+          const q = row.original;
+          const isSelected = selectedSymbol === q.symbol;
+          return (
+            <div
+              key={row.id}
+              onClick={() => {
+                if (onSelectSymbol) onSelectSymbol(q.symbol);
+                else navigate(`/stock/${encodeURIComponent(q.symbol)}`);
+              }}
+              className={cn(
+                'flex items-center justify-between p-3.5 transition active:bg-black/[0.04] dark:active:bg-white/5',
+                isSelected && 'bg-brand/[0.04] dark:bg-brand/10',
+              )}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                {isSelected && (
+                  <span className="h-2 w-2 rounded-full bg-brand animate-pulse shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={cn('font-bold text-base text-ink dark:text-zinc-100', isSelected && 'text-brand')}>
+                      {q.symbol}
+                    </span>
+                    <span className="chip text-[10px] shrink-0">{q.currency}</span>
+                  </div>
+                  <p className="text-xs text-ink-mute dark:text-zinc-400 truncate max-w-[140px]">
+                    {q.name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div className="text-right">
+                  <div className="font-mono text-base font-bold text-ink dark:text-zinc-100 num">
+                    {formatNumber(q.price)}
+                  </div>
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-mono text-xs font-semibold num',
+                      q.change > 0
+                        ? 'bg-emerald-500/10 text-up dark:bg-emerald-500/20'
+                        : q.change < 0
+                        ? 'bg-rose-500/10 text-down dark:bg-rose-500/20'
+                        : 'bg-black/5 text-ink-mute dark:bg-white/10 dark:text-zinc-400',
+                    )}
+                  >
+                    {q.change > 0 ? '+' : ''}
+                    {formatPercent(q.changePercent)}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => setTradeTarget(q.symbol)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-black/10 bg-white/70 text-ink-soft hover:bg-white hover:text-brand dark:border-white/10 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800 touch-action-manipulation"
+                    title={`快速為 ${q.symbol} 記帳`}
+                    aria-label={`為 ${q.symbol} 記帳`}
+                  >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                  </button>
+                  {onRemove && (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(q.symbol)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-faint hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 touch-action-manipulation"
+                      title={`移出自選清單：${q.symbol}`}
+                      aria-label={`移出自選清單：${q.symbol}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {data.length === 0 && (
+          <div className="px-5 py-10 text-center text-sm text-ink-mute dark:text-zinc-500">
+            目前自選清單為空。使用上方搜尋框或點選「+ 自選」快速加入。
+          </div>
+        )}
+      </div>
+
+      {/* Desktop / Tablet Multi-Column Table View (hidden sm:block) */}
+      <div className="hidden sm:block overflow-x-auto">
         {stale && (
           <div className="border-b border-amber-300/40 bg-amber-50/60 px-5 py-2.5 text-xs text-amber-700 dark:border-amber-400/20 dark:bg-amber-950/20 dark:text-amber-300">
             ⚠ 部分自選股報價載入稍有延遲，正自動背景重試中

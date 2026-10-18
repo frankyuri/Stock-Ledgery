@@ -316,56 +316,58 @@ export function Dividends() {
           )}
         </div>
 
-        {/* 12 個月長條圖 */}
-        <div className="mt-6 grid grid-cols-12 gap-1.5 sm:gap-3">
-          {overview?.monthlyForecast.map((item) => {
-            const isSelected = activeMonthData?.month === item.month;
-            const heightPercent = maxMonthlyIncome > 0
-              ? Math.max(12, Math.round((item.projectedIncome / maxMonthlyIncome) * 100))
-              : 12;
+        {/* 12 個月長條圖 (支援手持裝置水平滑動) */}
+        <div className="overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
+          <div className="mt-6 grid grid-cols-12 gap-1.5 sm:gap-3 min-w-[560px] sm:min-w-0">
+            {overview?.monthlyForecast.map((item) => {
+              const isSelected = activeMonthData?.month === item.month;
+              const heightPercent = maxMonthlyIncome > 0
+                ? Math.max(12, Math.round((item.projectedIncome / maxMonthlyIncome) * 100))
+                : 12;
 
-            return (
-              <button
-                type="button"
-                key={item.month}
-                onClick={() => setSelectedMonth(item.month)}
-                className={cn(
-                  'group flex flex-col items-center rounded-xl p-2 transition text-center',
-                  isSelected
-                    ? 'bg-slate-100 dark:bg-zinc-800 ring-2 ring-brand'
-                    : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60',
-                )}
-              >
-                {/* 金額標籤 */}
-                <span className="mb-2 text-[10px] font-semibold text-slate-600 dark:text-zinc-300">
-                  {item.projectedIncome > 0 ? `$${formatNumber(item.projectedIncome)}` : '—'}
-                </span>
+              return (
+                <button
+                  type="button"
+                  key={item.month}
+                  onClick={() => setSelectedMonth(item.month)}
+                  className={cn(
+                    'group flex flex-col items-center rounded-xl p-2 transition text-center touch-action-manipulation',
+                    isSelected
+                      ? 'bg-slate-100 dark:bg-zinc-800 ring-2 ring-brand'
+                      : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60',
+                  )}
+                >
+                  {/* 金額標籤 */}
+                  <span className="mb-2 text-[10px] font-semibold text-slate-600 dark:text-zinc-300">
+                    {item.projectedIncome > 0 ? `$${formatNumber(item.projectedIncome)}` : '—'}
+                  </span>
 
-                {/* 長條柱體容器 */}
-                <div className="relative flex h-36 w-full max-w-[2.5rem] items-end justify-center rounded-lg bg-slate-100 dark:bg-zinc-800/80 p-1">
-                  <div
-                    style={{ height: `${item.projectedIncome > 0 ? heightPercent : 4}%` }}
-                    className={cn(
-                      'w-full rounded-md transition-all duration-300',
-                      item.projectedIncome > 0
-                        ? isSelected
-                          ? 'bg-brand'
-                          : 'bg-brand/70 group-hover:bg-brand'
-                        : 'bg-slate-300 dark:bg-zinc-700',
-                    )}
-                  />
-                </div>
+                  {/* 長條柱體容器 */}
+                  <div className="relative flex h-36 w-full max-w-[2.5rem] items-end justify-center rounded-lg bg-slate-100 dark:bg-zinc-800/80 p-1">
+                    <div
+                      style={{ height: `${item.projectedIncome > 0 ? heightPercent : 4}%` }}
+                      className={cn(
+                        'w-full rounded-md transition-all duration-300',
+                        item.projectedIncome > 0
+                          ? isSelected
+                            ? 'bg-brand'
+                            : 'bg-brand/70 group-hover:bg-brand'
+                          : 'bg-slate-300 dark:bg-zinc-700',
+                      )}
+                    />
+                  </div>
 
-                {/* 月份名稱 */}
-                <span className={cn(
-                  'mt-2 text-xs font-medium',
-                  isSelected ? 'font-bold text-brand' : 'text-slate-600 dark:text-zinc-400',
-                )}>
-                  {item.monthLabel}
-                </span>
-              </button>
-            );
-          })}
+                  {/* 月份標籤 */}
+                  <span className={cn(
+                    'mt-2 text-xs font-medium',
+                    isSelected ? 'font-bold text-brand' : 'text-slate-600 dark:text-zinc-400',
+                  )}>
+                    {item.monthLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* 選取月份細項展開卡片 */}
