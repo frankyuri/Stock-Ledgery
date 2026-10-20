@@ -21,6 +21,8 @@ import {
   LogIn,
   UserPlus,
   ShieldCheck,
+  Smartphone,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
@@ -28,6 +30,8 @@ import { useStockStore } from '@/store/useStockStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTheme } from '@/lib/theme';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
+import { usePWAInstall } from '@/lib/hooks/usePWAInstall';
+import { InstallPromptModal } from '@/components/pwa/InstallPromptModal';
 import { version as APP_VERSION } from '../../../package.json';
 
 interface Props {
@@ -43,6 +47,17 @@ export function Sidebar({ open = false, onClose }: Props) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { theme, toggle: toggleTheme } = useTheme();
+
+  const {
+    isInstalled,
+    isIOS,
+    isSafari,
+    isInAppBrowser,
+    canPromptDirectly,
+    modalOpen,
+    setModalOpen,
+    triggerInstall,
+  } = usePWAInstall();
 
   const NAV = [
     {
@@ -215,6 +230,28 @@ export function Sidebar({ open = false, onClose }: Props) {
 
         {/* Quick Settings & Auth (Pinned at bottom-left) */}
         <div className="shrink-0 border-t border-slate-200/80 bg-white p-3 space-y-2.5 dark:border-zinc-800 dark:bg-zinc-900">
+          {/* Add to Home Screen / Mobile Desktop Shortcut */}
+          {!isInstalled ? (
+            <button
+              type="button"
+              onClick={triggerInstall}
+              className="flex w-full items-center justify-between rounded-lg border border-blue-200/90 bg-blue-50/80 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100/80 active:scale-95 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
+            >
+              <div className="flex items-center gap-1.5">
+                <Smartphone className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>生成手機桌面快捷</span>
+              </div>
+              <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white dark:bg-blue-500">
+                安裝
+              </span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50/70 px-2.5 py-1 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="truncate">已安裝為桌面獨立 App</span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">幣別切換</span>
             <CurrencyToggle />
@@ -304,6 +341,16 @@ export function Sidebar({ open = false, onClose }: Props) {
           </div>
         </div>
       </aside>
+
+      <InstallPromptModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        isIOS={isIOS}
+        isSafari={isSafari}
+        isInAppBrowser={isInAppBrowser}
+        canPromptDirectly={canPromptDirectly}
+        onDirectPrompt={triggerInstall}
+      />
     </>
   );
 }

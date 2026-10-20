@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DemoNoticeBanner } from '@/components/ui/DemoNoticeBanner';
+import { InstallBanner } from '@/components/pwa/InstallBanner';
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -32,6 +33,7 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenuClick={() => setDrawerOpen(true)} />
         <main className="mx-auto w-full max-w-7xl flex-1 px-3.5 py-4 sm:p-5 md:p-8 pb-24 md:pb-8">
+          <InstallBanner />
           <DemoNoticeBanner />
           <ErrorBoundary>
             <Outlet />

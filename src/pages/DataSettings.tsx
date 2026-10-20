@@ -16,7 +16,11 @@ import {
   Sparkles,
   Trash2,
   Coins,
+  Smartphone,
+  CheckCircle2,
 } from 'lucide-react';
+import { usePWAInstall } from '@/lib/hooks/usePWAInstall';
+import { InstallPromptModal } from '@/components/pwa/InstallPromptModal';
 import { useStockStore, buildBackupSnapshot, type BackupSnapshot } from '@/store/useStockStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { apiClient } from '@/services/api';
@@ -69,6 +73,17 @@ export function DataSettings() {
   const toast = useToast();
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+
+  const {
+    isInstalled,
+    isIOS,
+    isSafari,
+    isInAppBrowser,
+    canPromptDirectly,
+    modalOpen,
+    setModalOpen,
+    triggerInstall,
+  } = usePWAInstall();
 
   const stats = useMemo(
     () => ({
@@ -383,6 +398,63 @@ export function DataSettings() {
         </div>
       </section>
 
+      {/* PWA / Mobile Home Screen Shortcut Section */}
+      <section className="card card-body space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+              <Smartphone className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-ink dark:text-zinc-100 flex items-center gap-2">
+                <span>手機桌面快捷與獨立 App (PWA)</span>
+                {isInstalled && (
+                  <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" /> 已安裝
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs text-ink-mute dark:text-zinc-400">
+                在手機主畫面建立捷徑圖示，隨點秒開、全螢幕運作且支援離線記帳
+              </p>
+            </div>
+          </div>
+
+          <div>
+            {!isInstalled ? (
+              <button
+                type="button"
+                onClick={triggerInstall}
+                className="btn btn-primary text-xs font-semibold py-2 px-3.5 flex items-center gap-1.5 shadow-xs w-full sm:w-auto justify-center"
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                <span>立即生成桌面快捷</span>
+              </button>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                目前正以桌面獨立 App 運行中
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-ink-mute dark:text-zinc-400">
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-800/40 space-y-1">
+            <p className="font-semibold text-ink dark:text-zinc-200">⚡ 極速秒開</p>
+            <p className="text-[11px] leading-relaxed">內建 Service Worker 快取核心靜態檔案，開盤第一時間極速檢視。</p>
+          </div>
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-800/40 space-y-1">
+            <p className="font-semibold text-ink dark:text-zinc-200">📱 全螢幕沉浸</p>
+            <p className="text-[11px] leading-relaxed">隱藏瀏覽器網址列與上下工具列，如同 App Store 原生應用流暢。</p>
+          </div>
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-800/40 space-y-1">
+            <p className="font-semibold text-ink dark:text-zinc-200">🔒 離線獨立存儲</p>
+            <p className="text-[11px] leading-relaxed">買賣紀錄安全保存在本機裝置，即使無網路也可自由記錄與試算。</p>
+          </div>
+        </div>
+      </section>
+
       <section className="card card-body text-xs text-ink-mute dark:text-zinc-400 space-y-2">
         <p className="font-semibold text-ink dark:text-zinc-200 flex items-center gap-1.5">
           <ShieldCheck className="h-4 w-4 text-emerald-500" />
@@ -394,6 +466,16 @@ export function DataSettings() {
           <li>雲端同步會將您的交易紀錄安全保存於專屬 PostgreSQL 資料庫，支援無縫多裝置同步。</li>
         </ul>
       </section>
+
+      <InstallPromptModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        isIOS={isIOS}
+        isSafari={isSafari}
+        isInAppBrowser={isInAppBrowser}
+        canPromptDirectly={canPromptDirectly}
+        onDirectPrompt={triggerInstall}
+      />
     </div>
   );
 }
