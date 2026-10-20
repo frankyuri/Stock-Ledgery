@@ -1,20 +1,18 @@
 // Stocktify PWA Service Worker
-const CACHE_NAME = 'stocktify-cache-v1';
+const CACHE_NAME = 'stocktify-cache-v2';
 const PRECACHE_URLS = [
-  '/',
-  '/manifest.json',
-  '/favicon.svg',
-  '/apple-touch-icon.png',
-  '/pwa-192x192.png',
-  '/pwa-512x512.png',
+  './',
+  './manifest.json',
+  './favicon.svg',
+  './apple-touch-icon.png',
+  './pwa-192x192.png',
+  './pwa-512x512.png',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_URLS).catch(() => {
-        // Precaching failed non-critically
-      });
+      return cache.addAll(PRECACHE_URLS).catch(() => {});
     }).then(() => self.skipWaiting())
   );
 });
@@ -34,16 +32,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests and skip chrome-extension / non-http
   if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
     return;
   }
 
-  // Network first with cache fallback
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // If valid response and static asset, cache a copy
         if (
           networkResponse &&
           networkResponse.status === 200 &&
@@ -62,9 +57,8 @@ self.addEventListener('fetch', (event) => {
       .catch(async () => {
         const cached = await caches.match(event.request);
         if (cached) return cached;
-        // If requesting a HTML page navigation, fallback to root cached index
         if (event.request.mode === 'navigate') {
-          const rootCached = await caches.match('/');
+          const rootCached = (await caches.match('./')) || (await caches.match('/'));
           if (rootCached) return rootCached;
         }
         return new Response('離線模式中', {
