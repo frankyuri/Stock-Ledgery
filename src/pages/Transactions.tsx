@@ -15,8 +15,10 @@ import {
   AlertCircle,
   RefreshCw,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { SymbolSearchInput } from '@/components/ui/SymbolSearchInput';
 import { QuickTradeModal } from '@/components/modals/QuickTradeModal';
 import { SmartImportModal } from '@/components/modals/SmartImportModal';
@@ -32,6 +34,7 @@ import type { Quote, SearchResult, Transaction, TransactionType } from '@/types/
 export function Transactions() {
   const { currencySymbol } = useCurrency();
   const transactions = useStockStore((s) => s.transactions);
+  const user = useAuthStore((s) => s.user);
   const addTransaction = useStockStore((s) => s.addTransaction);
   const removeTransaction = useStockStore((s) => s.removeTransaction);
   const qc = useQueryClient();
@@ -121,13 +124,13 @@ export function Transactions() {
         const r = result.realizedGainLoss;
         toast.success(
           `已記錄 ${s} 賣出 · 已實現損益 ${r >= 0 ? '+' : ''}${formatNumber(r)}${
-            result.synced ? '（已同步至雲端）' : ''
+            result.synced ? '（已同步至雲端）' : '（已儲存於本機帳本）'
           }`,
         );
       } else {
         toast.success(
           `已記錄 ${s} ${type === 'BUY' ? '買進' : '賣出'} ${sh} 股${
-            result.synced ? '（已同步至雲端）' : ''
+            result.synced ? '（已同步至雲端）' : '（已儲存於本機帳本）'
           }`,
         );
       }
@@ -403,7 +406,15 @@ export function Transactions() {
       <form onSubmit={onSubmit} className="card">
         <div className="card-header">
           <div>
-            <h3 className="section-title">快速新增交易</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="section-title">快速新增交易</h3>
+              {!user && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  <ShieldCheck className="h-3 w-3" />
+                  本地離線模式（免註冊）
+                </span>
+              )}
+            </div>
             <p className="section-hint">
               買進會自動與現有持股加權重算平均成本；賣出會核對目前持有股數
             </p>

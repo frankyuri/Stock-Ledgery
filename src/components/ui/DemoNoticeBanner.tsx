@@ -31,7 +31,7 @@ export function DemoNoticeBanner() {
           </p>
           <p className="text-blue-700 dark:text-blue-300">
             包含台股 (2330 / 0050)、美股 (AAPL / NVDA / MSFT)
-            多元持倉、淨值歷史與退休模擬。您可以自由試算各項功能！
+            多元持倉與退休模擬。您也可直接記帳，開始記錄您自己的真實本機帳本（免註冊即可用）！
           </p>
         </div>
       </div>
@@ -43,7 +43,7 @@ export function DemoNoticeBanner() {
             className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 font-bold text-white shadow-xs transition hover:bg-blue-700"
           >
             <UserPlus className="h-3.5 w-3.5" />
-            <span>免費註冊雲端保存</span>
+            <span>註冊雲端備份</span>
           </Link>
         )}
         <button

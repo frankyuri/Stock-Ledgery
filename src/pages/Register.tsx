@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
 import { AuthShell } from '@/components/auth/AuthShell';
+import { ShieldCheck } from 'lucide-react';
 
 export function Register() {
   const register = useAuthStore((s) => s.register);
@@ -118,6 +119,15 @@ export function Register() {
         </button>
       </form>
 
+      <div className="mt-5 pt-4 border-t border-black/5 dark:border-white/5 text-center">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-brand dark:text-zinc-400 dark:hover:text-white transition"
+        >
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+          <span>免註冊，直接使用本地離線記帳 →</span>
+        </Link>
+      </div>
       <p className="mt-6 text-center text-sm text-ink-mute dark:text-zinc-400">
         已經有帳號？
         <Link to="/login" className="ml-1.5 font-medium text-brand hover:underline">

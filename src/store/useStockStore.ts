@@ -70,6 +70,7 @@ interface StockState {
   setRebalanceSettings: (patch: Partial<RebalanceSettings>) => void;
   addTransaction: (
     t: Omit<Transaction, 'id' | 'realizedGainLoss'>,
+    options?: { clearDemoFirst?: boolean },
   ) => Promise<AddTransactionResult>;
   addTransactionsBatch: (
     txns: Omit<Transaction, 'id' | 'realizedGainLoss'>[],
@@ -456,7 +457,7 @@ export const useStockStore = create<StockState>()(
           } catch {}
         }
       },
-      addTransaction: async (t) => {
+      addTransaction: async (t, options) => {
         const state = useStockStore.getState();
         if (!Number.isFinite(t.shares) || t.shares <= 0) {
           return { ok: false, error: '股數需為正數' };
@@ -515,6 +516,7 @@ export const useStockStore = create<StockState>()(
               set({
                 transactions: nextTxns,
                 holdings: reconcileHoldings(nextTxns),
+                isDemo: false,
               });
 
               return {
@@ -541,10 +543,12 @@ export const useStockStore = create<StockState>()(
           ...t,
           ...(realized != null ? { realizedGainLoss: realized } : {}),
         };
-        const nextTxns = [full, ...state.transactions];
+        const baseTxns = options?.clearDemoFirst ? [] : state.transactions;
+        const nextTxns = [full, ...baseTxns];
         set({
           transactions: nextTxns,
           holdings: reconcileHoldings(nextTxns),
+          isDemo: false,
         });
         return {
           ok: true,
@@ -616,6 +620,7 @@ export const useStockStore = create<StockState>()(
           set({
             transactions: recalculated,
             holdings: reconcileHoldings(recalculated),
+            isDemo: false,
           });
         }
 
@@ -678,6 +683,7 @@ export const useStockStore = create<StockState>()(
               set({
                 transactions: recalculated,
                 holdings: reconcileHoldings(recalculated),
+            isDemo: false,
               });
               const targetAfter = recalculated.find((t) => t.id === id);
               return { ok: true, realizedGainLoss: targetAfter?.realizedGainLoss, synced: true };
@@ -721,6 +727,7 @@ export const useStockStore = create<StockState>()(
           return {
             transactions: nextTxns,
             holdings: reconcileHoldings(nextTxns),
+          isDemo: false,
           };
         });
       },

@@ -388,11 +388,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </button>
               )}
               <span
-                className="hidden lg:inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-zinc-400"
-                title="所有個人資產均安全儲存於您的瀏覽器本機，無需登入即可享有全部分析功能"
+                className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800"
+                title="所有個人資產均安全儲存於您的瀏覽器本機，無需註冊即可享有完整記帳與分析功能"
               >
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                本地隱私
+                本地記帳 (免註冊)
               </span>
               <Link to="/login" className="btn text-xs py-1.5 px-2 sm:px-3">
                 登入

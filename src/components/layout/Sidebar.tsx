@@ -20,6 +20,7 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
@@ -260,7 +261,17 @@ export function Sidebar({ open = false, onClose }: Props) {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 pt-0.5">
+            <>
+              <div className="rounded-lg bg-emerald-50/80 p-2 text-[11px] text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                <div className="flex items-center gap-1 font-bold">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>本地離線記帳中（免註冊）</span>
+                </div>
+                <p className="mt-0.5 leading-normal text-emerald-700 dark:text-emerald-400 text-[10px]">
+                  所有買賣紀錄均安全儲存在此裝置瀏覽器中，不註冊也能永久免費使用！
+                </p>
+              </div>
+              <div className="flex items-center gap-2 pt-0.5">
               <Link
                 to="/login"
                 onClick={onClose}
@@ -278,6 +289,7 @@ export function Sidebar({ open = false, onClose }: Props) {
                 <span>註冊</span>
               </Link>
             </div>
+          </>
           )}
         </div>
 

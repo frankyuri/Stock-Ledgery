@@ -9,8 +9,10 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { SymbolSearchInput } from '@/components/ui/SymbolSearchInput';
 import { fetchQuote } from '@/services/stocks';
 import { todayISO } from '@/lib/date';
@@ -40,6 +42,9 @@ export function QuickTradeModal({
   const holdings = useStockStore((s) => s.holdings);
   const addTransaction = useStockStore((s) => s.addTransaction);
   const updateTransaction = useStockStore((s) => s.updateTransaction);
+  const isDemo = useStockStore((s) => s.isDemo);
+  const user = useAuthStore((s) => s.user);
+  const [clearDemoOnAdd, setClearDemoOnAdd] = useState(true);
 
   const [type, setType] = useState<TransactionType>(initialType);
   const [symbol, setSymbol] = useState(initialSymbol);
@@ -201,7 +206,7 @@ export function QuickTradeModal({
           fee: parsedFee,
           tradedAt,
           note,
-        });
+        }, { clearDemoFirst: isDemo && clearDemoOnAdd });
         if (!res.ok) {
           setError(res.error);
           toast.error(res.error);
@@ -214,12 +219,14 @@ export function QuickTradeModal({
           const sign = res.realizedGainLoss >= 0 ? '+' : '';
           toast.success(
             `已記帳 ${s} 賣出 · 已實現損益 ${sign}${formatNumber(res.realizedGainLoss)}${
-              res.synced ? '（已同步至雲端）' : ''
+              res.synced ? '（已同步至雲端）' : '（已安全儲存於本地離線帳本）'
             }`
           );
         } else {
           toast.success(
-            `已記帳 ${s} 買進 ${parsedShares} 股${res.synced ? '（已同步至雲端）' : ''}`
+            `已記帳 ${s} 買進 ${parsedShares} 股${
+              res.synced ? '（已同步至雲端）' : '（已安全儲存於本地離線帳本）'
+            }`
           );
         }
         onClose();
@@ -256,9 +263,15 @@ export function QuickTradeModal({
               {type === 'BUY' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold tracking-tight text-ink dark:text-zinc-100">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold tracking-tight text-ink dark:text-zinc-100">
                 {editTransaction ? '編輯交易紀錄' : '快速記帳 / 交易'}
-              </h2>
+                </h2>
+                <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
+                  <ShieldCheck className="h-2.5 w-2.5" />
+                  {user ? '雲端同步' : '本地離線儲存 (免註冊)'}
+                </span>
+              </div>
               <p className="text-xs text-ink-mute dark:text-zinc-400">
                 即時同步持股平均成本與已實現損益
               </p>
@@ -275,6 +288,19 @@ export function QuickTradeModal({
         </div>
 
         {/* Form Body (Scrollable on short screens) */}
+        {isDemo && !editTransaction && (
+          <div className="mt-3 rounded-lg border border-blue-200/80 bg-blue-50/70 p-2.5 dark:border-blue-900/60 dark:bg-blue-950/40">
+            <label className="flex items-center gap-2 text-xs text-blue-900 dark:text-blue-200 cursor-pointer font-medium">
+              <input
+                type="checkbox"
+                checked={clearDemoOnAdd}
+                onChange={(e) => setClearDemoOnAdd(e.target.checked)}
+                className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>同時清空示範數據，以此筆交易開始記錄我的真實帳本</span>
+            </label>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="mt-4 space-y-3.5 overflow-y-auto pr-1">
           {/* Transaction Type Tabs */}
           <div>
