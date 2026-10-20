@@ -932,7 +932,7 @@ export function StockChart({
       ) : (
         /* ── STANDARD MODE TOOLBAR ── */
         <div className="mb-2 sm:mb-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3 shrink-0">
-          <div className="flex overflow-x-auto no-scrollbar items-center gap-1.5 sm:gap-2 max-w-full pb-0.5">
+          <div className="flex overflow-x-auto no-scrollbar items-center gap-1.5 sm:gap-2 min-w-0 max-w-full pb-0.5">
             {/* Chart Type Toggle */}
             <div className="inline-flex rounded-lg border border-black/10 bg-white/70 p-0.5 text-xs dark:border-white/10 dark:bg-zinc-800/70 shrink-0">
               <button

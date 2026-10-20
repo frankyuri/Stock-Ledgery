@@ -117,7 +117,7 @@ export function Dashboard() {
               全球主要指數行情、個股 K 線走勢、自選清單即時追蹤
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => {
@@ -295,7 +295,7 @@ export function Dashboard() {
             <p className="section-hint">即時價格動態與 24H 振幅區間（點選任一列即可在上方切換圖表）</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {showAddTicker ? (
               <div className="flex items-center gap-1.5 w-64">
                 <SymbolSearchInput

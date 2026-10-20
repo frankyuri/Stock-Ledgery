@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -15,10 +15,18 @@ import {
   Flame,
   Scale,
   Receipt,
+  Sun,
+  Moon,
+  LogOut,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { LogoMark } from '@/components/ui/LogoMark';
 import { useStockStore } from '@/store/useStockStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useTheme } from '@/lib/theme';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { version as APP_VERSION } from '../../../package.json';
 
 interface Props {
@@ -31,6 +39,9 @@ export function Sidebar({ open = false, onClose }: Props) {
   const holdings = useStockStore((s) => s.holdings);
   const transactions = useStockStore((s) => s.transactions);
   const watchlist = useStockStore((s) => s.watchlist);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const NAV = [
     {
@@ -200,6 +211,75 @@ export function Sidebar({ open = false, onClose }: Props) {
             </div>
           ))}
         </nav>
+
+        {/* Mobile Quick Settings & Auth */}
+        <div className="border-t border-slate-200/80 p-3 space-y-2.5 dark:border-zinc-800">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">幣別切換</span>
+            <CurrencyToggle />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">外觀模式</span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="h-3.5 w-3.5 text-amber-400" />
+                  <span>深色</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="h-3.5 w-3.5 text-slate-600" />
+                  <span>淺色</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {user ? (
+            <div className="rounded-lg border border-slate-200/80 bg-slate-50/60 p-2 dark:border-zinc-800 dark:bg-zinc-800/60">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">{user.name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{user.email}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    if (onClose) onClose();
+                  }}
+                  className="rounded p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                  title="登出帳號"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pt-0.5">
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="btn flex-1 text-xs py-1.5 justify-center"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span>登入</span>
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="btn btn-primary flex-1 text-xs py-1.5 justify-center"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>註冊</span>
+              </Link>
+            </div>
+          )}
+        </div>
 
         {/* Bottom Footer Info */}
         <div className="border-t border-slate-200/80 p-3.5 dark:border-zinc-800">

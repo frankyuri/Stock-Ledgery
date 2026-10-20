@@ -102,8 +102,8 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 md:px-6">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 sm:gap-3 border-b border-slate-200/80 bg-white/95 px-3 sm:px-4 md:px-6 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           {onMenuClick && (
             <button
               type="button"
@@ -116,8 +116,8 @@ export function Header({ onMenuClick }: HeaderProps) {
           )}
 
           {/* Global Search Bar */}
-          <div ref={wrapRef} className="relative max-w-md flex-1 min-w-0 sm:min-w-[180px]">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <div ref={wrapRef} className="relative max-w-md flex-1 min-w-0">
+            <Search className="pointer-events-none absolute left-2.5 sm:left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
               ref={searchInputRef}
               value={query}
@@ -130,12 +130,12 @@ export function Header({ onMenuClick }: HeaderProps) {
                 if (e.key === 'Enter' && results[0]) goto(results[0].symbol);
                 if (e.key === 'Escape') setOpen(false);
               }}
-              placeholder="搜尋代號或公司（如 AAPL、2330）"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-1.5 pl-8 sm:pl-9 pr-8 sm:pr-14 text-xs text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-900"
+              placeholder="搜尋代號（如 AAPL、2330）"
+              className="w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50/60 py-1.5 pl-7 sm:pl-9 pr-7 sm:pr-14 text-xs text-slate-900 placeholder:text-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-900"
             />
 
             {/* Shortcut badge / Clear button */}
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {query ? (
                 <button
                   type="button"
@@ -206,7 +206,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         {/* Right Action Area */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 shrink-0">
           {/* Market Status Badges (顯示於較寬螢幕) */}
           <div className="hidden xl:flex items-center gap-2">
             <div
@@ -242,15 +242,17 @@ export function Header({ onMenuClick }: HeaderProps) {
           <button
             type="button"
             onClick={() => setTradeModalOpen(true)}
-            className="btn btn-primary text-xs font-semibold py-1.5 px-2.5 sm:px-3 touch-action-manipulation"
+            className="btn btn-primary text-xs font-semibold py-1.5 px-2 sm:px-3 touch-action-manipulation shrink-0"
             title="快速記帳 (快捷鍵 T)"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>記帳</span>
+            <span className="hidden sm:inline">記帳</span>
           </button>
 
           {/* Currency Toggle (TWD / USD) */}
-          <CurrencyToggle />
+          <div className="hidden md:inline-flex">
+            <CurrencyToggle />
+          </div>
 
           {/* Theme Toggle */}
           <button
@@ -322,7 +324,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white py-1 pl-1 pr-2.5 text-xs shadow-xs transition hover:bg-slate-50 dark:border-zinc-700/80 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-slate-200 bg-white py-1 pl-1 pr-1 sm:pr-2.5 text-xs shadow-xs transition hover:bg-slate-50 dark:border-zinc-700/80 dark:bg-zinc-800 dark:hover:bg-zinc-700"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[11px] font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
                   {user.name.slice(0, 1).toUpperCase()}
@@ -392,10 +394,10 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
                 本地隱私
               </span>
-              <Link to="/login" className="btn text-xs py-1.5 px-2.5 sm:px-3">
+              <Link to="/login" className="btn text-xs py-1.5 px-2 sm:px-3">
                 登入
               </Link>
-              <Link to="/register" className="btn btn-primary text-xs py-1.5 px-2.5 sm:px-3">
+              <Link to="/register" className="hidden sm:inline-flex btn btn-primary text-xs py-1.5 px-2.5 sm:px-3">
                 註冊
               </Link>
             </div>
