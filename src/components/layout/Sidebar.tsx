@@ -146,11 +146,11 @@ export function Sidebar({ open = false, onClose }: Props) {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col border-r border-slate-200/80 bg-white transition-transform dark:border-zinc-800 dark:bg-zinc-900',
-          'md:static md:translate-x-0',
+          'h-[100dvh] max-h-[100dvh] md:sticky md:top-0 md:h-screen md:max-h-screen md:self-start md:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         )}
       >
-        <div className="flex h-14 items-center justify-between gap-3 border-b border-slate-200/80 px-4 dark:border-zinc-800">
+        <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 px-4 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
             <LogoMark className="h-7 w-7 shrink-0 rounded-lg" />
             <div className="leading-tight">
@@ -172,7 +172,7 @@ export function Sidebar({ open = false, onClose }: Props) {
           )}
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto p-3">
+        <nav className="flex-1 min-h-0 space-y-5 overflow-y-auto p-3 overscroll-contain">
           {NAV.map((group) => (
             <div key={group.section}>
               <p className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
@@ -213,8 +213,8 @@ export function Sidebar({ open = false, onClose }: Props) {
           ))}
         </nav>
 
-        {/* Mobile Quick Settings & Auth */}
-        <div className="border-t border-slate-200/80 p-3 space-y-2.5 dark:border-zinc-800">
+        {/* Quick Settings & Auth (Pinned at bottom-left) */}
+        <div className="shrink-0 border-t border-slate-200/80 bg-white p-3 space-y-2.5 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">幣別切換</span>
             <CurrencyToggle />
@@ -272,29 +272,29 @@ export function Sidebar({ open = false, onClose }: Props) {
                 </p>
               </div>
               <div className="flex items-center gap-2 pt-0.5">
-              <Link
-                to="/login"
-                onClick={onClose}
-                className="btn flex-1 text-xs py-1.5 justify-center"
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                <span>登入</span>
-              </Link>
-              <Link
-                to="/register"
-                onClick={onClose}
-                className="btn btn-primary flex-1 text-xs py-1.5 justify-center"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                <span>註冊</span>
-              </Link>
-            </div>
-          </>
+                <Link
+                  to="/login"
+                  onClick={onClose}
+                  className="btn flex-1 text-xs py-1.5 justify-center"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span>登入</span>
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={onClose}
+                  className="btn btn-primary flex-1 text-xs py-1.5 justify-center"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>註冊</span>
+                </Link>
+              </div>
+            </>
           )}
         </div>
 
         {/* Bottom Footer Info */}
-        <div className="border-t border-slate-200/80 p-3.5 dark:border-zinc-800">
+        <div className="shrink-0 border-t border-slate-200/80 bg-white p-3.5 pb-safe dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-zinc-500">
             <span>v{APP_VERSION}</span>
             <span className="flex items-center gap-1 font-mono">
