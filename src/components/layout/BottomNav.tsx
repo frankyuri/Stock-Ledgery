@@ -61,7 +61,7 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  'relative flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium transition-all touch-action-manipulation',
+                  'relative flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium transition-all touch-action-manipulation select-none',
                   isActive
                     ? 'text-brand font-bold dark:text-blue-400'
                     : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',
@@ -94,7 +94,7 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
         <button
           type="button"
           onClick={onOpenMenu}
-          className="flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-slate-500 transition-all hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 touch-action-manipulation"
+          className="flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-slate-500 transition-all hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200 touch-action-manipulation select-none"
           aria-label="開啟所有功能選單"
         >
           <Menu className="h-5 w-5" />

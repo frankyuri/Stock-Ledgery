@@ -15,6 +15,17 @@ export function AppLayout() {
     setDrawerOpen(false);
   }, [location.pathname]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (drawerOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [drawerOpen]);
+
   return (
     <div className="flex min-h-screen">
       <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />

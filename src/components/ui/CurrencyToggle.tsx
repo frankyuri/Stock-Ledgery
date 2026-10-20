@@ -43,7 +43,7 @@ export function CurrencyToggle({ className, variant = 'pill' }: CurrencyTogglePr
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-lg border border-slate-200 bg-slate-100/90 p-0.5 text-xs dark:border-zinc-700/80 dark:bg-zinc-800/90 shadow-xs',
+        'inline-flex items-center rounded-lg border border-slate-200 bg-slate-100/90 p-0.5 text-xs dark:border-zinc-700/80 dark:bg-zinc-800/90 shadow-xs select-none touch-action-manipulation',
         className,
       )}
       title={`全域顯示幣別切換（目前：${baseCurrency}，1 USD ≈ ${fxRate} TWD）`}
@@ -52,7 +52,7 @@ export function CurrencyToggle({ className, variant = 'pill' }: CurrencyTogglePr
         type="button"
         onClick={() => handleSelect('TWD')}
         className={cn(
-          'rounded-md px-1.5 sm:px-2 py-1 text-xs font-bold transition-all',
+          'rounded-md px-1.5 sm:px-2 py-1 text-xs font-bold transition-all touch-action-manipulation select-none',
           baseCurrency === 'TWD'
             ? 'bg-white text-brand shadow-xs dark:bg-zinc-700 dark:text-white'
             : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-200',

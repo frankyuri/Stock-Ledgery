@@ -66,8 +66,8 @@ export function Header({ onMenuClick }: HeaderProps) {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
       if (!scaleMenuRef.current?.contains(e.target as Node)) setScaleMenuOpen(false);
     }
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener('pointerdown', onClick);
+    return () => document.removeEventListener('pointerdown', onClick);
   }, []);
 
   // Global hotkeys: Ctrl+K or / to search, T to trade (when not in input)

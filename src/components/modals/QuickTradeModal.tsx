@@ -88,6 +88,17 @@ export function QuickTradeModal({
     }
   }, [isOpen, editTransaction, initialSymbol, initialType]);
 
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isOpen]);
+
   // Handle ESC key to close modal
   useEffect(() => {
     if (!isOpen) return;
