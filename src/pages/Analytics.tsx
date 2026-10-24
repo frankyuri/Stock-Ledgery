@@ -13,6 +13,7 @@ import {
   Gauge,
   Layers,
   Flame,
+  Grid3x3,
 } from 'lucide-react';
 import { useStockStore } from '@/store/useStockStore';
 import { usePortfolioBundles } from '@/lib/hooks/usePortfolioBundles';
@@ -28,8 +29,16 @@ import {
   type UnderlyingExposure,
   type EtfOverlapAnalysis,
 } from '@/lib/etfExposure';
+import {
+  calculateCorrelationMatrix,
+  calculatePortfolioHealthScore,
+  type CorrelationMatrixResult,
+  type PortfolioHealthScore,
+} from '@/lib/correlationAnalytics';
 import { ComparisonChart } from '@/components/charts/ComparisonChart';
 import { UnderwaterChart } from '@/components/charts/UnderwaterChart';
+import { CorrelationHeatmap } from '@/components/charts/CorrelationHeatmap';
+import { HealthDiagnosticsCard } from '@/components/analytics/HealthDiagnosticsCard';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { Candle } from '@/types/stock';
@@ -55,7 +64,7 @@ export function Analytics() {
   const { bundles, isLoading, isRefetching, refetch } = usePortfolioBundles(allSymbolsToFetch);
 
   // 計算權重與量化指標
-  const { metrics, holdingWeights, benchmarkLabel } = useMemo(() => {
+  const { metrics, holdingWeights, benchmarkLabel, filteredCandleMap } = useMemo(() => {
     const defaultLabel =
       BENCHMARK_OPTIONS.find((b) => b.symbol === selectedBenchmark)?.label ||
       selectedBenchmark;
@@ -65,6 +74,7 @@ export function Analytics() {
         metrics: null,
         holdingWeights: [],
         benchmarkLabel: defaultLabel,
+        filteredCandleMap: new Map<string, Candle[]>(),
       };
     }
 
@@ -143,6 +153,7 @@ export function Analytics() {
       metrics: res,
       holdingWeights: holdingWeightsArr,
       benchmarkLabel: defaultLabel,
+      filteredCandleMap,
     };
   }, [bundles, holdings, symbols, selectedBenchmark, timeRange]);
 
@@ -234,6 +245,42 @@ export function Analytics() {
   const etfOverlapAnalysis: EtfOverlapAnalysis | null = useMemo(() => {
     return calculateEtfOverlap(etf1, etf2);
   }, [etf1, etf2]);
+
+  // 資產相關係數矩陣
+  const correlationResult: CorrelationMatrixResult = useMemo(() => {
+    if (!filteredCandleMap || symbols.length === 0) {
+      return {
+        symbols: [],
+        matrix: [],
+        averageCorrelation: 0,
+        pairs: [],
+        highRiskPairs: [],
+        hedgingPairs: [],
+      };
+    }
+    return calculateCorrelationMatrix(symbols, filteredCandleMap);
+  }, [symbols, filteredCandleMap]);
+
+  // 投資組合體質健康評分
+  const healthScore: PortfolioHealthScore | null = useMemo(() => {
+    if (!metrics || holdingWeights.length === 0) return null;
+    const maxWeight = holdingWeights[0]?.weight ?? 0;
+    const top3Weight = holdingWeights
+      .slice(0, 3)
+      .reduce((sum, h) => sum + h.weight, 0);
+
+    return calculatePortfolioHealthScore({
+      holdingsCount: holdingWeights.length,
+      maxWeight,
+      top3Weight,
+      averageCorrelation: correlationResult.averageCorrelation,
+      sharpeRatio: metrics.sharpeRatio,
+      maxDrawdown: metrics.maxDrawdown,
+      annualizedVolatility: metrics.annualizedVolatility,
+      beta: metrics.beta,
+      stressResilienceRating: stressTestResult?.resilienceRating,
+    });
+  }, [metrics, holdingWeights, correlationResult, stressTestResult]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -429,6 +476,9 @@ export function Analytics() {
         </div>
       </div>
 
+      {/* 投組體質健康健檢診斷卡片 */}
+      {healthScore && <HealthDiagnosticsCard health={healthScore} />}
+
       {/* 投組 vs 大盤對比走勢圖 */}
       <section className="card p-5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -525,6 +575,29 @@ export function Analytics() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 投組資產相關係數熱力矩陣 (Correlation Heatmap) */}
+      <section className="card p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-4 dark:border-zinc-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg bg-indigo-500/10 p-1.5 text-indigo-600 dark:text-indigo-400">
+                <Grid3x3 className="h-4 w-4" />
+              </span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                資產相關係數熱力矩陣 (Correlation Heatmap)
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+              計算持股間歷史每日收益率之皮爾森相關係數 (-1.0 ~ +1.0)，檢驗同向暴跌風險與實質避險分散效果
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <CorrelationHeatmap data={correlationResult} />
         </div>
       </section>
 
