@@ -1,55 +1,101 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode, type ComponentType } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/store/useAuthStore';
 
-const Dashboard = lazy(() =>
-  import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })),
+/**
+ * 具有自動重試與發布版本自癒機制的 lazy 載入器
+ * 當用戶端因伺服器重新部署而遇到舊 hash 模組 404 時，自動重新整理頁面獲取最新 chunk 檔案
+ */
+function lazyRetry<T extends ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  name: string,
+) {
+  return lazy(async () => {
+    const key = `chunk_retry_${name}`;
+    const hasRetried = sessionStorage.getItem(key);
+    try {
+      const module = await factory();
+      sessionStorage.removeItem(key);
+      return module;
+    } catch (error) {
+      if (!hasRetried) {
+        sessionStorage.setItem(key, 'true');
+        console.warn(`[LazyRetry] Failed to load chunk for ${name}, auto reloading...`, error);
+        window.location.reload();
+        return new Promise<{ default: T }>(() => {});
+      }
+      sessionStorage.removeItem(key);
+      throw error;
+    }
+  });
+}
+
+const Dashboard = lazyRetry(
+  () => import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })),
+  'Dashboard',
 );
-const Overview = lazy(() =>
-  import('@/pages/Overview').then((m) => ({ default: m.Overview })),
+const Overview = lazyRetry(
+  () => import('@/pages/Overview').then((m) => ({ default: m.Overview })),
+  'Overview',
 );
-const Portfolio = lazy(() =>
-  import('@/pages/Portfolio').then((m) => ({ default: m.Portfolio })),
+const Portfolio = lazyRetry(
+  () => import('@/pages/Portfolio').then((m) => ({ default: m.Portfolio })),
+  'Portfolio',
 );
-const Dividends = lazy(() =>
-  import('@/pages/Dividends').then((m) => ({ default: m.Dividends })),
+const Dividends = lazyRetry(
+  () => import('@/pages/Dividends').then((m) => ({ default: m.Dividends })),
+  'Dividends',
 );
-const Analytics = lazy(() =>
-  import('@/pages/Analytics').then((m) => ({ default: m.Analytics })),
+const Analytics = lazyRetry(
+  () => import('@/pages/Analytics').then((m) => ({ default: m.Analytics })),
+  'Analytics',
 );
-const FireTracker = lazy(() =>
-  import('@/pages/FireTracker').then((m) => ({ default: m.FireTracker })),
+const FireTracker = lazyRetry(
+  () => import('@/pages/FireTracker').then((m) => ({ default: m.FireTracker })),
+  'FireTracker',
 );
-const Rebalance = lazy(() =>
-  import('@/pages/Rebalance').then((m) => ({ default: m.Rebalance })),
+const Rebalance = lazyRetry(
+  () => import('@/pages/Rebalance').then((m) => ({ default: m.Rebalance })),
+  'Rebalance',
 );
-const TaxCenter = lazy(() =>
-  import('@/pages/TaxCenter').then((m) => ({ default: m.TaxCenter })),
+const TaxCenter = lazyRetry(
+  () => import('@/pages/TaxCenter').then((m) => ({ default: m.TaxCenter })),
+  'TaxCenter',
 );
-const StockDetail = lazy(() =>
-  import('@/pages/StockDetail').then((m) => ({ default: m.StockDetail })),
+const StockDetail = lazyRetry(
+  () => import('@/pages/StockDetail').then((m) => ({ default: m.StockDetail })),
+  'StockDetail',
 );
-const Transactions = lazy(() =>
-  import('@/pages/Transactions').then((m) => ({ default: m.Transactions })),
+const Transactions = lazyRetry(
+  () => import('@/pages/Transactions').then((m) => ({ default: m.Transactions })),
+  'Transactions',
 );
-const Assets = lazy(() =>
-  import('@/pages/Assets').then((m) => ({ default: m.Assets })),
+const Assets = lazyRetry(
+  () => import('@/pages/Assets').then((m) => ({ default: m.Assets })),
+  'Assets',
 );
-const LineSettings = lazy(() =>
-  import('@/pages/LineSettings').then((m) => ({ default: m.LineSettings })),
+const LineSettings = lazyRetry(
+  () => import('@/pages/LineSettings').then((m) => ({ default: m.LineSettings })),
+  'LineSettings',
 );
-const DataSettings = lazy(() =>
-  import('@/pages/DataSettings').then((m) => ({ default: m.DataSettings })),
+const DataSettings = lazyRetry(
+  () => import('@/pages/DataSettings').then((m) => ({ default: m.DataSettings })),
+  'DataSettings',
 );
-const Login = lazy(() => import('@/pages/Login').then((m) => ({ default: m.Login })));
-const Register = lazy(() =>
-  import('@/pages/Register').then((m) => ({ default: m.Register })),
+const Login = lazyRetry(
+  () => import('@/pages/Login').then((m) => ({ default: m.Login })),
+  'Login',
 );
-const NotFound = lazy(() =>
-  import('@/pages/NotFound').then((m) => ({ default: m.NotFound })),
+const Register = lazyRetry(
+  () => import('@/pages/Register').then((m) => ({ default: m.Register })),
+  'Register',
+);
+const NotFound = lazyRetry(
+  () => import('@/pages/NotFound').then((m) => ({ default: m.NotFound })),
+  'NotFound',
 );
 
 function PageFallback() {

@@ -1,5 +1,5 @@
 // Stocktify PWA Service Worker
-const CACHE_NAME = 'stocktify-cache-v2';
+const CACHE_NAME = 'stocktify-cache-v3';
 const PRECACHE_URLS = [
   './',
   './manifest.json',

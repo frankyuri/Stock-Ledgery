@@ -317,8 +317,8 @@ export function Dividends() {
         </div>
 
         {/* 12 個月長條圖 (支援手持裝置水平滑動) */}
-        <div className="overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
-          <div className="mt-6 grid grid-cols-12 gap-1.5 sm:gap-3 min-w-[560px] sm:min-w-0">
+        <div className="overflow-x-auto pb-3 pt-1 px-1">
+          <div className="mt-5 grid grid-cols-12 gap-1.5 sm:gap-2.5 min-w-[620px] px-2 py-1">
             {overview?.monthlyForecast.map((item) => {
               const isSelected = activeMonthData?.month === item.month;
               const heightPercent = maxMonthlyIncome > 0
@@ -331,15 +331,15 @@ export function Dividends() {
                   key={item.month}
                   onClick={() => setSelectedMonth(item.month)}
                   className={cn(
-                    'group flex flex-col items-center rounded-xl p-2 transition text-center touch-action-manipulation',
+                    'group flex flex-col items-center rounded-xl p-1.5 sm:p-2 transition text-center touch-action-manipulation min-w-0',
                     isSelected
                       ? 'bg-slate-100 dark:bg-zinc-800 ring-2 ring-brand'
                       : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60',
                   )}
                 >
                   {/* 金額標籤 */}
-                  <span className="mb-2 text-[10px] font-semibold text-slate-600 dark:text-zinc-300">
-                    {item.projectedIncome > 0 ? `$${formatNumber(item.projectedIncome)}` : '—'}
+                  <span className="mb-2 text-[10px] font-semibold text-slate-600 dark:text-zinc-300 font-mono truncate max-w-full">
+                    {item.projectedIncome > 0 ? `$${formatNumber(item.projectedIncome, 0)}` : '—'}
                   </span>
 
                   {/* 長條柱體容器 */}
@@ -359,7 +359,7 @@ export function Dividends() {
 
                   {/* 月份標籤 */}
                   <span className={cn(
-                    'mt-2 text-xs font-medium',
+                    'mt-2 text-xs font-medium truncate max-w-full',
                     isSelected ? 'font-bold text-brand' : 'text-slate-600 dark:text-zinc-400',
                   )}>
                     {item.monthLabel}

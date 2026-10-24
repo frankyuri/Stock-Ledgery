@@ -95,8 +95,8 @@ export const HealthDiagnosticsCard: React.FC<Props> = ({ health }) => {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3 items-center">
         {/* 左側圓環總分 */}
         <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50/60 dark:bg-zinc-800/30 border border-slate-200/60 dark:border-zinc-800">
-          <div className="relative flex items-center justify-center">
-            <svg className="h-32 w-32 -rotate-90 transform">
+          <div className="relative flex items-center justify-center w-32 h-32 shrink-0">
+            <svg className="h-32 w-32 -rotate-90 transform" viewBox="0 0 128 128">
               <circle
                 cx="64"
                 cy="64"
@@ -117,11 +117,11 @@ export const HealthDiagnosticsCard: React.FC<Props> = ({ health }) => {
                 fill="transparent"
               />
             </svg>
-            <div className="absolute flex flex-col items-center justify-center">
-              <span className="font-mono text-3xl font-black text-slate-900 dark:text-zinc-100">
-                {overallScore}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="font-mono text-3xl font-black text-slate-900 dark:text-zinc-100 leading-none">
+                {Math.max(0, Math.min(100, overallScore))}
               </span>
-              <span className="text-[10px] font-semibold text-slate-400">/ 100 滿分</span>
+              <span className="text-[10px] font-semibold text-slate-400 mt-1">/ 100 滿分</span>
             </div>
           </div>
           <p className="mt-2 text-xs font-semibold text-slate-700 dark:text-zinc-300">
@@ -133,21 +133,22 @@ export const HealthDiagnosticsCard: React.FC<Props> = ({ health }) => {
         </div>
 
         {/* 右側四大支柱柱狀進度條 */}
-        <div className="md:col-span-2 space-y-3.5">
+        <div className="md:col-span-2 space-y-3.5 min-w-0">
           {/* 1. 分散度 */}
-          <div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300">
-                <Layers className="h-3.5 w-3.5 text-brand" />
-                標的分散度 (持股數量與權重平坦度)
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-xs gap-2 min-w-0">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300 truncate min-w-0">
+                <Layers className="h-3.5 w-3.5 text-brand shrink-0" />
+                <span className="truncate">標的分散度</span>
+                <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-zinc-500">(持股與權重均衡)</span>
               </span>
-              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
-                {pillars.diversification} 分
+              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100 shrink-0">
+                {Math.max(0, Math.min(100, pillars.diversification))} 分
               </span>
             </div>
             <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-700">
               <div
-                style={{ width: `${pillars.diversification}%` }}
+                style={{ width: `${Math.max(0, Math.min(100, pillars.diversification))}%` }}
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
                   pillars.diversification >= 75 ? 'bg-emerald-500' : pillars.diversification >= 50 ? 'bg-brand' : 'bg-rose-500',
@@ -157,19 +158,20 @@ export const HealthDiagnosticsCard: React.FC<Props> = ({ health }) => {
           </div>
 
           {/* 2. 波動與回撤防禦 */}
-          <div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300">
-                <Shield className="h-3.5 w-3.5 text-cyan-500" />
-                波動與回撤防禦 (MDD & 波動控制)
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-xs gap-2 min-w-0">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300 truncate min-w-0">
+                <Shield className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
+                <span className="truncate">波動與回撤防禦</span>
+                <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-zinc-500">(MDD & 波動控制)</span>
               </span>
-              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
-                {pillars.riskControl} 分
+              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100 shrink-0">
+                {Math.max(0, Math.min(100, pillars.riskControl))} 分
               </span>
             </div>
             <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-700">
               <div
-                style={{ width: `${pillars.riskControl}%` }}
+                style={{ width: `${Math.max(0, Math.min(100, pillars.riskControl))}%` }}
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
                   pillars.riskControl >= 75 ? 'bg-emerald-500' : pillars.riskControl >= 50 ? 'bg-cyan-500' : 'bg-rose-500',
@@ -179,19 +181,20 @@ export const HealthDiagnosticsCard: React.FC<Props> = ({ health }) => {
           </div>
 
           {/* 3. 報酬效率 */}
-          <div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                報酬效率 (夏普比率 Sharpe & 貝他 Beta)
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-xs gap-2 min-w-0">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300 truncate min-w-0">
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span className="truncate">報酬效率</span>
+                <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-zinc-500">(夏普 Sharpe & 貝他)</span>
               </span>
-              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
-                {pillars.efficiency} 分
+              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100 shrink-0">
+                {Math.max(0, Math.min(100, pillars.efficiency))} 分
               </span>
             </div>
             <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-700">
               <div
-                style={{ width: `${pillars.efficiency}%` }}
+                style={{ width: `${Math.max(0, Math.min(100, pillars.efficiency))}%` }}
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
                   pillars.efficiency >= 75 ? 'bg-emerald-500' : pillars.efficiency >= 50 ? 'bg-emerald-400' : 'bg-rose-500',
@@ -201,19 +204,20 @@ export const HealthDiagnosticsCard: React.FC<Props> = ({ health }) => {
           </div>
 
           {/* 4. 壓力情境韌性 */}
-          <div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300">
-                <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
-                黑天鵝壓力韌性 (歷史危機抗跌表現)
+          <div className="min-w-0">
+            <div className="flex items-center justify-between text-xs gap-2 min-w-0">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300 truncate min-w-0">
+                <ShieldCheck className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                <span className="truncate">黑天鵝壓力韌性</span>
+                <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-zinc-500">(危機抗跌評級)</span>
               </span>
-              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100">
-                {pillars.resilience} 分
+              <span className="font-mono font-bold text-slate-900 dark:text-zinc-100 shrink-0">
+                {Math.max(0, Math.min(100, pillars.resilience))} 分
               </span>
             </div>
             <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-700">
               <div
-                style={{ width: `${pillars.resilience}%` }}
+                style={{ width: `${Math.max(0, Math.min(100, pillars.resilience))}%` }}
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
                   pillars.resilience >= 75 ? 'bg-emerald-500' : pillars.resilience >= 50 ? 'bg-purple-500' : 'bg-rose-500',

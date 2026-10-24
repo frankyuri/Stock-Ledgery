@@ -32,6 +32,40 @@ export class ErrorBoundary extends Component<Props, State> {
       return this.props.fallback(error, this.reset);
     }
 
+    const isChunkError =
+      error.message?.includes('dynamically imported module') ||
+      error.message?.includes('Failed to fetch dynamically imported') ||
+      error.message?.includes('Loading chunk');
+
+    if (isChunkError) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center px-4">
+          <div className="card w-full max-w-md p-8 text-center shadow-lg">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand mb-4">
+              <svg className="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+            </div>
+            <p className="text-xs font-bold text-brand uppercase tracking-wider">系統版本更新</p>
+            <h2 className="mt-2 text-xl font-bold text-ink dark:text-zinc-100">偵測到最新版本發布</h2>
+            <p className="mt-2 text-sm text-ink-mute dark:text-zinc-400 leading-relaxed">
+              Stocktify 已發布最新版本功能，只需重新載入頁面即可獲取最新的元件與數據！
+            </p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="btn btn-primary px-6 py-2.5 text-sm font-semibold shadow-md"
+              >
+                立即更新載入 (重新整理)
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="card w-full max-w-md p-8 text-center">

@@ -9,6 +9,12 @@ import { DisplayScaleProvider } from '@/lib/displayScale';
 import { ToastProvider } from '@/lib/toast';
 import './index.css';
 
+// 自動攔截因線上部署導致舊 chunk hash 失效的錯誤並主動重新載入
+window.addEventListener('vite:preloadError', (event) => {
+  console.warn('[Vite] Preload error detected, reloading page to fetch latest chunks...', event);
+  window.location.reload();
+});
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
