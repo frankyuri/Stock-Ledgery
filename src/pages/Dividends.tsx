@@ -460,7 +460,7 @@ export function Dividends() {
                         if (nhiItem?.isTriggered) {
                           return (
                             <span
-                              className="rounded px-1.5 py-0.2 text-[9px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                              className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
                               title={`單筆預估 NT$${formatNumber(nhiItem.dividendPerPayout)}，觸發 2.11% 健保補充保費（扣 NT$${formatNumber(nhiItem.nhiTaxPerPayout)}/次）`}
                             >
                               健保扣繳
@@ -470,7 +470,7 @@ export function Dividends() {
                         if (nhiItem?.isNearLimit) {
                           return (
                             <span
-                              className="rounded px-1.5 py-0.2 text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              className="rounded px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                               title={`單筆預估 NT$${formatNumber(nhiItem.dividendPerPayout)}，接近 NT$20,000 扣繳門檻`}
                             >
                               接近門檻

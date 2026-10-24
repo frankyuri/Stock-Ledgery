@@ -135,7 +135,7 @@ export function ComparisonChart({
     <div className="relative w-full">
       <div className="mb-2 flex items-center justify-end gap-4 text-xs font-medium">
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-4 rounded-xs bg-[#0a84ff]" />
+          <span className="h-2 w-4 rounded-sm bg-[#0a84ff]" />
           <span className="text-slate-800 dark:text-zinc-200">個人投資組合</span>
         </div>
         <div className="flex items-center gap-1.5">

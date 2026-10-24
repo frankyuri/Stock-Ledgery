@@ -247,7 +247,7 @@ export function WatchlistTable({
                   </div>
                   <div
                     className={cn(
-                      'inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-mono text-xs font-semibold num',
+                      'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-mono text-xs font-semibold num',
                       q.change > 0
                         ? 'bg-emerald-500/10 text-up dark:bg-emerald-500/20'
                         : q.change < 0

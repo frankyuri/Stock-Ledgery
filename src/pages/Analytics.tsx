@@ -300,7 +300,7 @@ export function Analytics() {
           <select
             value={selectedBenchmark}
             onChange={(e) => setSelectedBenchmark(e.target.value)}
-            className="rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-xs focus:border-brand focus:outline-hidden dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+            className="rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-xs focus:border-brand focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
           >
             {BENCHMARK_OPTIONS.map((opt) => (
               <option key={opt.symbol} value={opt.symbol}>
@@ -364,11 +364,11 @@ export function Analytics() {
           </div>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              {metrics ? metrics.sharpeRatio : '—'}
+              {metrics ? metrics.sharpeRatio.toFixed(2) : '—'}
             </span>
             {metrics && (
               <span className={cn(
-                'text-[10px] font-bold rounded-sm px-1 py-0.2',
+                'text-[10px] font-bold rounded-sm px-1 py-0.5',
                 metrics.sharpeRatio >= 1.5 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
                 metrics.sharpeRatio >= 1.0 ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
                 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
@@ -392,7 +392,7 @@ export function Analytics() {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
-              {metrics ? `${metrics.maxDrawdown}%` : '—'}
+              {metrics ? `${metrics.maxDrawdown.toFixed(2)}%` : '—'}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-400 dark:text-zinc-500">
@@ -410,7 +410,7 @@ export function Analytics() {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              {metrics ? `${metrics.annualizedVolatility}%` : '—'}
+              {metrics ? `${metrics.annualizedVolatility.toFixed(2)}%` : '—'}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-400 dark:text-zinc-500">
@@ -431,7 +431,7 @@ export function Analytics() {
               'text-xl font-bold tracking-tight',
               alpha >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
             )}>
-              {alpha >= 0 ? '+' : ''}{Math.round(alpha * 100) / 100}%
+              {alpha >= 0 ? '+' : ''}{alpha.toFixed(2)}%
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-400 dark:text-zinc-500 truncate">
@@ -449,7 +449,7 @@ export function Analytics() {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              {metrics ? metrics.beta : '—'}
+              {metrics ? metrics.beta.toFixed(2) : '—'}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-400 dark:text-zinc-500">
@@ -467,7 +467,7 @@ export function Analytics() {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-              {metrics ? metrics.sortinoRatio : '—'}
+              {metrics ? metrics.sortinoRatio.toFixed(2) : '—'}
             </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-400 dark:text-zinc-500">
@@ -767,7 +767,7 @@ export function Analytics() {
                         <span className="text-[11px] text-slate-500 dark:text-zinc-400">
                           {exp.name}
                         </span>
-                        <span className="rounded-md bg-slate-200/70 px-1.5 py-0.2 text-[9px] font-medium text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                        <span className="rounded-md bg-slate-200/70 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
                           {exp.sector}
                         </span>
                       </div>

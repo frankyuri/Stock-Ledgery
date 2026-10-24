@@ -223,7 +223,7 @@ export function FireProjectionChart({ data, height = 340 }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-medium border-b border-slate-100 dark:border-zinc-800 pb-2.5">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-4 rounded-xs bg-[#10b981]" />
+            <span className="h-2.5 w-4 rounded-sm bg-[#10b981]" />
             <span className="text-slate-800 dark:text-zinc-200">
               預估總資產 (複利累積)
             </span>

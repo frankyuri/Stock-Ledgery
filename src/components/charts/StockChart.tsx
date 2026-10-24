@@ -909,7 +909,7 @@ export function StockChart({
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span className="hidden xl:inline">最適化</span>
-              <kbd className="hidden xl:inline rounded bg-black/5 px-1 py-0.2 text-[10px] text-ink-mute dark:bg-white/10 dark:text-zinc-400">
+              <kbd className="hidden xl:inline rounded bg-black/5 px-1 py-0.5 text-[10px] text-ink-mute dark:bg-white/10 dark:text-zinc-400">
                 F
               </kbd>
             </button>
@@ -923,7 +923,7 @@ export function StockChart({
             >
               <Minimize2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">退出</span>
-              <kbd className="rounded bg-rose-600/10 dark:bg-rose-400/20 px-1 py-0.2 text-[10px]">
+              <kbd className="rounded bg-rose-600/10 dark:bg-rose-400/20 px-1 py-0.5 text-[10px]">
                 Esc
               </kbd>
             </button>
@@ -1102,7 +1102,7 @@ export function StockChart({
               {activeRsi != null && (
                 <span
                   className={cn(
-                    'rounded px-1.5 py-0.2 text-[11px] font-semibold',
+                    'rounded px-1.5 py-0.5 text-[11px] font-semibold',
                     activeRsi >= 70
                       ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
                       : activeRsi <= 30
@@ -1118,19 +1118,19 @@ export function StockChart({
             {/* Top-Right keyboard helper pill */}
             <div className="pointer-events-none absolute right-3 top-2.5 z-10 hidden xl:flex items-center gap-2.5 text-[11px] text-ink-mute dark:text-zinc-400 font-sans select-none backdrop-blur-xs px-2 py-1 rounded-md bg-white/40 dark:bg-zinc-900/40">
               <span className="flex items-center gap-1">
-                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">Esc</kbd> 退出
+                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">Esc</kbd> 退出
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">F</kbd> 最適縮放
+                <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">F</kbd> 最適縮放
               </span>
               {onResolutionChange && (
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">1/2/3</kbd> 週期
+                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">1/2/3</kbd> 週期
                 </span>
               )}
               {watchlist && watchlist.length > 1 && onSelectSymbol && (
                 <span className="flex items-center gap-1">
-                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.2 font-mono text-[10px]">←/→</kbd> 切換標的
+                  <kbd className="rounded bg-black/5 dark:bg-white/10 px-1 py-0.5 font-mono text-[10px]">←/→</kbd> 切換標的
                 </span>
               )}
             </div>

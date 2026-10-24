@@ -152,11 +152,11 @@ export const CorrelationHeatmap: React.FC<Props> = ({ data }) => {
                           >
                             <div
                               className={cn(
-                                'flex h-8 w-13 cursor-pointer items-center justify-center rounded-md font-mono text-[11px] transition-transform duration-100 hover:scale-105 shadow-2xs',
+                                'flex h-8 w-[54px] cursor-pointer items-center justify-center rounded-md font-mono text-[11px] transition-transform duration-100 hover:scale-105 shadow-xs',
                                 getCellColor(i, j, val),
                               )}
                             >
-                              {i === j ? '1.0' : val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)}
+                              {i === j ? '1.00' : val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)}
                             </div>
                           </td>
                         );
@@ -204,23 +204,23 @@ export const CorrelationHeatmap: React.FC<Props> = ({ data }) => {
           {/* 圖例說明 */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-1 text-[11px] text-slate-500 dark:text-zinc-400">
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-xs bg-emerald-600" />
+              <span className="h-3 w-3 rounded-sm bg-emerald-600" />
               <span>&lt; -0.2 (反向避險)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-xs bg-slate-200 dark:bg-zinc-800" />
+              <span className="h-3 w-3 rounded-sm bg-slate-200 dark:bg-zinc-800" />
               <span>-0.2 ~ +0.2 (獨立分散)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-xs bg-amber-200 dark:bg-amber-900" />
+              <span className="h-3 w-3 rounded-sm bg-amber-200 dark:bg-amber-900" />
               <span>+0.2 ~ +0.45 (溫和相關)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-xs bg-rose-400" />
+              <span className="h-3 w-3 rounded-sm bg-rose-400" />
               <span>+0.45 ~ +0.75 (中度正相關)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-xs bg-rose-500" />
+              <span className="h-3 w-3 rounded-sm bg-rose-500" />
               <span>&gt; +0.75 (高度同步連動)</span>
             </div>
           </div>

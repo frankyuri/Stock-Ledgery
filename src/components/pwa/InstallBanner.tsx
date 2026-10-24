@@ -43,7 +43,7 @@ export function InstallBanner() {
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-1.5">
                 <span>加到手機桌面</span>
-                <span className="hidden sm:inline-block rounded bg-blue-100 px-1.5 py-0.2 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                <span className="hidden sm:inline-block rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
                   全螢幕體驗
                 </span>
               </p>

@@ -288,7 +288,7 @@ export function Rebalance() {
             </span>
             <span
               className={cn(
-                'font-bold px-1.5 py-0.2 rounded-sm',
+                'font-bold px-1.5 py-0.5 rounded-sm',
                 driftResult.isPortfolioBalanced
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
                   : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',

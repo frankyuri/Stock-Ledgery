@@ -373,7 +373,7 @@ export function PortfolioTable({ data, onRemove, stale }: Props) {
                     <span className={changeColor(h.gainLoss)}>
                       {h.gainLoss >= 0 ? '+' : ''}{formatNumber(h.gainLoss)}
                     </span>
-                    <span className={cn('rounded px-1 py-0.2 text-[10px]', h.gainLoss >= 0 ? 'bg-emerald-500/10 text-up' : 'bg-rose-500/10 text-down')}>
+                    <span className={cn('rounded px-1 py-0.5 text-[10px]', h.gainLoss >= 0 ? 'bg-emerald-500/10 text-up' : 'bg-rose-500/10 text-down')}>
                       {h.gainLossPercent >= 0 ? '+' : ''}{formatPercent(h.gainLossPercent)}
                     </span>
                   </div>

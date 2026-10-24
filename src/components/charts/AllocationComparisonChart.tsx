@@ -28,13 +28,13 @@ export function AllocationComparisonChart({
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-medium border-b border-slate-100 dark:border-zinc-800 pb-2.5">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-4 rounded-xs bg-brand" />
+            <span className="h-2.5 w-4 rounded-sm bg-brand" />
             <span className="text-slate-800 dark:text-zinc-200">
               實際配置權重 (Actual)
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-4 rounded-xs border border-dashed border-amber-500 bg-amber-500/20" />
+            <span className="h-2.5 w-4 rounded-sm border border-dashed border-amber-500 bg-amber-500/20" />
             <span className="text-slate-600 dark:text-zinc-400">
               目標配置權重 (Target)
             </span>
